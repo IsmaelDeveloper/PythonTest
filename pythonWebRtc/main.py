@@ -1,11 +1,15 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QListWidget, QListWidgetItem
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QListWidget, QListWidgetItem, QLabel
 from PyQt5.QtCore import pyqtSignal
 import socketio
 from aiortc import RTCPeerConnection, RTCConfiguration, RTCIceServer, RTCSessionDescription
 import requests
 import os
 import logging
+from aiortc.contrib.media import MediaPlayer
+from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtCore import Qt
+import numpy as np
 
 
 class MainWindow(QWidget):
@@ -15,33 +19,21 @@ class MainWindow(QWidget):
     sdp_offer_received = pyqtSignal(object)
     sdp_answer = pyqtSignal(object)
 
-
-# {
-# "urls": [
-# "turn:13.250.13.83:3478?transport=udp"
-# ],
-# "username": "YzYNCouZM1mhqhmseWk6",
-# "credential": "YzYNCouZM1mhqhmseWk6"
-# }
-
-
     def __init__(self):
         super().__init__()
         logging.basicConfig(level=logging.DEBUG)
         self.init_ui()
         self.sio = socketio.Client()
         self.sio.connect('http://localhost:5000')
-        configuration = RTCConfiguration(iceServers=[
-            RTCIceServer(urls="stun:stun.l.google.com:19302"),
-            # RTCIceServer(urls="turn:13.250.13.83:3478?transport=udp",
-            #            username="YzYNCouZM1mhqhmseWk6",
-            #           credential="YzYNCouZM1mhqhmseWk6")
-            #    RTCIceServer("turn:numb.viagenie.ca", "webrtc@live.com", "muazkh"),
-            #     RTCIceServer("stun:stun.l.google.com:19302")
-            #    RTCIceServer("stun:freestun.net:3478")
+        self.local_audio = None
 
+        self.local_video = None
+
+        configuration = RTCConfiguration(iceServers=[
+            RTCIceServer(urls="stun:stun.l.google.com:19302")
         ])
         self.pc = RTCPeerConnection(configuration)
+        self.pc.on('track', self.handle_track)
         self.pc.on('icecandidate', self.emit_icecandidate_signal)
         self.pc.on('connectionstatechange', self.on_connection_state_change)
         self.data_channel = self.pc.createDataChannel("dataChannel")
@@ -58,6 +50,41 @@ class MainWindow(QWidget):
         })
         self.sio.emit('set-username',
                       {'username': os.getenv('USER_NAME', 'undefined')})
+
+    def init_media_players(self):
+        if not self.local_audio:
+            self.local_audio = MediaPlayer(
+                'audio=마이크 배열 (Realtek(R) Audio)', format='dshow', options={'rtbufsize': '70200000'})
+        if not self.local_video:
+            self.local_video = MediaPlayer(
+                'video=Integrated Camera',
+                format='dshow',
+                options={
+                    'framerate': '30',
+                    'video_size': '640x480',
+                    'rtbufsize': '400M'
+                }
+            )
+
+    async def handle_track(self, track):
+        print("Track received", track)
+        if track.kind == 'video':
+            while True:
+                frame = await track.recv()
+                # convert frame to numpy format
+                image = frame.to_ndarray(format="bgr24")
+
+                # convert numpy  to QImage
+                h, w, ch = image.shape
+                bytes_per_line = ch * w
+                convert_to_Qt_format = QImage(
+                    image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+                # can adjust size of displayed image here
+                p = convert_to_Qt_format.scaled(640, 480, Qt.KeepAspectRatio)
+
+                # conver Qimage to pixmap to display
+                pixmap = QPixmap.fromImage(p)
+                self.video_label.setPixmap(pixmap)
 
     def start_offer_generation(self):
         import asyncio
@@ -88,6 +115,8 @@ class MainWindow(QWidget):
         self.setGeometry(100, 100, 400, 300)
         self.layout = QVBoxLayout()
 
+        self.video_label = QLabel()
+        self.layout.addWidget(self.video_label)
         self.list_widget = QListWidget()
         self.layout.addWidget(self.list_widget)
 
@@ -197,6 +226,10 @@ class MainWindow(QWidget):
 
     async def create_offer(self, data):
         print("Creating offer...", data)
+        self.init_media_players()
+        if not self.pc.getSenders():
+            self.pc.addTrack(self.local_audio.audio)
+            self.pc.addTrack(self.local_video.video)
         username = os.getenv('USER_NAME', 'undefined')
 
         offer = await self.pc.createOffer()
