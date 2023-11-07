@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QListWidget, QListWidgetItem, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QListWidget, QListWidgetItem, QLabel, QMessageBox
 from PyQt5.QtCore import pyqtSignal
 import socketio
 from aiortc import RTCPeerConnection, RTCConfiguration, RTCIceServer, RTCSessionDescription
@@ -10,6 +10,8 @@ from aiortc.contrib.media import MediaPlayer
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import Qt
 import numpy as np
+import pyaudio
+from aiortc.contrib.media import MediaStreamTrack
 
 
 class MainWindow(QWidget):
@@ -67,7 +69,21 @@ class MainWindow(QWidget):
             )
 
     async def handle_track(self, track):
-        print("Track received", track)
+        print("Track received", track.kind)
+        if track.kind == 'audio':
+            print("audio track received")
+            # Configure PyAudio
+            p = pyaudio.PyAudio()
+            stream = p.open(format=pyaudio.paInt16,
+                            channels=1,
+                            rate=48000,
+                            output=True)
+
+            # Play audio stream
+            while True:
+                frame = await track.recv()
+                data = frame.to_bytes()
+                stream.write(data)
         if track.kind == 'video':
             while True:
                 frame = await track.recv()
@@ -146,9 +162,17 @@ class MainWindow(QWidget):
         print("Remote description set with answer")
 
     def start_sdp_offer_received(self, data):
-        import asyncio
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.handle_sdp_offer_received(data))
+        username = os.getenv('USER_NAME', 'undefined')
+        if data["userReceiveCall"] != username:
+            return
+        reply = QMessageBox.question(self, 'Call', data["userInitiateCall"] + " is calling you",
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            import asyncio
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(self.handle_sdp_offer_received(data))
+        else:
+            print("User reject the call")
 
     async def handle_sdp_offer_received(self, data):
         username = os.getenv('USER_NAME', 'undefined')
