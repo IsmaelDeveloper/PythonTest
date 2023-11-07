@@ -63,8 +63,8 @@ class MainWindow(QWidget):
                 format='dshow',
                 options={
                     'framerate': '30',
-                    'video_size': '640x480',
-                    'rtbufsize': '400M'
+                    'video_size': '320x240',
+                    'rtbufsize': '1024M'
                 }
             )
 
