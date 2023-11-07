@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <script type="text/javascript">
+      var backend;
+      new QWebChannel(qt.webChannelTransport, function (channel) {
+        backend = channel.objects.backend;
+      });
+
+      function buttonClicked() {
+        backend.buttonClicked();
+      }
+    </script>
+  </head>
+  <body
+    style="
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    "
+  >
+    <button onclick="buttonClicked()">Click Me</button>
+  </body>
+</html>

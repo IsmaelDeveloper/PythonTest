@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Play Sound with JS</title>
+  </head>
+  <body>
+    <script type="text/javascript">
+      // Créer un nouvel objet Audio
+      var audio = new Audio("./helloKO.mp3");
+
+      // Jouer le son dès que la page est chargée
+      window.onload = function () {
+        audio.play();
+      };
+    </script>
+  </body>
+</html>

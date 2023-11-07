@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebRTC Video Chat</title>
+</head>
+<body>
+    <video id="localVideo" autoplay></video>
+    <video id="remoteVideo" autoplay></video>
+
+    <script>
+        alert("test");
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+
+        const configuration = {'iceServers': [{'urls': 'stun:stun.l.google.com:19302'}]};
+        const peerConnection = new RTCPeerConnection(configuration);
+
+        peerConnection.onicecandidate = function(event) {
+            if (event.candidate) {
+            }
+        };
+
+        peerConnection.ontrack = function(event) {
+            remoteVideo.srcObject = event.streams[0];
+        };
+
+        navigator.mediaDevices.getUserMedia({video: true, audio: true})
+        .then(stream => {
+            localVideo.srcObject = stream;
+            stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+        })
+        .catch(error => console.error('Error accessing media devices.', error));
+
+        peerConnection.createOffer()
+        .then(offer => peerConnection.setLocalDescription(offer))
+        .then(() => {
+            
+        });
+    </script>
+</body>
+</html>
