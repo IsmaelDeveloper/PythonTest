@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QListWidget, QListWidgetItem, QLabel, QMessageBox
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QTimer
 import socketio
 from aiortc import RTCPeerConnection, RTCConfiguration, RTCIceServer, RTCSessionDescription
 import requests
@@ -12,6 +12,7 @@ from PyQt5.QtCore import Qt
 import numpy as np
 import pyaudio
 from aiortc.contrib.media import MediaStreamTrack
+import asyncio
 
 
 class MainWindow(QWidget):
@@ -68,10 +69,11 @@ class MainWindow(QWidget):
                 }
             )
 
-    async def handle_track(self, track):
+    async def handle_track(self, track: MediaStreamTrack):
         print("Track received", track.kind)
+        print("Track state", track.readyState)
         if track.kind == 'audio':
-            print("audio track received")
+            print("audio track received 1")
             # Configure PyAudio
             p = pyaudio.PyAudio()
             stream = p.open(format=pyaudio.paInt16,
@@ -81,14 +83,26 @@ class MainWindow(QWidget):
 
             # Play audio stream
             while True:
+                print("audio track received 2")
                 frame = await track.recv()
+                print("audio track received 3")
+
                 data = frame.to_bytes()
                 stream.write(data)
         if track.kind == 'video':
             while True:
-                frame = await track.recv()
+                print("video track received 1")
+                try:
+                    frame = await asyncio.wait_for(track.recv(), timeout=25.0)
+                    print("video track received 2")
+                except asyncio.TimeoutError:
+                    print("Timeout: no frame answer after 5 seconds")
+                    break
+                except:
+                    print("Videoerror")
                 # convert frame to numpy format
                 image = frame.to_ndarray(format="bgr24")
+                print("video track received 3")
 
                 # convert numpy  to QImage
                 h, w, ch = image.shape
@@ -101,6 +115,11 @@ class MainWindow(QWidget):
                 # conver Qimage to pixmap to display
                 pixmap = QPixmap.fromImage(p)
                 self.video_label.setPixmap(pixmap)
+                self.update_video_label(pixmap)
+                print("video track received 4")
+
+    def update_video_label(self, pixmap):
+        QTimer.singleShot(0, lambda: self.video_label.setPixmap(pixmap))
 
     def start_offer_generation(self):
         import asyncio
@@ -121,7 +140,7 @@ class MainWindow(QWidget):
             }
             print(candidate_dict)
             # send Ice candidate to server
-            self.sio.emit('ice-candidate', candidate_dict)
+          #  self.sio.emit('ice-candidate', candidate_dict)
 
         elif not candidate:
             print("All ICE candidates have been generated")
@@ -272,5 +291,6 @@ class MainWindow(QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     main_window = MainWindow()
+    main_window.showFullScreen()
     main_window.show()
     sys.exit(app.exec_())
