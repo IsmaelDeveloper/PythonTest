@@ -13,6 +13,33 @@ import numpy as np
 import pyaudio
 from aiortc.contrib.media import MediaStreamTrack
 import asyncio
+from aiortc import MediaStreamTrack
+from aiortc.contrib.media import MediaPlayer
+
+
+class CustomAudioTrack(MediaStreamTrack):
+    kind = "audio"
+
+    def __init__(self, track):
+        super().__init__()
+        self.track = track
+
+    async def recv(self):
+        frame = await self.track.audio.recv()
+        return frame
+
+
+class CustomVideoTrack(MediaStreamTrack):
+    kind = "video"
+
+    def __init__(self, track):
+        super().__init__()
+        self.track = track
+
+    async def recv(self):
+        print("recv execute")
+        frame = await self.track.video.recv()
+        return frame
 
 
 class MainWindow(QWidget):
@@ -65,9 +92,11 @@ class MainWindow(QWidget):
                 options={
                     'framerate': '30',
                     'video_size': '320x240',
-                    'rtbufsize': '1024M'
+                    'rtbufsize': '2048M'
                 }
             )
+        self.custom_audio_track = CustomAudioTrack(self.local_audio)
+        self.custom_video_track = CustomVideoTrack(self.local_video)
 
     async def handle_track(self, track: MediaStreamTrack):
         print("Track received", track.kind)
@@ -86,18 +115,14 @@ class MainWindow(QWidget):
                 print("audio track received 2")
                 frame = await track.recv()
                 print("audio track received 3")
-
                 data = frame.to_bytes()
                 stream.write(data)
         if track.kind == 'video':
             while True:
                 print("video track received 1")
                 try:
-                    frame = await asyncio.wait_for(track.recv(), timeout=25.0)
+                    frame = await track.recv()
                     print("video track received 2")
-                except asyncio.TimeoutError:
-                    print("Timeout: no frame answer after 5 seconds")
-                    break
                 except:
                     print("Videoerror")
                 # convert frame to numpy format
@@ -269,10 +294,10 @@ class MainWindow(QWidget):
 
     async def create_offer(self, data):
         print("Creating offer...", data)
-        self.init_media_players()
-        if not self.pc.getSenders():
-            self.pc.addTrack(self.local_audio.audio)
-            self.pc.addTrack(self.local_video.video)
+        # self.init_media_players()
+        # if not self.pc.getSenders():
+        #     self.pc.addTrack(self.custom_audio_track)
+        #     self.pc.addTrack(self.custom_video_track)
         username = os.getenv('USER_NAME', 'undefined')
 
         offer = await self.pc.createOffer()
