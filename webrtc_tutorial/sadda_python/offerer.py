@@ -1,21 +1,45 @@
-from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer
-import json
 import asyncio
 import requests
 import os
 import socketio
-
-SIGNALING_SERVER_URL = 'http://localhost:6969'
-ID = "offerer01"
-sio = socketio.AsyncClient()
+from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer
+from PyQt5.QtCore import QObject, pyqtSignal
 
 
-async def main():
-    print("Starting")
-    peer_connection = RTCPeerConnection()
-    channel = peer_connection.createDataChannel("chat")
+class Offerer(QObject):
+    SIGNALING_SERVER_URL = 'http://localhost:6969'
+    ID = "offerer01"
 
-    async def send_pings(channel):
+    def __init__(self):
+        super().__init__()
+        self.sio = socketio.AsyncClient()
+        self.peer_connection = RTCPeerConnection()
+        self.channel = None
+        self.setup_sio_events()
+        self.setup_peer_connection()
+
+    def setup_sio_events(self):
+        @self.sio.event
+        async def getAnswer(data):
+            if data["type"] == "answer":
+                rd = RTCSessionDescription(sdp=data["sdp"], type=data["type"])
+                await self.peer_connection.setRemoteDescription(rd)
+                print("Answer received and set as Remote Description")
+
+    def setup_peer_connection(self):
+        self.channel = self.peer_connection.createDataChannel("chat")
+
+        @self.channel.on("open")
+        def on_open():
+            print("channel openned")
+            self.channel.send("Hello from Offerer via Datachannel")
+            asyncio.ensure_future(self.send_pings(self.channel))
+
+        @self.channel.on("message")
+        def on_message(message):
+            print("Received via RTC Datachannel", message)
+
+    async def send_pings(self, channel):
         num = 0
         while True:
             msg = "From Offerer: {}".format(num)
@@ -24,31 +48,19 @@ async def main():
             num += 1
             await asyncio.sleep(1)
 
-    @channel.on("open")
-    def on_open():
-        print("channel openned")
-        channel.send("Hello from Offerer via Datachannel")
-        asyncio.ensure_future(send_pings(channel))
+    async def start(self):
+        await self.peer_connection.setLocalDescription(await self.peer_connection.createOffer())
+        message = {"id": self.ID, "sdp": self.peer_connection.localDescription.sdp,
+                   "type": self.peer_connection.localDescription.type, "target": os.getenv("TARGET_USERNAME", "default_target")}
+        r = requests.post(self.SIGNALING_SERVER_URL + '/offer', data=message)
 
-    @channel.on("message")
-    def on_message(message):
-        print("Received via RTC Datachannel", message)
+        await self.sio.connect(self.SIGNALING_SERVER_URL)
+        await self.sio.wait()
 
-    @sio.event
-    async def getAnswer(data):
-        if data["type"] == "answer":
-            rd = RTCSessionDescription(sdp=data["sdp"], type=data["type"])
-            await peer_connection.setRemoteDescription(rd)
-            print("Answer received and set as Remote Description")
 
-    # send offer
-    await peer_connection.setLocalDescription(await peer_connection.createOffer())
-    message = {"id": ID, "sdp": peer_connection.localDescription.sdp,
-               "type": peer_connection.localDescription.type, "target": os.getenv("TARGET_USERNAME", "default_target")}
-    r = requests.post(SIGNALING_SERVER_URL + '/offer', data=message)
+# Exemple d'utilisation
+if __name__ == "__main__":
+    offerer = Offerer()
 
-    await sio.connect(SIGNALING_SERVER_URL)
-    await sio.wait()
-
-if __name__ == '__main__':
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(offerer.start())

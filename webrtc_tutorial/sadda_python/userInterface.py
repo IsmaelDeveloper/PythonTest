@@ -7,6 +7,7 @@ import asyncio
 import subprocess
 import threading
 from answerer import Answerer
+from offerer import Offerer
 sio = socketio.Client()
 
 
@@ -88,16 +89,21 @@ class UserWindow(QWidget):
     def onUserButtonClicked(self, username):
         print(f"Call to {username}")
         os.environ["TARGET_USERNAME"] = username
-        self.launchScript()
+        self.startOfferer()
 
-    def launchScript(self):
-        self.process = subprocess.Popen([sys.executable, 'offerer.py'])
+    def startOfferer(self):
+        self.offerer = Offerer()
+        self.offerer_thread = threading.Thread(
+            target=self.run_offerer, daemon=True)
+        self.offerer_thread.start()
+
+    def run_offerer(self):
+        asyncio.run(self.offerer.start())
 
     def closeEvent(self, event):
-        if self.process_offerer:
-            self.process_offerer.terminate()
-            self.process_offerer.wait()
-        event.accept()
+        if hasattr(self, 'offerer_thread') and self.offerer_thread.is_alive():
+            self.offerer_thread.join()
+        super().closeEvent(event)
 
 
 def main():
