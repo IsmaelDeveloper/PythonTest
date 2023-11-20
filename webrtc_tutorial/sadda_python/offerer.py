@@ -3,7 +3,10 @@ import requests
 import os
 import socketio
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer
+from aiortc.contrib.media import MediaPlayer
 from PyQt5.QtCore import QObject, pyqtSignal
+import logging
+ROOT = os.path.dirname(__file__)
 
 
 class Offerer(QObject):
@@ -12,6 +15,7 @@ class Offerer(QObject):
 
     def __init__(self):
         super().__init__()
+        logging.basicConfig(level=logging.DEBUG)
         self.sio = socketio.AsyncClient()
         self.peer_connection = RTCPeerConnection()
         self.channel = None
@@ -48,7 +52,13 @@ class Offerer(QObject):
             num += 1
             await asyncio.sleep(1)
 
+    async def initialize_media(self):
+        self.player = MediaPlayer(os.path.join(ROOT, "demo-instruct.wav"))
+        if self.player.audio:
+            self.peer_connection.addTrack(self.player.audio)
+
     async def start(self):
+        await self.initialize_media()
         await self.peer_connection.setLocalDescription(await self.peer_connection.createOffer())
         message = {"id": self.ID, "sdp": self.peer_connection.localDescription.sdp,
                    "type": self.peer_connection.localDescription.type, "target": os.getenv("TARGET_USERNAME", "default_target")}

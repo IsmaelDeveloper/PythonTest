@@ -1,9 +1,11 @@
 import socketio
-from aiortc import RTCPeerConnection, RTCSessionDescription
+from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceServer
 import asyncio
 import os
 import requests
 from PyQt5.QtCore import QObject, pyqtSignal
+from aiortc.contrib.media import MediaPlayer, MediaRecorder, MediaRelay
+import pyaudio
 
 
 class Answerer(QObject):
@@ -45,6 +47,27 @@ class Answerer(QObject):
                 print("Received via RTC Datachannel: ", message)
 
             asyncio.ensure_future(self.send_pings(channel))
+
+        @self.peer_connection.on("track")
+        async def on_track(track):
+            if track.kind == "audio":
+                relay = MediaRelay()
+                relayed_track = relay.subscribe(track)
+
+                # Créez et configurez un flux PyAudio pour la lecture
+                p = pyaudio.PyAudio()
+                stream = p.open(format=pyaudio.paInt16,
+                                channels=2,
+                                rate=48000,
+                                output=True)
+
+                while True:
+                    # Lire les données du track et les écrire dans le flux PyAudio
+                    print('we are here')
+                    frame = await relayed_track.recv()
+                    print("frame :", frame)
+                    data = frame.to_ndarray().tobytes()
+                    stream.write(data)
 
     async def send_pings(self, channel):
         num = 0
