@@ -1,5 +1,5 @@
 import socketio
-from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceServer
+from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration
 import asyncio
 import os
 import requests
@@ -17,7 +17,10 @@ class Answerer(QObject):
     def __init__(self):
         super().__init__()
         self.sio = socketio.AsyncClient()
-        self.peer_connection = RTCPeerConnection()
+        self.peer_connection = RTCPeerConnection(
+            RTCConfiguration(iceServers=[RTCIceServer(
+                urls=["stun:stun.l.google.com:19302"])])
+        )
         self.setup_sio_events()
         self.setup_peer_connection_events()
 
@@ -51,23 +54,37 @@ class Answerer(QObject):
         @self.peer_connection.on("track")
         async def on_track(track):
             if track.kind == "audio":
-                relay = MediaRelay()
-                relayed_track = relay.subscribe(track)
+                asyncio.create_task(self.handle_audio_track(track))
+            elif track.kind == "video":
+                asyncio.create_task(self.handle_video_track(track))
 
-                # Créez et configurez un flux PyAudio pour la lecture
-                p = pyaudio.PyAudio()
-                stream = p.open(format=pyaudio.paInt16,
-                                channels=2,
-                                rate=48000,
-                                output=True)
+    async def handle_audio_track(self, track):
+        relay = MediaRelay()
+        relayed_track = relay.subscribe(track)
+        p = pyaudio.PyAudio()
+        stream = p.open(format=pyaudio.paInt16, channels=2,
+                        rate=48000, output=True, frames_per_buffer=2048)
 
-                while True:
-                    # Lire les données du track et les écrire dans le flux PyAudio
-                    print('we are here')
-                    frame = await relayed_track.recv()
-                    print("frame :", frame)
-                    data = frame.to_ndarray().tobytes()
-                    stream.write(data)
+        while True:
+            try:
+                frame = await relayed_track.recv()
+                print("Audio frame:", frame)
+                data = frame.to_ndarray().tobytes()
+                stream.write(data)
+            except Exception as e:
+                print("Audio error:", e)
+
+    async def handle_video_track(self, track):
+        relay = MediaRelay()
+        relayed_track = relay.subscribe(track)
+
+        while True:
+            try:
+                frame = await relayed_track.recv()
+                print("Video frame:", frame)
+                # Traiter la frame vidéo
+            except Exception as e:
+                print("Video error:", e)
 
     async def send_pings(self, channel):
         num = 0
