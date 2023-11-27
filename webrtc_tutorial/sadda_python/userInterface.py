@@ -27,6 +27,18 @@ class SocketIOThread(QThread):
         self.users_updated.emit(data)
 
 
+class CenteredMessageBox(QMessageBox):
+    def __init__(self, *args, **kwargs):
+        super(CenteredMessageBox, self).__init__(*args, **kwargs)
+
+    def showEvent(self, event):
+        super(CenteredMessageBox, self).showEvent(event)
+        screen_geometry = QApplication.desktop().screenGeometry()
+        x = (screen_geometry.width() - self.width()) // 2
+        y = (screen_geometry.height() - self.height()) // 2
+        self.move(x, y)
+
+
 class CallReceiver(QWidget):
     def __init__(self):
         super().__init__()
@@ -91,8 +103,13 @@ class CallReceiver(QWidget):
         self.close()
 
     def on_offer_received(self):
-        reply = QMessageBox.question(
-            self, 'Call incoming', "Do you wanna accept the call ?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        messagebox = CenteredMessageBox()
+        messagebox.setWindowTitle('Call incoming')
+        messagebox.setText("Do you wanna accept the call?")
+        messagebox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        messagebox.setDefaultButton(QMessageBox.No)
+        reply = messagebox.exec_()
+
         if reply == QMessageBox.Yes:
             self.answer_call(True)
             self.showFullScreen()
