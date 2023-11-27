@@ -16,13 +16,10 @@ sio = socketio.Client()
 class SocketIOThread(QThread):
     users_updated = pyqtSignal(list)
 
-    def __init__(self, username):
+    def __init__(self):
         super().__init__()
-        self.username = username
 
     def run(self):
-        sio.connect('http://127.0.0.1:6969')
-        sio.emit('register', {'username': self.username})
         sio.on('update_users', self.on_update_users)
         sio.wait()
 
@@ -34,10 +31,15 @@ class CallReceiver(QWidget):
     def __init__(self):
         super().__init__()
         self.answerer = Answerer()
+
         self.initUI()
         self.setupAnswerer()
 
     def initUI(self):
+
+        sio.connect('http://127.0.0.1:6969')
+        sio.emit('register', {'username': os.getenv(
+            "USERNAME", "default_user")})
         self.setWindowTitle("Incoming Call")
         self.setGeometry(300, 300, 800, 600)
         self.layout = QVBoxLayout(self)
@@ -53,6 +55,11 @@ class CallReceiver(QWidget):
         self.hangupButton = QPushButton("Hangup")
         self.hangupButton.clicked.connect(self.hangupCall)
         self.layout.addWidget(self.hangupButton)
+
+    async def connect_socketio(self):
+        await self.sio.connect('http://127.0.0.1:6969')
+        await self.sio.emit('register', {'username': self.username})
+        self.sio.on('update_users', self.on_update_users)
 
     def setupAnswerer(self):
         self.answerer.offer_received.connect(self.on_offer_received)
@@ -115,7 +122,7 @@ class UserWindow(QWidget):
         self.stackedLayout.addWidget(self.mainWidget)
 
     def setupSocketThread(self):
-        self.ws_thread = SocketIOThread(os.getenv("USERNAME", "default_user"))
+        self.ws_thread = SocketIOThread()
         self.ws_thread.users_updated.connect(self.updateUserButtons)
         self.ws_thread.start()
 
