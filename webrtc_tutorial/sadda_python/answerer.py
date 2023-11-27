@@ -4,11 +4,14 @@ import asyncio
 import os
 import requests
 from PyQt5.QtCore import QObject, pyqtSignal
-from aiortc.contrib.media import MediaPlayer, MediaRecorder, MediaRelay
+from aiortc.contrib.media import MediaPlayer, MediaRecorder, MediaRelay, MediaStreamTrack
 import pyaudio
+import numpy as np
+from rtc_utils import end_rtc_call
 
 
 class Answerer(QObject):
+    video_frame_received = pyqtSignal(np.ndarray)
     SIGNALING_SERVER_URL = 'http://127.0.0.1:6969'
     ID = "answerer01"
     LOCAL_USERNAME = os.getenv("USERNAME", "default_user")
@@ -63,28 +66,28 @@ class Answerer(QObject):
         relayed_track = relay.subscribe(track)
         p = pyaudio.PyAudio()
         stream = p.open(format=pyaudio.paInt16, channels=2,
-                        rate=48000, output=True, frames_per_buffer=2048)
+                        rate=48000, output=True, frames_per_buffer=1024)
 
         while True:
-            try:
-                frame = await relayed_track.recv()
-                print("Audio frame:", frame)
-                data = frame.to_ndarray().tobytes()
-                stream.write(data)
-            except Exception as e:
-                print("Audio error:", e)
+            print("try to get audio frame")
+            frame = await relayed_track.recv()
+            print("Audio frame:", frame)
+            data = frame.to_ndarray().tobytes()
+            stream.write(data)
 
-    async def handle_video_track(self, track):
+    async def handle_video_track(self, track: MediaStreamTrack):
         relay = MediaRelay()
         relayed_track = relay.subscribe(track)
 
         while True:
-            try:
-                frame = await relayed_track.recv()
-                print("Video frame:", frame)
-                # Traiter la frame vidéo
-            except Exception as e:
-                print("Video error:", e)
+            frame = await relayed_track.recv()
+            video_frame = frame.to_ndarray(
+                format="bgr24")  # Convertir en ndarray
+            self.video_frame_received.emit(video_frame)
+
+    def end_call(self):
+        asyncio.run_coroutine_threadsafe(
+            end_rtc_call(self.peer_connection), asyncio.get_event_loop())
 
     async def send_pings(self, channel):
         num = 0
