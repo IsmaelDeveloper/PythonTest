@@ -1,7 +1,7 @@
 import os
 import sys
 import socketio
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QMessageBox, QLabel, QStackedLayout, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QMessageBox, QLabel, QStackedLayout, QSizePolicy, QHBoxLayout
 from PyQt5.QtCore import pyqtSlot, QThread, pyqtSignal, QTimer, Qt
 from PyQt5.QtGui import QImage, QPixmap
 import asyncio
@@ -53,8 +53,17 @@ class CallReceiver(QWidget):
 
         # Ajouter le bouton Hangup
         self.hangupButton = QPushButton("Hangup")
+        # Largeur fixe, ajustez selon vos besoins
+        self.hangupButton.setFixedWidth(100)
+        self.hangupButton.setStyleSheet(
+            "background-color: red; border-radius: 10px; color: white; padding: 5px;")
+
         self.hangupButton.clicked.connect(self.hangupCall)
-        self.layout.addWidget(self.hangupButton)
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(self.hangupButton, 0, Qt.AlignCenter)
+
+        # Ajoutez le layout du bouton au layout principal
+        self.layout.addLayout(buttonLayout)
 
     async def connect_socketio(self):
         await self.sio.connect('http://127.0.0.1:6969')
