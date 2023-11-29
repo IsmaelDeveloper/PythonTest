@@ -7,15 +7,58 @@ from aiortc.contrib.media import MediaPlayer
 from PyQt5.QtCore import QObject, pyqtSignal
 import logging
 from av import VideoFrame
+from av.audio.frame import AudioFrame
 import av
 import numpy as np
 import cv2
 import sounddevice as sd
 import pyaudio
 
-from av import AudioFrame
-import fractions
+from fractions import Fraction
 ROOT = os.path.dirname(__file__)
+
+
+class CustomAudioTrack(MediaStreamTrack):
+    kind = "audio"
+
+    def __init__(self, rate=48000, channels=2):
+        super().__init__()
+        self.rate = rate
+        self.channels = channels
+        self._timestamp = 0
+
+        # Initialiser PyAudio
+        self.pa = pyaudio.PyAudio()
+        self.stream = self.pa.open(format=pyaudio.paInt16,
+                                   channels=2,
+                                   rate=48000,
+                                   input=True,
+                                   frames_per_buffer=960)
+
+    async def recv(self):
+        frames_per_buffer = 960
+
+        # Lire les données du stream PyAudio
+        data = np.frombuffer(self.stream.read(
+            frames_per_buffer), dtype=np.int16)
+        data = data.reshape(-1, 1)
+
+        self._timestamp += frames_per_buffer
+        pts = self._timestamp
+        time_base = Fraction(1, self.rate)
+        # Préparation des données pour PyAV
+        audio_frame = av.AudioFrame.from_ndarray(
+            data.T, format='s16', layout='stereo')
+        audio_frame.sample_rate = self.rate
+        audio_frame.pts = pts
+        audio_frame.time_base = time_base
+
+        return audio_frame
+
+    def __del__(self):
+        self.stream.stop_stream()
+        self.stream.close()
+        self.pa.terminate()
 
 
 class CustomVideoTrack(VideoStreamTrack):
@@ -92,9 +135,9 @@ class Offerer(QObject):
 
     async def initialize_media(self):
         # self.player = MediaPlayer(os.path.join(
-        # #     ROOT, "demo-instruct.wav"), loop=True)
-        # self.player = MediaPlayer('audio=마이크 배열 (Realtek(R) Audio)',
-        #                           format='dshow', options={'channels': '2', 'sample_rate': '48000'})
+        #     ROOT, "demo-instruct.wav"), loop=True)
+        self.player = MediaPlayer('audio=마이크 배열 (Realtek(R) Audio)',
+                                  format='dshow', options={'channels': '2', 'sample_rate': '48000'})
 
         # self.playerVideo = MediaPlayer('video=Integrated Camera', format='dshow', options={
         #     'rtbufsize': '2048M',
@@ -107,9 +150,9 @@ class Offerer(QObject):
         #     self.peer_connection.addTrack(self.playerVideo.video)
 
         custom_video_track = CustomVideoTrack()
+        custom_audio_track = CustomAudioTrack()
         # self.peer_connection.addTrack(custom_video_track)
-
-        self.peer_connection.addTrack(custom_video_track)
+        self.peer_connection.addTrack(custom_audio_track)
 
     async def start(self):
         await self.initialize_media()

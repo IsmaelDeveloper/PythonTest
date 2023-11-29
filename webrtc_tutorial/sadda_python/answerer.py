@@ -56,23 +56,24 @@ class Answerer(QObject):
 
         @self.peer_connection.on("track")
         async def on_track(track):
-            if track.kind == "audio":
-                asyncio.create_task(self.handle_audio_track(track))
-            elif track.kind == "video":
+            if track.kind == "video":
                 asyncio.create_task(self.handle_video_track(track))
+            elif track.kind == "audio":
+                asyncio.create_task(self.handle_audio_track(track))
 
     async def handle_audio_track(self, track):
         relay = MediaRelay()
         relayed_track = relay.subscribe(track)
         p = pyaudio.PyAudio()
         stream = p.open(format=pyaudio.paInt16, channels=2,
-                        rate=48000, output=True, frames_per_buffer=1024)
+                        rate=48000, output=True, frames_per_buffer=960)
 
         while True:
             print("try to get audio frame")
             frame = await relayed_track.recv()
             print("Audio frame:", frame)
             data = frame.to_ndarray().tobytes()
+            print("Length of data:", len(data))
             stream.write(data)
 
     async def handle_video_track(self, track: MediaStreamTrack):
@@ -80,6 +81,7 @@ class Answerer(QObject):
         relayed_track = relay.subscribe(track)
 
         while True:
+            print("try to get video frame")
             frame = await relayed_track.recv()
             video_frame = frame.to_ndarray(
                 format="bgr24")  # Convertir en ndarray
