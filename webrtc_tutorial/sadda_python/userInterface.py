@@ -8,7 +8,9 @@ import asyncio
 import subprocess
 import threading
 from answerer import Answerer
+from audioAnswerer import AudioAnswerer
 from offerer import Offerer
+from audioOfferer import AudioOfferer
 import cv2
 sio = socketio.Client()
 
@@ -42,10 +44,12 @@ class CenteredMessageBox(QMessageBox):
 class CallReceiver(QWidget):
     def __init__(self):
         super().__init__()
+        self.audioAnswerer = AudioAnswerer()
         self.answerer = Answerer()
 
         self.initUI()
         self.setupAnswerer()
+        self.setupAnswererAudio()
 
     def initUI(self):
 
@@ -84,10 +88,18 @@ class CallReceiver(QWidget):
 
     def setupAnswerer(self):
         self.answerer.offer_received.connect(self.on_offer_received)
+
         self.answerer.video_frame_received.connect(self.updateVideoFrame)
         self.answerer_thread = threading.Thread(
             target=self.run_answerer, daemon=True)
         self.answerer_thread.start()
+
+    def setupAnswererAudio(self):
+        self.audioAnswerer.audio_offer_received.connect(
+            self.on_audio_offer_received)
+        self.answerer_audio_thread = threading.Thread(
+            target=self.run_answerer_audio, daemon=True)
+        self.answerer_audio_thread.start()
 
     def updateVideoFrame(self, frame):
         print("Update video frame")
@@ -101,6 +113,11 @@ class CallReceiver(QWidget):
         print("Hangup call")
         self.answerer.end_call()
         self.close()
+
+    def on_audio_offer_received(self):
+        print("Audio offer received")
+        asyncio.run_coroutine_threadsafe(
+            self.audioAnswerer.handle_offer(), asyncio.get_event_loop())
 
     def on_offer_received(self):
         messagebox = CenteredMessageBox()
@@ -124,6 +141,9 @@ class CallReceiver(QWidget):
 
     def run_answerer(self):
         asyncio.run(self.answerer.start())
+
+    def run_answerer_audio(self):
+        asyncio.run(self.audioAnswerer.start())
 
 
 class UserWindow(QWidget):
@@ -173,17 +193,29 @@ class UserWindow(QWidget):
         self.startOfferer()
 
     def startOfferer(self):
-        self.offerer = Offerer()
-        self.offerer_thread = threading.Thread(
-            target=self.run_offerer, daemon=True)
-        self.offerer_thread.start()
+        # Pour l'audio
+        self.offererAudio = AudioOfferer()
+        self.audio_offerer_thread = threading.Thread(
+            target=self.run_offerer_audio, daemon=True)
+        self.audio_offerer_thread.start()
 
-    def run_offerer(self):
-        asyncio.run(self.offerer.start())
+        # Pour la vidéo
+        self.offererVideo = Offerer()
+        self.video_offerer_thread = threading.Thread(
+            target=self.run_offerer_video, daemon=True)
+        self.video_offerer_thread.start()
+
+    def run_offerer_audio(self):
+        asyncio.run(self.offererAudio.start())
+
+    def run_offerer_video(self):
+        asyncio.run(self.offererVideo.start())
 
     def closeEvent(self, event):
-        if hasattr(self, 'offerer_thread') and self.offerer_thread.is_alive():
-            self.offerer_thread.join()
+        # if hasattr(self, 'offerer_thread') and self.audio_offerer_thread.is_alive():
+        #     self.audio_offerer_thread.join()
+        if hasattr(self, 'offerer_thread') and self.video_offerer_thread.is_alive():
+            self.video_offerer_thread.join()
         super().closeEvent(event)
 
 

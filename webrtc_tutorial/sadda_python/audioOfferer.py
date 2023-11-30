@@ -87,9 +87,9 @@ class CustomVideoTrack(VideoStreamTrack):
         return video_frame
 
 
-class Offerer(QObject):
+class AudioOfferer(QObject):
     SIGNALING_SERVER_URL = 'http://localhost:6969'
-    ID = "offerer01"
+    ID = "Audioofferer01"
 
     def __init__(self):
         super().__init__()
@@ -105,7 +105,7 @@ class Offerer(QObject):
 
     def setup_sio_events(self):
         @self.sio.event
-        async def getAnswer(data):
+        async def getAudioAnswer(data):
             if data["type"] == "answer":
                 rd = RTCSessionDescription(sdp=data["sdp"], type=data["type"])
                 await self.peer_connection.setRemoteDescription(rd)
@@ -134,23 +134,23 @@ class Offerer(QObject):
             await asyncio.sleep(1)
 
     async def initialize_media(self):
-        custom_video_track = CustomVideoTrack()
-        self.peer_connection.addTrack(custom_video_track)
+        custom_audio_track = CustomAudioTrack()
+        self.peer_connection.addTrack(custom_audio_track)
 
     async def start(self):
         await self.initialize_media()
         await self.peer_connection.setLocalDescription(await self.peer_connection.createOffer())
         message = {"id": self.ID, "sdp": self.peer_connection.localDescription.sdp,
                    "type": self.peer_connection.localDescription.type, "target": os.getenv("TARGET_USERNAME", "default_target")}
-        r = requests.post(self.SIGNALING_SERVER_URL + '/offer', data=message)
-
+        r = requests.post(self.SIGNALING_SERVER_URL +
+                          '/audioOffer', data=message)
         await self.sio.connect(self.SIGNALING_SERVER_URL)
         await self.sio.wait()
 
 
 # Exemple d'utilisation
 if __name__ == "__main__":
-    offerer = Offerer()
+    offerer = AudioOfferer()
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(offerer.start())

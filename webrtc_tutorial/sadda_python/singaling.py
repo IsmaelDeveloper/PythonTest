@@ -22,6 +22,11 @@ def broadcast_offer(offer_data):
     socketio.emit('getOffer', offer_data)
 
 
+def broadcast_offer_audio(offer_data):
+    print(" offer data", offer_data)
+    socketio.emit('getAudioOffer', offer_data)
+
+
 @app.route('/offer', methods=['POST'])
 def offer():
     if request.form["type"] == "offer":
@@ -34,9 +39,27 @@ def offer():
         return Response(status=400)
 
 
+@app.route('/audioOffer', methods=['POST'])
+def audio_offer():
+    print("audio offer")
+    if request.form["type"] == "offer":
+        offer_data = {"id": request.form['id'],
+                      "type": request.form['type'], "sdp": request.form['sdp'], "target": request.form['target']}
+        data["offer"] = offer_data
+        broadcast_offer_audio(offer_data)
+        return Response(status=200)
+    else:
+        return Response(status=400)
+
+
 def broadcast_answer(answer_data):
     print(" answer data", answer_data)
     socketio.emit('getAnswer', answer_data)
+
+
+def broadcast_answer_audio(answer_data):
+    print(" answer data", answer_data)
+    socketio.emit('getAudioAnswer', answer_data)
 
 
 @app.route('/answer', methods=['POST'])
@@ -45,6 +68,17 @@ def answer():
         data["answer"] = {"id": request.form['id'],
                           "type": request.form['type'], "sdp": request.form['sdp']}
         broadcast_answer(data["answer"])
+        return Response(status=200)
+    else:
+        return Response(status=400)
+
+
+@app.route('/audioAnswer', methods=['POST'])
+def audio_answer():
+    if request.form["type"] == "answer":
+        data["answer"] = {"id": request.form['id'],
+                          "type": request.form['type'], "sdp": request.form['sdp']}
+        broadcast_answer_audio(data["answer"])
         return Response(status=200)
     else:
         return Response(status=400)
