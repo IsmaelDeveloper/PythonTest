@@ -46,6 +46,8 @@ class CallReceiver(QWidget):
         super().__init__()
         self.audioAnswerer = AudioAnswerer()
         self.answerer = Answerer()
+        self.videoAccepted = False
+        self.audioEvent = False
 
         self.initUI()
         self.setupAnswerer()
@@ -112,12 +114,15 @@ class CallReceiver(QWidget):
     def hangupCall(self):
         print("Hangup call")
         self.answerer.end_call()
+        self.audioAnswerer.end_call()
         self.close()
 
     def on_audio_offer_received(self):
         print("Audio offer received")
-        asyncio.run_coroutine_threadsafe(
-            self.audioAnswerer.handle_offer(), asyncio.get_event_loop())
+        self.audioEvent = True
+        if self.videoAccepted:
+            asyncio.run_coroutine_threadsafe(
+                self.audioAnswerer.handle_offer(), asyncio.get_event_loop())
 
     def on_offer_received(self):
         messagebox = CenteredMessageBox()
@@ -131,6 +136,10 @@ class CallReceiver(QWidget):
             self.answer_call(True)
             self.showFullScreen()
             self.show()
+            if self.audioEvent == True:
+                asyncio.run_coroutine_threadsafe(
+                    self.audioAnswerer.handle_offer(), asyncio.get_event_loop())
+                self.videoAccepted = True
         else:
             self.answer_call(False)
 
