@@ -134,24 +134,9 @@ class Offerer(QObject):
             await asyncio.sleep(1)
 
     async def initialize_media(self):
-        # self.player = MediaPlayer(os.path.join(
-        #     ROOT, "demo-instruct.wav"), loop=True)
-        self.player = MediaPlayer('audio=마이크 배열 (Realtek(R) Audio)',
-                                  format='dshow', options={'channels': '2', 'sample_rate': '48000'})
-
-        # self.playerVideo = MediaPlayer('video=Integrated Camera', format='dshow', options={
-        #     'rtbufsize': '2048M',
-        #     'video_size': '640x480',
-        #     'framerate': '30',
-        # })
-        # if self.player.audio:
-        #     self.peer_connection.addTrack(self.player.audio)
-        # if self.playerVideo.video:
-        #     self.peer_connection.addTrack(self.playerVideo.video)
-
         custom_video_track = CustomVideoTrack()
         custom_audio_track = CustomAudioTrack()
-        # self.peer_connection.addTrack(custom_video_track)
+        self.peer_connection.addTrack(custom_video_track)
         self.peer_connection.addTrack(custom_audio_track)
 
     async def start(self):
