@@ -3,7 +3,7 @@ import requests
 import os
 import socketio
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer, VideoStreamTrack, MediaStreamTrack
-from aiortc.contrib.media import MediaPlayer
+from aiortc.contrib.media import MediaRelay
 from PyQt5.QtCore import QObject, pyqtSignal
 import logging
 from av import VideoFrame
@@ -103,6 +103,26 @@ class AudioOfferer(QObject):
         def on_close():
             print("channel closed")
             self.end_call()
+
+        @self.peer_connection.on("track")
+        async def on_track(track):
+            print("enter on_track")
+            asyncio.create_task(self.handle_audio_track(track))
+
+    async def handle_audio_track(self, track):
+        relay = MediaRelay()
+        relayed_track = relay.subscribe(track)
+        p = pyaudio.PyAudio()
+        stream = p.open(format=pyaudio.paInt16, channels=2,
+                        rate=48000, output=True, frames_per_buffer=960)
+
+        while True:
+            print("try to get audio frame")
+            frame = await relayed_track.recv()
+            print("Audio frame:", frame)
+            data = frame.to_ndarray().tobytes()
+            print("Length of data:", len(data))
+            stream.write(data)
 
     def end_call(self):
         asyncio.run_coroutine_threadsafe(
