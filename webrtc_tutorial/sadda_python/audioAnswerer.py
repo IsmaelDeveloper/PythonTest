@@ -8,6 +8,51 @@ from aiortc.contrib.media import MediaPlayer, MediaRecorder, MediaRelay, MediaSt
 import pyaudio
 import numpy as np
 from rtc_utils import end_rtc_call
+import av
+from fractions import Fraction
+
+
+class CustomAudioTrack(MediaStreamTrack):
+    kind = "audio"
+
+    def __init__(self, rate=48000, channels=2):
+        super().__init__()
+        self.rate = rate
+        self.channels = channels
+        self._timestamp = 0
+
+        # Initialiser PyAudio
+        self.pa = pyaudio.PyAudio()
+        self.stream = self.pa.open(format=pyaudio.paInt16,
+                                   channels=2,
+                                   rate=48000,
+                                   input=True,
+                                   frames_per_buffer=960)
+
+    async def recv(self):
+        frames_per_buffer = 960
+
+        # Lire les données du stream PyAudio
+        data = np.frombuffer(self.stream.read(
+            frames_per_buffer), dtype=np.int16)
+        data = data.reshape(-1, 1)
+
+        self._timestamp += frames_per_buffer
+        pts = self._timestamp
+        time_base = Fraction(1, self.rate)
+        # Préparation des données pour PyAV
+        audio_frame = av.AudioFrame.from_ndarray(
+            data.T, format='s16', layout='stereo')
+        audio_frame.sample_rate = self.rate
+        audio_frame.pts = pts
+        audio_frame.time_base = time_base
+
+        return audio_frame
+
+    def __del__(self):
+        self.stream.stop_stream()
+        self.stream.close()
+        self.pa.terminate()
 
 
 class AudioAnswerer(QObject):
@@ -63,10 +108,7 @@ class AudioAnswerer(QObject):
 
         @self.peer_connection.on("track")
         async def on_track(track):
-            if track.kind == "video":
-                asyncio.create_task(self.handle_video_track(track))
-            elif track.kind == "audio":
-                asyncio.create_task(self.handle_audio_track(track))
+            asyncio.create_task(self.handle_audio_track(track))
 
     async def handle_audio_track(self, track):
         relay = MediaRelay()
@@ -117,6 +159,8 @@ class AudioAnswerer(QObject):
             rd = RTCSessionDescription(
                 sdp=self.offer["sdp"], type=self.offer["type"])
             await self.peer_connection.setRemoteDescription(rd)
+            custom_audio_track = CustomAudioTrack()
+            self.peer_connection.addTrack(custom_audio_track)
             await self.peer_connection.setLocalDescription(await self.peer_connection.createAnswer())
 
             answer = {"id": self.ID, "sdp": self.peer_connection.localDescription.sdp,

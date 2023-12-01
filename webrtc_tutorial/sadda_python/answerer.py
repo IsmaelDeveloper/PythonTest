@@ -1,5 +1,5 @@
 import socketio
-from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration
+from aiortc import RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration, VideoStreamTrack
 import asyncio
 import os
 import requests
@@ -8,6 +8,35 @@ from aiortc.contrib.media import MediaPlayer, MediaRecorder, MediaRelay, MediaSt
 import pyaudio
 import numpy as np
 from rtc_utils import end_rtc_call
+import cv2
+from av import VideoFrame
+import av
+
+
+class CustomVideoTrack(VideoStreamTrack):
+    """
+    A video stream track that generates frames from a custom source.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.camera = cv2.VideoCapture(0)
+
+    async def recv(self):
+        pts, time_base = await self.next_timestamp()
+        # Générer ou récupérer une frame vidéo ici
+        # Exemple : créer une image noire
+        ret, frame = self.camera.read()
+        if not ret:
+            print("Erreur de capture de la webcam.")
+            return
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Convertir la frame NumPy en VideoFrame
+        video_frame = VideoFrame.from_ndarray(frame, format="rgb24")
+        video_frame.pts = pts
+        video_frame.time_base = time_base
+
+        return video_frame
 
 
 class Answerer(QObject):
@@ -61,25 +90,7 @@ class Answerer(QObject):
 
         @self.peer_connection.on("track")
         async def on_track(track):
-            if track.kind == "video":
-                asyncio.create_task(self.handle_video_track(track))
-            elif track.kind == "audio":
-                asyncio.create_task(self.handle_audio_track(track))
-
-    async def handle_audio_track(self, track):
-        relay = MediaRelay()
-        relayed_track = relay.subscribe(track)
-        p = pyaudio.PyAudio()
-        stream = p.open(format=pyaudio.paInt16, channels=2,
-                        rate=48000, output=True, frames_per_buffer=960)
-
-        while True:
-            print("try to get audio frame")
-            frame = await relayed_track.recv()
-            print("Audio frame:", frame)
-            data = frame.to_ndarray().tobytes()
-            print("Length of data:", len(data))
-            stream.write(data)
+            asyncio.create_task(self.handle_video_track(track))
 
     async def handle_video_track(self, track: MediaStreamTrack):
         relay = MediaRelay()
@@ -114,6 +125,8 @@ class Answerer(QObject):
             rd = RTCSessionDescription(
                 sdp=self.offer["sdp"], type=self.offer["type"])
             await self.peer_connection.setRemoteDescription(rd)
+            custom_video_track = CustomVideoTrack()
+            self.peer_connection.addTrack(custom_video_track)
             await self.peer_connection.setLocalDescription(await self.peer_connection.createAnswer())
 
             answer = {"id": self.ID, "sdp": self.peer_connection.localDescription.sdp,
