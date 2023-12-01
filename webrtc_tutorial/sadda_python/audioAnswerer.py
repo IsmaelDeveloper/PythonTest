@@ -112,6 +112,7 @@ class AudioAnswerer(QObject):
         await self.sio.wait()
 
     async def handle_offer(self):
+        print("Handling audio offer")
         if hasattr(self, 'offer'):
             rd = RTCSessionDescription(
                 sdp=self.offer["sdp"], type=self.offer["type"])
@@ -122,6 +123,7 @@ class AudioAnswerer(QObject):
                       "type": self.peer_connection.localDescription.type}
             r = requests.post(self.SIGNALING_SERVER_URL +
                               '/audioAnswer', data=answer)
+            print("Answer sent : ", r)
 
 
 # Exemple d'utilisation

@@ -54,7 +54,8 @@ class CallReceiver(QWidget):
         self.setupAnswererAudio()
 
     def initUI(self):
-
+        if sio.connected:
+            sio.disconnect()
         sio.connect('http://127.0.0.1:6969')
         sio.emit('register', {'username': os.getenv(
             "USERNAME", "default_user")})
@@ -112,15 +113,33 @@ class CallReceiver(QWidget):
             self.videoLabel.width(), self.videoLabel.height(), Qt.KeepAspectRatio))
 
     def hangupCall(self):
-        print("Hangup call")
+        # disconnect signal
+        self.answerer.offer_received.disconnect()
+        self.answerer.video_frame_received.disconnect()
+        self.audioAnswerer.audio_offer_received.disconnect()
+
+        # stop and close rtc connection properly
         self.answerer.end_call()
         self.audioAnswerer.end_call()
+
+        # reinitialize call related components
+        self.audioAnswerer = AudioAnswerer()
+        self.answerer = Answerer()
+        self.videoAccepted = False
+        self.audioEvent = False
+
+        # reinitialize call related threads
+        self.setupAnswerer()
+        self.setupAnswererAudio()
+
+        print("Hangup call")
         self.close()
 
     def on_audio_offer_received(self):
         print("Audio offer received")
         self.audioEvent = True
         if self.videoAccepted:
+            print("Audio offer accepted")
             asyncio.run_coroutine_threadsafe(
                 self.audioAnswerer.handle_offer(), asyncio.get_event_loop())
 
