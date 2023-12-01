@@ -108,7 +108,10 @@ class AudioAnswerer(QObject):
 
         @self.peer_connection.on("track")
         async def on_track(track):
-            asyncio.create_task(self.handle_audio_track(track))
+            if track.kind == "video":
+                asyncio.create_task(self.handle_video_track(track))
+            elif track.kind == "audio":
+                asyncio.create_task(self.handle_audio_track(track))
 
     async def handle_audio_track(self, track):
         relay = MediaRelay()
@@ -159,8 +162,6 @@ class AudioAnswerer(QObject):
             rd = RTCSessionDescription(
                 sdp=self.offer["sdp"], type=self.offer["type"])
             await self.peer_connection.setRemoteDescription(rd)
-            custom_audio_track = CustomAudioTrack()
-            self.peer_connection.addTrack(custom_audio_track)
             await self.peer_connection.setLocalDescription(await self.peer_connection.createAnswer())
 
             answer = {"id": self.ID, "sdp": self.peer_connection.localDescription.sdp,
