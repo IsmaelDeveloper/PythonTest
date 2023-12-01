@@ -132,6 +132,8 @@ class CallReceiver(QWidget):
         self.setupAnswerer()
         self.setupAnswererAudio()
 
+        self.videoLabel.clear()
+
         print("Hangup call")
         self.close()
 
