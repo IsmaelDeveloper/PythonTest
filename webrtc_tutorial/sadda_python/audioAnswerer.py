@@ -56,6 +56,11 @@ class AudioAnswerer(QObject):
 
             asyncio.ensure_future(self.send_pings(channel))
 
+            @channel.on("close")
+            def on_close():
+                print("channel closed")
+                self.end_call()
+
         @self.peer_connection.on("track")
         async def on_track(track):
             if track.kind == "video":

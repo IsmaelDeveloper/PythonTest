@@ -13,7 +13,7 @@ import numpy as np
 import cv2
 import sounddevice as sd
 import pyaudio
-
+from rtc_utils import end_rtc_call
 from fractions import Fraction
 ROOT = os.path.dirname(__file__)
 
@@ -123,6 +123,15 @@ class Offerer(QObject):
         @self.channel.on("message")
         def on_message(message):
             print("Received via RTC Datachannel", message)
+
+        @self.channel.on("close")
+        def on_close():
+            print("channel closed")
+            self.end_call()
+
+    def end_call(self):
+        asyncio.run_coroutine_threadsafe(
+            end_rtc_call(self.peer_connection), asyncio.get_event_loop())
 
     async def send_pings(self, channel):
         num = 0

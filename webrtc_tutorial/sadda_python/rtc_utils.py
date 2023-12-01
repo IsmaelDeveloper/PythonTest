@@ -14,6 +14,15 @@ async def end_rtc_call(peer_connection: RTCPeerConnection):
         return
 
     # Arrêtez toutes les pistes des senders
+
+    for sender in peer_connection.getTransceivers():
+        print("Enter getTransceivers")
+        try:
+            sender.stop()
+            print("Track stopped")
+        except Exception as e:
+            print(f"Erreur lors de l'arrêt de la piste: {e}")
+
     for sender in peer_connection.getSenders():
         print("Enter getSenders")
         try:
