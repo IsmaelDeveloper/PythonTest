@@ -12,7 +12,7 @@ from rtc_utils import end_rtc_call
 
 class Answerer(QObject):
     video_frame_received = pyqtSignal(np.ndarray)
-    SIGNALING_SERVER_URL = 'http://127.0.0.1:6969'
+    SIGNALING_SERVER_URL = 'http://192.168.0.136:6969'
     ID = "answerer01"
     LOCAL_USERNAME = os.getenv("USERNAME", "default_user")
     offer_received = pyqtSignal()

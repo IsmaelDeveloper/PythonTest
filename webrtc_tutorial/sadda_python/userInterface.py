@@ -56,7 +56,7 @@ class CallReceiver(QWidget):
     def initUI(self):
         if sio.connected:
             sio.disconnect()
-        sio.connect('http://127.0.0.1:6969')
+        sio.connect('http://192.168.0.136:6969')
         sio.emit('register', {'username': os.getenv(
             "USERNAME", "default_user")})
         self.setWindowTitle("Incoming Call")
@@ -85,7 +85,7 @@ class CallReceiver(QWidget):
         self.layout.addLayout(buttonLayout)
 
     async def connect_socketio(self):
-        await self.sio.connect('http://127.0.0.1:6969')
+        await self.sio.connect('http://192.168.0.136:6969')
         await self.sio.emit('register', {'username': self.username})
         self.sio.on('update_users', self.on_update_users)
 

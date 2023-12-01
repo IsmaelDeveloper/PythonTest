@@ -63,7 +63,7 @@ class CustomAudioTrack(MediaStreamTrack):
 
 
 class AudioOfferer(QObject):
-    SIGNALING_SERVER_URL = 'http://localhost:6969'
+    SIGNALING_SERVER_URL = 'http://192.168.0.136:6969'
     ID = "Audioofferer01"
 
     def __init__(self):

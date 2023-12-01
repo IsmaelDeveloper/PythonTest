@@ -45,7 +45,7 @@ class CustomVideoTrack(VideoStreamTrack):
 
 
 class Offerer(QObject):
-    SIGNALING_SERVER_URL = 'http://localhost:6969'
+    SIGNALING_SERVER_URL = 'http://192.168.0.136:6969'
     ID = "offerer01"
 
     def __init__(self):
