@@ -195,6 +195,8 @@ class UserWindow(QWidget):
         self.initUI()
         self.setupSocketThread()
         self.process_offerer = None
+        self.offererAudio = None
+        self.offererVideo = None
         self.callReceiver = CallReceiver()
         self.callReceiver.hangupRequested.connect(self.hangupCall)
 
@@ -233,11 +235,11 @@ class UserWindow(QWidget):
 
     def hangupCall(self):
         # Fermer la connexion RTC pour l'offreur
-        if self.offererVideo:
+        if self.offererVideo is not None:
             self.offererVideo.end_call()
             self.offererVideo = None
 
-        if self.offererAudio:
+        if self.offererAudio is not None:
             self.offererAudio.end_call()
             self.offererAudio = None
 
