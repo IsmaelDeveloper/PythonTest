@@ -42,6 +42,8 @@ class CenteredMessageBox(QMessageBox):
 
 
 class CallReceiver(QWidget):
+    hangupRequested = pyqtSignal()
+
     def __init__(self):
         super().__init__()
         self.audioAnswerer = AudioAnswerer()
@@ -131,6 +133,7 @@ class CallReceiver(QWidget):
         # stop and close rtc connection properly
         self.answerer.end_call()
         self.audioAnswerer.end_call()
+        self.hangupRequested.emit()
 
         # reinitialize call related components
         self.audioAnswerer = AudioAnswerer()
@@ -193,6 +196,7 @@ class UserWindow(QWidget):
         self.setupSocketThread()
         self.process_offerer = None
         self.callReceiver = CallReceiver()
+        self.callReceiver.hangupRequested.connect(self.hangupCall)
 
     def initUI(self):
         self.setWindowTitle("User List")
@@ -226,6 +230,16 @@ class UserWindow(QWidget):
             list_item = QListWidgetItem()
             self.userListWidget.addItem(list_item)
             self.userListWidget.setItemWidget(list_item, button)
+
+    def hangupCall(self):
+        # Fermer la connexion RTC pour l'offreur
+        if self.offererVideo:
+            self.offererVideo.end_call()
+            self.offererVideo = None
+
+        if self.offererAudio:
+            self.offererAudio.end_call()
+            self.offererAudio = None
 
     def onUserButtonClicked(self, username):
         print(f"Call to {username}")
