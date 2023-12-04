@@ -155,7 +155,7 @@ class AudioAnswerer(QObject):
     async def start(self):
         await self.sio.connect(self.SIGNALING_SERVER_URL)
         await self.sio.wait()
-    
+
     async def initialize_media(self):
         custom_audio_track = CustomAudioTrack()
         self.peer_connection.addTrack(custom_audio_track)
@@ -166,7 +166,7 @@ class AudioAnswerer(QObject):
             rd = RTCSessionDescription(
                 sdp=self.offer["sdp"], type=self.offer["type"])
             await self.peer_connection.setRemoteDescription(rd)
-            await self.initialize_media()
+            # await self.initialize_media()
             await self.peer_connection.setLocalDescription(await self.peer_connection.createAnswer())
 
             answer = {"id": self.ID, "sdp": self.peer_connection.localDescription.sdp,
