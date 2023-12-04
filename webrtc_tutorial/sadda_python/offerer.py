@@ -3,7 +3,7 @@ import requests
 import os
 import socketio
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCIceServer, VideoStreamTrack, MediaStreamTrack
-from aiortc.contrib.media import MediaPlayer
+from aiortc.contrib.media import MediaRelay
 from PyQt5.QtCore import QObject, pyqtSignal
 import logging
 from av import VideoFrame
@@ -47,6 +47,7 @@ class CustomVideoTrack(VideoStreamTrack):
 class Offerer(QObject):
     SIGNALING_SERVER_URL = 'http://192.168.0.136:6969'
     ID = "offerer01"
+    video_frame_received = pyqtSignal(np.ndarray)
 
     def __init__(self):
         super().__init__()
@@ -85,6 +86,21 @@ class Offerer(QObject):
         def on_close():
             print("channel closed")
             self.end_call()
+
+        @self.peer_connection.on("track")
+        async def on_track(track):
+            asyncio.create_task(self.handle_video_track(track))
+
+    async def handle_video_track(self, track: MediaStreamTrack):
+        relay = MediaRelay()
+        relayed_track = relay.subscribe(track)
+
+        while True:
+            print("try to get video frame in offer")
+            frame = await relayed_track.recv()
+            video_frame = frame.to_ndarray(
+                format="bgr24")  # Convertir en ndarray
+            self.video_frame_received.emit(video_frame)
 
     def end_call(self):
         asyncio.run_coroutine_threadsafe(

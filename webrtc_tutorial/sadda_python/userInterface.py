@@ -48,7 +48,7 @@ class CallReceiver(QWidget):
         self.answerer = Answerer()
         self.videoAccepted = False
         self.audioEvent = False
-
+        self.windowCanBeOpen = True
         self.initUI()
         self.setupAnswerer()
         self.setupAnswererAudio()
@@ -103,6 +103,16 @@ class CallReceiver(QWidget):
         self.answerer_audio_thread = threading.Thread(
             target=self.run_answerer_audio, daemon=True)
         self.answerer_audio_thread.start()
+
+    def openCallReceiver(self):
+        if self.windowCanBeOpen:
+            self.windowCanBeOpen = False
+            self.showFullScreen()
+            self.show()
+
+    def updateVideoFrameForOffer(self, frame):
+        self.openCallReceiver()
+        self.updateVideoFrame(frame)
 
     def updateVideoFrame(self, frame):
         print("Update video frame")
@@ -221,6 +231,7 @@ class UserWindow(QWidget):
         print(f"Call to {username}")
         os.environ["TARGET_USERNAME"] = username
         self.startOfferer()
+        self.callReceiver.windowCanBeOpen = True
 
     def startOfferer(self):
         # Pour l'audio
@@ -231,9 +242,15 @@ class UserWindow(QWidget):
 
         # Pour la vidéo
         self.offererVideo = Offerer()
+        self.offererVideo.video_frame_received.connect(
+            self.run_videoForOfferer)
         self.video_offerer_thread = threading.Thread(
             target=self.run_offerer_video, daemon=True)
         self.video_offerer_thread.start()
+
+    def run_videoForOfferer(self, frame):
+        print("run video for offerer")
+        self.callReceiver.updateVideoFrameForOffer(frame)
 
     def run_offerer_audio(self):
         asyncio.run(self.offererAudio.start())
