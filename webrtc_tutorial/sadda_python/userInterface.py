@@ -2,8 +2,9 @@ import os
 import sys
 import socketio
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QMessageBox, QLabel, QStackedLayout, QSizePolicy, QHBoxLayout
-from PyQt5.QtCore import pyqtSlot, QThread, pyqtSignal, QTimer, Qt
+from PyQt5.QtCore import pyqtSlot, QThread, pyqtSignal, QTimer, Qt, QUrl
 from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 import asyncio
 import subprocess
 import threading
@@ -159,6 +160,13 @@ class CallReceiver(QWidget):
                 self.audioAnswerer.handle_offer(), asyncio.get_event_loop())
 
     def on_offer_received(self):
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        audio_file_path = os.path.join(current_dir, "calling.mp3")
+        self.player = QMediaPlayer()
+        # Utilisez le chemin absolu ici
+        url = QUrl.fromLocalFile(audio_file_path)
+        self.player.setMedia(QMediaContent(url))
+        self.player.play()
         messagebox = CenteredMessageBox()
         messagebox.setWindowTitle('Call incoming')
         messagebox.setText("Do you wanna accept the call?")
@@ -167,6 +175,7 @@ class CallReceiver(QWidget):
         reply = messagebox.exec_()
 
         if reply == QMessageBox.Yes:
+            self.player.stop()
             self.answer_call(True)
             self.showFullScreen()
             self.show()
@@ -175,6 +184,7 @@ class CallReceiver(QWidget):
                     self.audioAnswerer.handle_offer(), asyncio.get_event_loop())
                 self.videoAccepted = True
         else:
+            self.player.stop()
             self.answer_call(False)
 
     def answer_call(self, accept):
