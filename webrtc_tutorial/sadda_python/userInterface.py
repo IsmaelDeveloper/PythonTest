@@ -1,7 +1,7 @@
 import os
 import sys
 import socketio
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QMessageBox, QLabel, QStackedLayout, QSizePolicy, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QDialog, QListWidget, QListWidgetItem, QMessageBox, QLabel, QStackedLayout, QSizePolicy, QHBoxLayout
 from PyQt5.QtCore import pyqtSlot, QThread, pyqtSignal, QTimer, Qt, QUrl
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -42,8 +42,65 @@ class CenteredMessageBox(QMessageBox):
         self.move(x, y)
 
 
+class CallingDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.initUI()
+        self.setModal(True)
+        self.autoCloseTimer = QTimer(self)
+        self.autoCloseTimer.timeout.connect(self.autoClose)
+        self.autoCloseTimer.setSingleShot(True)
+        self.autoCloseTimer.start(30000)
+
+    def initUI(self):
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        audio_file_path = os.path.join(current_dir, "isCalling.mp3")
+        self.player = QMediaPlayer()
+        self.player.mediaStatusChanged.connect(self.checkMediaStatus)
+
+        url = QUrl.fromLocalFile(audio_file_path)
+        self.player.setMedia(QMediaContent(url))
+        self.player.play()
+
+        self.setWindowTitle("Calling")
+        self.resize(400, 200)
+
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+
+        layout = QVBoxLayout()
+
+        label = QLabel("is calling...")
+        layout.addWidget(label)
+        layout.setAlignment(label, Qt.AlignCenter)
+
+        self.setLayout(layout)
+
+    def autoClose(self):
+        self.player.stop()
+        self.close()
+
+    def checkMediaStatus(self, status):
+        if status == QMediaPlayer.EndOfMedia:
+            QTimer.singleShot(1000, self.rewindAndPlay)
+
+    def rewindAndPlay(self):
+        self.player.setPosition(0)
+        self.player.play()
+
+    def stopPlayer(self):
+        if self.player.state() == QMediaPlayer.PlayingState:
+            self.player.stop()
+
+    def closeEvent(self, event):
+        print("Closing CallingDialog and stopping the player")
+        if self.player.state() == QMediaPlayer.PlayingState:
+            self.player.stop()
+        super().closeEvent(event)
+
+
 class CallReceiver(QWidget):
     hangupRequested = pyqtSignal()
+    closeCallingDialog = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -109,6 +166,7 @@ class CallReceiver(QWidget):
 
     def openCallReceiver(self):
         if self.windowCanBeOpen:
+            self.closeCallingDialog.emit()
             self.windowCanBeOpen = False
             self.showFullScreen()
             self.show()
@@ -219,8 +277,10 @@ class UserWindow(QWidget):
         self.process_offerer = None
         self.offererAudio = None
         self.offererVideo = None
+        self.callingDialog = None
         self.callReceiver = CallReceiver()
         self.callReceiver.hangupRequested.connect(self.hangupCall)
+        self.callReceiver.closeCallingDialog.connect(self.callingDialogClose)
 
     def initUI(self):
         self.setWindowTitle("User List")
@@ -268,8 +328,17 @@ class UserWindow(QWidget):
     def onUserButtonClicked(self, username):
         print(f"Call to {username}")
         os.environ["TARGET_USERNAME"] = username
+
+        self.callingDialog = CallingDialog(self)
+        self.callingDialog.show()
+
         self.startOfferer()
         self.callReceiver.windowCanBeOpen = True
+
+    def callingDialogClose(self):
+        if self.callingDialog:
+            self.callingDialog.stopPlayer()
+            self.callingDialog.autoClose()
 
     def startOfferer(self):
         # Pour l'audio
