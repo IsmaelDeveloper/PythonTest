@@ -172,6 +172,15 @@ class CallReceiver(QWidget):
         messagebox.setText("Do you wanna accept the call?")
         messagebox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         messagebox.setDefaultButton(QMessageBox.No)
+
+        self.messageBoxTimer = QTimer()
+        self.messageBoxTimer.setSingleShot(True)
+        self.messageBoxTimer.timeout.connect(
+            lambda: self.closeMessageBox(messagebox))
+
+        # Démarrer le QTimer
+        self.messageBoxTimer.start(20000)
+
         reply = messagebox.exec_()
 
         if reply == QMessageBox.Yes:
@@ -186,6 +195,9 @@ class CallReceiver(QWidget):
         else:
             self.player.stop()
             self.answer_call(False)
+
+    def closeMessageBox(self, messagebox: CenteredMessageBox):
+        messagebox.done(0)
 
     def answer_call(self, accept):
         if accept:
