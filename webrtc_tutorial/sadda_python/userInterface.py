@@ -46,6 +46,7 @@ class CallingDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.initUI()
+        self.shouldLoopAudio = True
         self.setModal(True)
         self.autoCloseTimer = QTimer(self)
         self.autoCloseTimer.timeout.connect(self.autoClose)
@@ -76,23 +77,17 @@ class CallingDialog(QDialog):
         self.setLayout(layout)
 
     def autoClose(self):
+        self.shouldLoopAudio = False  # Mettre à jour le drapeau
         self.player.stop()
         self.close()
 
     def checkMediaStatus(self, status):
-        if status == QMediaPlayer.EndOfMedia:
-            QTimer.singleShot(1000, self.rewindAndPlay)
-
-    def rewindAndPlay(self):
-        self.player.setPosition(0)
-        self.player.play()
-
-    def stopPlayer(self):
-        if self.player.state() == QMediaPlayer.PlayingState:
-            self.player.stop()
+        if status == QMediaPlayer.EndOfMedia and self.shouldLoopAudio:
+            self.player.setPosition(0)
+            self.player.play()
 
     def closeEvent(self, event):
-        print("Closing CallingDialog and stopping the player")
+        self.shouldLoopAudio = False  # Mettre à jour le drapeau
         if self.player.state() == QMediaPlayer.PlayingState:
             self.player.stop()
         super().closeEvent(event)
@@ -329,15 +324,15 @@ class UserWindow(QWidget):
         print(f"Call to {username}")
         os.environ["TARGET_USERNAME"] = username
 
-        self.callingDialog = CallingDialog(self)
+        self.callingDialog = CallingDialog()
         self.callingDialog.show()
 
         self.startOfferer()
         self.callReceiver.windowCanBeOpen = True
 
     def callingDialogClose(self):
+        print("calling dialog event close received")
         if self.callingDialog:
-            self.callingDialog.stopPlayer()
             self.callingDialog.autoClose()
 
     def startOfferer(self):
