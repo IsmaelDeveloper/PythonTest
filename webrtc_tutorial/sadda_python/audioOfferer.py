@@ -27,8 +27,6 @@ class CustomAudioTrack(MediaStreamTrack):
         self.rate = rate
         self.channels = channels
         self._timestamp = 0
-        self.buffer = []
-        self.is_connection_established = False
 
         # Initialiser PyAudio
         self.pa = pyaudio.PyAudio()
@@ -40,20 +38,23 @@ class CustomAudioTrack(MediaStreamTrack):
 
     async def recv(self):
         frames_per_buffer = 960
+
+        # Lire les données du stream PyAudio
         data = np.frombuffer(self.stream.read(
-            frames_per_buffer), dtype=np.int16).reshape(-1, 1)
+            frames_per_buffer), dtype=np.int16)
+        data = data.reshape(-1, 1)
+
         self._timestamp += frames_per_buffer
         pts = self._timestamp
         time_base = Fraction(1, self.rate)
+        # Préparation des données pour PyAV
         audio_frame = av.AudioFrame.from_ndarray(
             data.T, format='s16', layout='stereo')
         audio_frame.sample_rate = self.rate
         audio_frame.pts = pts
         audio_frame.time_base = time_base
-        if self.is_connection_established:
-            return audio_frame
-        else:
-            self.buffer.append(audio_frame)
+
+        return audio_frame
 
     def __del__(self):
         self.stream.stop_stream()
@@ -73,7 +74,6 @@ class AudioOfferer(QObject):
             RTCConfiguration(iceServers=[RTCIceServer(
                 urls=["stun:stun.l.google.com:19302"])])
         )
-        self.custom_audio_track = CustomAudioTrack()
         self.channel = None
         self.setup_sio_events()
         self.setup_peer_connection()
@@ -82,7 +82,6 @@ class AudioOfferer(QObject):
         @self.sio.event
         async def getAudioAnswer(data):
             if data["type"] == "answer":
-                self.custom_audio_track.is_connection_established = True
                 rd = RTCSessionDescription(sdp=data["sdp"], type=data["type"])
                 await self.peer_connection.setRemoteDescription(rd)
                 print("Answer received and set as Remote Description")
@@ -139,7 +138,8 @@ class AudioOfferer(QObject):
             await asyncio.sleep(1)
 
     async def initialize_media(self):
-        self.peer_connection.addTrack(self.custom_audio_track)
+        custom_audio_track = CustomAudioTrack()
+        self.peer_connection.addTrack(custom_audio_track)
 
     async def start(self):
         await self.initialize_media()
