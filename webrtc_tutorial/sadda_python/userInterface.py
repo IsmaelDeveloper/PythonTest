@@ -1,5 +1,6 @@
 import os
 import sys
+from PyQt5 import QtGui
 import socketio
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QDialog, QListWidget, QListWidgetItem, QMessageBox, QLabel, QStackedLayout, QSizePolicy, QHBoxLayout
 from PyQt5.QtCore import pyqtSlot, QThread, pyqtSignal, QTimer, Qt, QUrl
@@ -94,6 +95,7 @@ class CallingDialog(QDialog):
 
 
 class CallReceiver(QWidget):
+    closeCallReceiver = pyqtSignal()
     hangupRequested = pyqtSignal()
     closeCallingDialog = pyqtSignal()
 
@@ -263,6 +265,10 @@ class CallReceiver(QWidget):
     def run_answerer_audio(self):
         asyncio.run(self.audioAnswerer.start())
 
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        self.closeCallReceiver.emit()
+        super().closeEvent(a0)
+
 
 class UserWindow(QWidget):
     def __init__(self):
@@ -276,6 +282,7 @@ class UserWindow(QWidget):
         self.callReceiver = CallReceiver()
         self.callReceiver.hangupRequested.connect(self.hangupCall)
         self.callReceiver.closeCallingDialog.connect(self.callingDialogClose)
+        self.callReceiver.closeCallReceiver.connect(self.refresh)
 
     def initUI(self):
         self.setWindowTitle("User List")
@@ -300,6 +307,13 @@ class UserWindow(QWidget):
         self.userListWidget.clear()
         for user in users:
             self.addUserButton(user)
+
+    def refresh(self):
+        self.close()
+
+        self.new_instance = UserWindow()
+        self.new_instance.showFullScreen()
+        self.new_instance.show()
 
     def addUserButton(self, username):
         current_user = os.getenv("USERNAME", "default_user")
