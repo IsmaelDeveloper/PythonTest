@@ -166,7 +166,7 @@ class AudioAnswerer(QObject):
             rd = RTCSessionDescription(
                 sdp=self.offer["sdp"], type=self.offer["type"])
             await self.peer_connection.setRemoteDescription(rd)
-            await self.initialize_media()
+            # await self.initialize_media()
             await self.peer_connection.setLocalDescription(await self.peer_connection.createAnswer())
 
             answer = {"id": self.ID, "sdp": self.peer_connection.localDescription.sdp,
