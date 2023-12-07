@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function sendOfferToServer(offerData) {
-    fetch("http://127.0.0.1:6969/offer", {
+    fetch("http://" + serverUrl + "/offer", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",

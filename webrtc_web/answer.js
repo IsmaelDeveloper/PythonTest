@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function sendAnswerToServer(answerData) {
-  fetch("http://127.0.0.1:6969/answer", {
+  fetch("http://" + serverUrl + "/answer", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
