@@ -12,6 +12,9 @@ document.addEventListener("DOMContentLoaded", function () {
       "ICE connection state change:",
       localConnection.iceConnectionState
     );
+    if (localConnection.iceConnectionState === "disconnected") {
+      window.location.reload();
+    }
   };
 
   // Enregistrement des changements d'état de la négociation
