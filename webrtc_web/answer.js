@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", function () {
   socket.on("connect", function () {
     console.log("Connected to the server. Socket ID:", socket.id);
   });
+  let iceCandidateQueue = [];
+
   localConnection.ontrack = function (event) {
     if (event.track.kind === "video") {
       console.log("event", event);
@@ -19,9 +21,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
   socket.on("receiveCandidateInAnswer", function (data) {
     if (data.target === username) {
-      console.log("ice candidate to add", data);
       var candidate = new RTCIceCandidate(data.candidate);
-      localConnection.addIceCandidate(candidate).catch(console.error);
+      if (localConnection.remoteDescription) {
+        localConnection.addIceCandidate(candidate).catch(console.error);
+      } else {
+        iceCandidateQueue.push(candidate);
+      }
     }
   });
 
@@ -86,6 +91,11 @@ document.addEventListener("DOMContentLoaded", function () {
       .setRemoteDescription(remoteDesc)
       .then(() => {
         console.log("Remote description set successfully");
+        while (iceCandidateQueue.length) {
+          let candidate = iceCandidateQueue.shift();
+          localConnection.addIceCandidate(candidate).catch(console.error);
+        }
+
         return localConnection.createAnswer();
       })
       .then((answer) => {
