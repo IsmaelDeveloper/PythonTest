@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>WebSocket Test</title>
+    <link rel="stylesheet" href="./custom.css" />
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="offer.js"></script>
+    <script src="answer.js"></script>
+  </head>
+  <body>
+    <h1>Connected Kiosk</h1>
+    <div id="users"></div>
+    <video id="localVideo" autoplay muted playsinline></video>
+    <!-- Votre vidéo locale -->
+    <video id="remoteVideo" autoplay muted playsinline></video>
+    <!-- Vidéo distante -->
+    <audio id="remoteAudio" autoplay playsinline></audio>
+  </body>
+</html>
