@@ -1,21 +1,7 @@
+import { serverUrl, rtcConfig } from "./config.js";
 document.addEventListener("DOMContentLoaded", function () {
-  var socket = io.connect("http://" + "127.0.0.1" + ":" + "6969");
+  var socket = io.connect(serverUrl);
   var username = new URLSearchParams(window.location.search).get("username");
-  var iceServers = [
-    {
-      urls: "stun:stun.l.google.com:19302",
-    },
-    {
-      urls: "turn:13.250.13.83:3478?transport=udp",
-      username: "YzYNCouZM1mhqhmseWk6",
-      credential: "YzYNCouZM1mhqhmseWk6",
-    },
-  ];
-
-  var rtcConfig = {
-    iceServers: iceServers,
-  };
-
   var localConnection = new RTCPeerConnection(rtcConfig);
   var target = "";
   socket.on("connect", function () {
@@ -66,51 +52,70 @@ document.addEventListener("DOMContentLoaded", function () {
 
   socket.on("getOffer", function (data) {
     if (data.target === username) {
-      target = data.id;
-      // Définir la description distante (l'offre)
-      var remoteDesc = new RTCSessionDescription({
-        type: data.type,
-        sdp: data.sdp,
-      });
-      localConnection
-        .setRemoteDescription(remoteDesc)
-        .then(() => {
-          console.log("Remote description set successfully");
+      // Afficher la popup
+      document.getElementById("callPopup").style.display = "block";
 
-          // Créer une réponse
-          return localConnection.createAnswer();
-        })
-        .then((answer) => {
-          // Définir la description locale (la réponse)
-          return localConnection.setLocalDescription(answer);
-        })
-        .then(() => {
-          // Envoyer la réponse au serveur
-          sendAnswerToServer({
-            type: "answer",
-            sdp: localConnection.localDescription.sdp,
-            id: data.from,
-          });
-        })
-        .catch(console.error);
+      // Lorsque l'utilisateur accepte l'appel
+      document.getElementById("acceptCall").onclick = function () {
+        acceptCall(data);
+        document.getElementById("callPopup").style.display = "none";
+        document.getElementById("videoPopup").style.display = "block"; // Afficher la popup vidéo
+      };
+
+      document.getElementById("closeVideo").onclick = function () {
+        document.getElementById("videoPopup").style.display = "none";
+        window.location.reload();
+      };
+
+      // Lorsque l'utilisateur décline l'appel
+      document.getElementById("declineCall").onclick = function () {
+        console.log("Call declined");
+        document.getElementById("callPopup").style.display = "none";
+        // Vous pouvez ajouter ici une logique pour informer l'autre utilisateur que l'appel a été décliné
+      };
     }
   });
 
-  function sendAnswerToServer(answerData) {
-    fetch("http://127.0.0.1:6969/answer", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: `type=${answerData.type}&sdp=${encodeURIComponent(
-        answerData.sdp
-      )}&id=${answerData.id}`,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
+  function acceptCall(data) {
+    target = data.id;
+    var remoteDesc = new RTCSessionDescription({
+      type: data.type,
+      sdp: data.sdp,
+    });
+    localConnection
+      .setRemoteDescription(remoteDesc)
+      .then(() => {
+        console.log("Remote description set successfully");
+        return localConnection.createAnswer();
+      })
+      .then((answer) => {
+        return localConnection.setLocalDescription(answer);
+      })
+      .then(() => {
+        sendAnswerToServer({
+          type: "answer",
+          sdp: localConnection.localDescription.sdp,
+          id: data.from,
+        });
       })
       .catch(console.error);
   }
 });
+
+function sendAnswerToServer(answerData) {
+  fetch("http://127.0.0.1:6969/answer", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: `type=${answerData.type}&sdp=${encodeURIComponent(
+      answerData.sdp
+    )}&id=${answerData.id}`,
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+    })
+    .catch(console.error);
+}

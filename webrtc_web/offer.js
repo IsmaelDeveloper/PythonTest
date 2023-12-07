@@ -1,23 +1,9 @@
+import { serverUrl, rtcConfig } from "./config.js";
 document.addEventListener("DOMContentLoaded", function () {
-  var socket = io.connect("http://" + "127.0.0.1" + ":" + "6969");
+  var socket = io.connect(serverUrl);
   var usersDiv = document.getElementById("users");
   var username = new URLSearchParams(window.location.search).get("username");
   var target = "";
-  var iceServers = [
-    {
-      urls: "stun:stun.l.google.com:19302",
-    },
-    {
-      urls: "turn:13.250.13.83:3478?transport=udp",
-      username: "YzYNCouZM1mhqhmseWk6",
-      credential: "YzYNCouZM1mhqhmseWk6",
-    },
-  ];
-
-  var rtcConfig = {
-    iceServers: iceServers,
-  };
-
   var localConnection = new RTCPeerConnection(rtcConfig);
 
   // Enregistrement des événements d'état ICE
@@ -76,8 +62,6 @@ document.addEventListener("DOMContentLoaded", function () {
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
-        document.getElementById("localVideo").srcObject = stream;
-
         stream
           .getTracks()
           .forEach((track) => localConnection.addTrack(track, stream));

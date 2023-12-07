@@ -37,3 +37,61 @@ button {
 button:hover {
   background-color: #45a049;
 }
+
+#callPopup {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  background-color: white;
+  border: 1px solid #ddd;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+#callPopup {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  background-color: white;
+  border: 1px solid #ddd;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+#videoPopup {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 70vw; /* 70% de la largeur de la fenêtre */
+  height: 70vh; /* 70% de la hauteur de la fenêtre */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: white;
+  border: 1px solid #ddd;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+#videoPopup > video {
+  width: 100%; /* Remplir la largeur de la popup */
+  height: 90%; /* Prendre la majorité de la hauteur de la popup */
+  object-fit: contain; /* Conserver le ratio d'aspect sans étirer la vidéo */
+}
+
+#closeVideo {
+  width: auto; /* Taille automatique basée sur le contenu */
+  margin-top: 10px; /* Espacement entre la vidéo et le bouton */
+}
+
+#buttonContainer {
+  width: 100%; /* Utiliser toute la largeur de la popup */
+  display: flex;
+  justify-content: center; /* Centrer le bouton horizontalement */
+  margin-top: 20px; /* Espacement entre la vidéo et le bouton */
+}
