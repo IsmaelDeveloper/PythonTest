@@ -59,12 +59,15 @@ document.addEventListener("DOMContentLoaded", function () {
     if (data.target === username) {
       // Afficher la popup
       document.getElementById("callPopup").style.display = "block";
-
+      var callingSound = document.getElementById("callingSound");
+      callingSound.play();
       // Lorsque l'utilisateur accepte l'appel
       document.getElementById("acceptCall").onclick = function () {
         acceptCall(data);
         document.getElementById("callPopup").style.display = "none";
         document.getElementById("videoPopup").style.display = "block"; // Afficher la popup vidéo
+        callingSound.pause();
+        callingSound.currentTime = 0;
       };
 
       document.getElementById("closeVideo").onclick = function () {
@@ -76,6 +79,8 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("declineCall").onclick = function () {
         console.log("Call declined");
         document.getElementById("callPopup").style.display = "none";
+        callingSound.pause();
+        callingSound.currentTime = 0;
         // Vous pouvez ajouter ici une logique pour informer l'autre utilisateur que l'appel a été décliné
       };
     }
