@@ -33,6 +33,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
+  localConnection.ontrack = function (event) {
+    if (event.track.kind === "video") {
+      document.getElementById("videoPopup").style.display = "block"; // Afficher la popup vidéo
+      console.log("event", event);
+      document.getElementById("remoteVideo").srcObject = event.streams[0];
+    } else if (event.track.kind === "audio") {
+      console.log("event audio ", event);
+      document.getElementById("remoteAudio").srcObject = event.streams[0];
+    }
+  };
+
   socket.on("receiveCandidateInOffer", function (data) {
     if (data.target === username) {
       console.log("ice candidate to add", data);
