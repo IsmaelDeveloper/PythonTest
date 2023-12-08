@@ -37,7 +37,7 @@ class WebView(QMainWindow):
         self.showMaximized()
         username = os.getenv("USERNAME", "defaultUser")
         # L'URL de votre interface utilisateur
-        url = f"http://127.0.0.1:5501/webrtc_web/userInterface.html?username={username}"
+        url = f"http://192.168.0.136:5501/webrtc_web/userInterface.html?username={username}"
         self.browser.load(
             QUrl(url))
 
