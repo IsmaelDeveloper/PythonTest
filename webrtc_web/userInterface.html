@@ -11,10 +11,17 @@
   <body>
     <h1>Connected Kiosk</h1>
     <div id="users"></div>
-    <video id="localVideo" autoplay muted playsinline></video>
     <div id="videoPopup" style="display: none">
       <video id="remoteVideo" muted autoplay playsinline></video>
       <audio id="remoteAudio" autoplay playsinline></audio>
+      <video
+        id="localVideo"
+        autoplay
+        muted
+        playsinline
+        class="local-overlay"
+      ></video>
+
       <!-- Ajoutez un bouton ou un moyen de fermer la popup si nécessaire -->
       <div id="buttonContainer">
         <button id="closeVideo">close</button>

@@ -103,6 +103,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       })
       .then((stream) => {
+        document.getElementById("localVideo").srcObject = stream;
         stream
           .getTracks()
           .forEach((track) => localConnection.addTrack(track, stream));
