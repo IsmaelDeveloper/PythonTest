@@ -44,6 +44,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
+  document.getElementById("closeVideo").onclick = function () {
+    document.getElementById("videoPopup").style.display = "none";
+    window.location.reload();
+  };
+
   socket.on("receiveCandidateInOffer", function (data) {
     if (data.target === username) {
       console.log("ice candidate to add", data);
