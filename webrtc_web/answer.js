@@ -97,15 +97,15 @@ document.addEventListener("DOMContentLoaded", function () {
       .setRemoteDescription(remoteDesc)
       .then(() => {
         console.log("Remote description set successfully");
-        navigator.mediaDevices
-          .getUserMedia({ video: true, audio: true })
-          .then((stream) => {
-            stream
-              .getTracks()
-              .forEach((track) => localConnection.addTrack(track, stream));
-          });
+        return navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
       })
-      .then(() => {
+      .then((stream) => {
+        stream
+          .getTracks()
+          .forEach((track) => localConnection.addTrack(track, stream));
         while (iceCandidateQueue.length) {
           let candidate = iceCandidateQueue.shift();
           localConnection.addIceCandidate(candidate).catch(console.error);
