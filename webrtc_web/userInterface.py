@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import QUrl
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings, QWebEngineProfile
 
 import os
 
@@ -41,6 +41,13 @@ class WebView(QMainWindow):
         self.browser.load(
             QUrl(url))
 
+    def clear_cache(self):
+        # Accéder au profil par défaut
+        profile = QWebEngineProfile.defaultProfile()
+
+        # Vider le cache
+        profile.clearHttpCache()
+
     def toggle_fullscreen(self):
         if self.isFullScreen():
             self.showNormal()
@@ -51,5 +58,6 @@ class WebView(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = WebView()
+    window.clear_cache()  # Pour vider le cache
     window.toggle_fullscreen()  # Pour mettre en plein écran
     sys.exit(app.exec_())
