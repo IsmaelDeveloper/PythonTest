@@ -88,8 +88,8 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById(
       "callPopup"
     ).innerHTML = `<p>${callerUsername} is calling...</p>
-      <button id="acceptCall">Accepter</button>
-      <button id="declineCall">Décliner</button>`;
+      <button id="acceptCall">Accept</button>
+      <button id="declineCall">Decline</button>`;
     document.getElementById("callPopup").style.display = "block";
     var callingSound = document.getElementById("callingSound");
     callingSound.play();
