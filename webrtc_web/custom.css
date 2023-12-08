@@ -51,6 +51,7 @@ button:hover {
 }
 
 #callPopup {
+  text-align: center;
   position: fixed;
   left: 50%;
   top: 50%;

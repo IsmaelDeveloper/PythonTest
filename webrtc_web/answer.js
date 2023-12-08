@@ -57,10 +57,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   socket.on("getOffer", function (data) {
     if (data.target === username) {
-      // Afficher la popup
-      document.getElementById("callPopup").style.display = "block";
-      var callingSound = document.getElementById("callingSound");
-      callingSound.play();
+      var callerUsername = data.from; // Ajout du nom de l'utilisateur appelant
+      displayCallPopup(callerUsername);
       // Lorsque l'utilisateur accepte l'appel
       document.getElementById("acceptCall").onclick = function () {
         acceptCall(data);
@@ -85,6 +83,17 @@ document.addEventListener("DOMContentLoaded", function () {
       };
     }
   });
+
+  function displayCallPopup(callerUsername) {
+    document.getElementById(
+      "callPopup"
+    ).innerHTML = `<p>${callerUsername} is calling...</p>
+      <button id="acceptCall">Accepter</button>
+      <button id="declineCall">Décliner</button>`;
+    document.getElementById("callPopup").style.display = "block";
+    var callingSound = document.getElementById("callingSound");
+    callingSound.play();
+  }
 
   function acceptCall(data) {
     target = data.id;
