@@ -123,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function () {
           id: data.from,
         });
       })
-      .catch(console.error);
+      .catch(console.error.data);
   }
 });
 
