@@ -5,7 +5,24 @@ from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtQuick import QQuickView
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings, QWebEngineProfile
+
+
+class WebEnginePage(QWebEnginePage):
+    def __init__(self, *args, **kwargs):
+        super(WebEnginePage, self).__init__(*args, **kwargs)
+        self.featurePermissionRequested.connect(
+            self.onFeaturePermissionRequested)
+
+    def onFeaturePermissionRequested(self, url, feature):
+        # Accorder automatiquement toutes les permissions nécessaires
+        if feature in (QWebEnginePage.MediaAudioCapture,
+                       QWebEnginePage.MediaVideoCapture,
+                       QWebEnginePage.MediaAudioVideoCapture):
+            self.setFeaturePermission(
+                url, feature, QWebEnginePage.PermissionGrantedByUser)
+        else:
+            super(WebEnginePage, self).onFeaturePermissionRequested(url, feature)
 
 
 class MainApp(QWidget):
@@ -53,11 +70,20 @@ class MainApp(QWidget):
 
         self.web_view = QWebEngineView()
 
+        self.configureWebEngineSettings()
         self.loadStyleSheet()
 
     def loadStyleSheet(self):
         with open('style.qss', 'r') as file:
             self.setStyleSheet(file.read())
+
+    def configureWebEngineSettings(self):
+        settings = QWebEngineSettings.globalSettings()
+        settings.setAttribute(
+            QWebEngineSettings.PlaybackRequiresUserGesture, False)
+
+    def clearCache(self):
+        QWebEngineProfile.defaultProfile().clearHttpCache()
 
     def openWebviewOnMp4(self, url):
         self.video_player.stop()
@@ -68,13 +94,16 @@ class MainApp(QWidget):
         self.web_view.show()
 
     def openFullScreenWebView(self, url):
+        self.clearCache()
         self.video_player.stop()
         self.video_widget.hide()
         self.qml_view.hide()
         self.buttons_view.hide()
 
         self.web_view.setUrl(QUrl(url))
-        self.web_view.showMaximized()
+        self.web_view.setParent(None)
+        self.web_view.setWindowFlags(Qt.FramelessWindowHint)
+        self.web_view.showFullScreen()
 
     @pyqtSlot()
     def onMediaStatusChanged(self):
@@ -99,7 +128,7 @@ class MainApp(QWidget):
 
     @pyqtSlot()
     def onKioskClicked(self):
-        self.openFullScreenWebView("https://www.naver.com")
+        self.openFullScreenWebView("http://192.168.0.3/kiosk/")
 
 
 if __name__ == '__main__':
