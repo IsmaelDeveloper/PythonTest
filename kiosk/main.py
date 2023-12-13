@@ -67,6 +67,15 @@ class MainApp(QWidget):
         self.video_widget.hide()
         self.web_view.show()
 
+    def openFullScreenWebView(self, url):
+        self.video_player.stop()
+        self.video_widget.hide()
+        self.qml_view.hide()
+        self.buttons_view.hide()
+
+        self.web_view.setUrl(QUrl(url))
+        self.web_view.showMaximized()
+
     @pyqtSlot()
     def onMediaStatusChanged(self):
         if self.video_player.mediaStatus() == QMediaPlayer.EndOfMedia:
@@ -86,10 +95,11 @@ class MainApp(QWidget):
     @pyqtSlot()
     def onBusClicked(self):
         print("Bus button clicked")
+        self.openWebviewOnMp4("https://www.naver.com")
 
     @pyqtSlot()
     def onKioskClicked(self):
-        print("Kiosk button clicked")
+        self.openFullScreenWebView("https://www.naver.com")
 
 
 if __name__ == '__main__':
