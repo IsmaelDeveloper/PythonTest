@@ -14,7 +14,7 @@ class CustomTabBar(QTabBar):
         self.firstIcon = QIcon("./ressources/images/configure-dark.png")
         self.secondIcon = QIcon("./ressources/images/refresh.png")
 
-        # Ajouter deux faux onglets pour les icônes
+        # Add fake tabs to reserve space for the icons
         self.addTab("")
         self.addTab("")
 
@@ -22,30 +22,30 @@ class CustomTabBar(QTabBar):
         super(CustomTabBar, self).paintEvent(event)
         painter = QPainter(self)
 
-        # Dessiner la première icône
+        # draw first icon
         firstIconTabRect = self.tabRect(self.count() - 2)
         firstIconRect = QRect(firstIconTabRect.x(),
                               firstIconTabRect.y(), 30, 30)
         self.firstIcon.paint(painter, firstIconRect)
 
-        # Dessiner la seconde icône
+        # Draw second icons
         secondIconTabRect = self.tabRect(self.count() - 1)
         secondIconRect = QRect(secondIconTabRect.x(),
                                secondIconTabRect.y(), 30, 30)
         self.secondIcon.paint(painter, secondIconRect)
 
     def mousePressEvent(self, event):
-        # Détecter les clics sur la première icône
+        # detect click on the first icon
         if self.tabRect(self.count() - 2).contains(event.pos()):
             self.firstIconClicked.emit()
-            event.accept()  # Accepter l'événement pour empêcher le changement d'onglet
-            return  # Ne pas appeler super.mousePressEvent
+            event.accept()  # accept event for not switching tab
+            return  # dont call super.mousePressEvent
 
-        # Détecter les clics sur la seconde icône
+        # detect click on the second icon
         if self.tabRect(self.count() - 1).contains(event.pos()):
             self.secondIconClicked.emit()
-            event.accept()  # Accepter l'événement pour empêcher le changement d'onglet
-            return  # Ne pas appeler super.mousePressEvent
+            event.accept()  # accept event for not switching tab
+            return  # dont call super.mousePressEvent
 
-        # Comportement par défaut pour les autres zones
+        # default comportement for other tabs
         super(CustomTabBar, self).mousePressEvent(event)

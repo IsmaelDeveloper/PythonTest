@@ -91,11 +91,12 @@ class MainApp(QWidget):
         self.slideMenu = QFrame(self)
         self.slideMenu.setGeometry(-menu_width, 0, menu_width, self.height())
 
-        # Création d'un layout horizontal pour les onglets et l'image
+        # create layout for slide menu
         slideMenuLayout = QHBoxLayout(self.slideMenu)
         slideMenuLayout.setContentsMargins(0, 0, 0, 0)
         slideMenuLayout.setSpacing(0)
-        # Utilisation de QTabWidget pour les onglets
+
+        # create tab widget
         self.tabWidget = QTabWidget(self.slideMenu)
         customTabBar = CustomTabBar()
         customTabBar.firstIconClicked.connect(self.onImageClicked)
@@ -116,10 +117,10 @@ class MainApp(QWidget):
         # tab1_layout.addWidget(QLabel("Contenu de l'Onglet 1"))
         # tab1_layout.addWidget(QPushButton("Bouton dans Onglet 1"))
 
-        # Ajout des widgets au layout du slide menu
+        # add widget to slide menu
         slideMenuLayout.addWidget(self.tabWidget)
 
-        # Animation pour le slide menu
+        # Animation for slide menu
         self.menuAnimation = QPropertyAnimation(self.slideMenu, b"geometry")
         self.menuAnimation.setDuration(500)
 
