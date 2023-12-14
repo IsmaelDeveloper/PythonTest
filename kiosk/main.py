@@ -1,6 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel
-from PyQt5.QtCore import Qt, QUrl, pyqtSignal, pyqtSlot, QTimer
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
+from PyQt5.QtCore import Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect
 from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -43,6 +43,7 @@ class MainApp(QWidget):
         self.countdown_timer = QTimer(self)
         self.countdown_timer.timeout.connect(self.updateCountdown)
         self.countdown_button = QPushButton("50", self)
+        self.countdown_button.hide()
         self.countdown_button.clicked.connect(self.closeWebview)
 
     def initUI(self):
@@ -81,6 +82,51 @@ class MainApp(QWidget):
         self.configureWebEngineSettings()
 
         self.loadStyleSheet()
+        self.addSlideMenu()
+
+    def addSlideMenu(self):
+        menu_width = 200
+        self.slideMenu = QFrame(self)
+        self.slideMenu.setGeometry(-200, 0, 200, self.height())
+
+        # Utilisation de QTabWidget pour les onglets
+        self.tabWidget = QTabWidget(self.slideMenu)
+        self.tabWidget.setStyleSheet("background-color: white;")
+        self.tabWidget.setGeometry(0, 0, 200, self.height())
+
+        # Ajout de deux onglets
+        tab1 = QWidget()
+        tab2 = QWidget()
+        self.tabWidget.addTab(tab1, "Onglet 1")
+        self.tabWidget.addTab(tab2, "Onglet 2")
+
+        # Add neccessary widgets to the tab
+        # for example to tab1
+        # tab1_layout = QVBoxLayout(tab1)
+        # tab1_layout.addWidget(QPushButton("Bouton dans Onglet 1"))
+
+        # Animation  for slide menu
+        self.menuAnimation = QPropertyAnimation(self.slideMenu, b"geometry")
+        self.menuAnimation.setDuration(500)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_F3:
+            self.toggleMenu()
+
+    def toggleMenu(self):
+        print("ok")
+        menu_width = self.slideMenu.width()
+        is_hidden = self.slideMenu.x() == -menu_width  # check if the menu is hidden
+
+        if is_hidden:
+            new_x = 0
+        else:
+            new_x = -menu_width
+        #  Animation
+        self.menuAnimation.setStartValue(self.slideMenu.geometry())
+        end_geometry = QRect(new_x, 0, menu_width, self.height() // 2)
+        self.menuAnimation.setEndValue(end_geometry)
+        self.menuAnimation.start()
 
     def loadStyleSheet(self):
         with open('style.qss', 'r') as file:
