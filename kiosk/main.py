@@ -1,11 +1,58 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
+from PyQt5.QtWidgets import QLabel, QTabBar, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
 from PyQt5.QtCore import Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect
 from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtQuick import QQuickView
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings, QWebEngineProfile
+from PyQt5.QtGui import QIcon, QPainter
+
+
+class CustomTabBar(QTabBar):
+    firstIconClicked = pyqtSignal()
+    secondIconClicked = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(CustomTabBar, self).__init__(parent)
+        self.firstIcon = QIcon("./ressources/images/configure-dark.png")
+        self.secondIcon = QIcon("./ressources/images/refresh.png")
+
+        # Ajouter deux faux onglets pour les icônes
+        self.addTab("")
+        self.addTab("")
+
+    def paintEvent(self, event):
+        super(CustomTabBar, self).paintEvent(event)
+        painter = QPainter(self)
+
+        # Dessiner la première icône
+        firstIconTabRect = self.tabRect(self.count() - 2)
+        firstIconRect = QRect(firstIconTabRect.x(),
+                              firstIconTabRect.y(), 30, 30)
+        self.firstIcon.paint(painter, firstIconRect)
+
+        # Dessiner la seconde icône
+        secondIconTabRect = self.tabRect(self.count() - 1)
+        secondIconRect = QRect(secondIconTabRect.x(),
+                               secondIconTabRect.y(), 30, 30)
+        self.secondIcon.paint(painter, secondIconRect)
+
+    def mousePressEvent(self, event):
+        # Détecter les clics sur la première icône
+        if self.tabRect(self.count() - 2).contains(event.pos()):
+            self.firstIconClicked.emit()
+            event.accept()  # Accepter l'événement pour empêcher le changement d'onglet
+            return  # Ne pas appeler super.mousePressEvent
+
+        # Détecter les clics sur la seconde icône
+        if self.tabRect(self.count() - 1).contains(event.pos()):
+            self.secondIconClicked.emit()
+            event.accept()  # Accepter l'événement pour empêcher le changement d'onglet
+            return  # Ne pas appeler super.mousePressEvent
+
+        # Comportement par défaut pour les autres zones
+        super(CustomTabBar, self).mousePressEvent(event)
 
 
 class WebEnginePage(QWebEnginePage):
@@ -85,29 +132,44 @@ class MainApp(QWidget):
         self.addSlideMenu()
 
     def addSlideMenu(self):
-        menu_width = 200
+        menu_width = 250
         self.slideMenu = QFrame(self)
-        self.slideMenu.setGeometry(-200, 0, 200, self.height())
+        self.slideMenu.setGeometry(-menu_width, 0, menu_width, self.height())
 
+        # Création d'un layout horizontal pour les onglets et l'image
+        slideMenuLayout = QHBoxLayout(self.slideMenu)
+        slideMenuLayout.setContentsMargins(0, 0, 0, 0)
+        slideMenuLayout.setSpacing(0)
         # Utilisation de QTabWidget pour les onglets
         self.tabWidget = QTabWidget(self.slideMenu)
-        self.tabWidget.setStyleSheet("background-color: white;")
-        self.tabWidget.setGeometry(0, 0, 200, self.height())
+        customTabBar = CustomTabBar()
+        customTabBar.firstIconClicked.connect(self.onImageClicked)
+        customTabBar.secondIconClicked.connect(self.onImageClicked)
 
-        # Ajout de deux onglets
+        self.tabWidget.setTabBar(customTabBar)
+        self.tabWidget.setStyleSheet("background-color: white;")
         tab1 = QWidget()
         tab2 = QWidget()
+
         self.tabWidget.addTab(tab1, "Onglet 1")
         self.tabWidget.addTab(tab2, "Onglet 2")
+        self.tabWidget.setCurrentIndex(0)
 
-        # Add neccessary widgets to the tab
-        # for example to tab1
-        # tab1_layout = QVBoxLayout(tab1)
+        # add content on tab1
+        # tab1_layout = QVBoxLayout()
+        # tab1.setLayout(tab1_layout)
+        # tab1_layout.addWidget(QLabel("Contenu de l'Onglet 1"))
         # tab1_layout.addWidget(QPushButton("Bouton dans Onglet 1"))
 
-        # Animation  for slide menu
+        # Ajout des widgets au layout du slide menu
+        slideMenuLayout.addWidget(self.tabWidget)
+
+        # Animation pour le slide menu
         self.menuAnimation = QPropertyAnimation(self.slideMenu, b"geometry")
         self.menuAnimation.setDuration(500)
+
+    def onImageClicked(self):
+        print("Image clicked")
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_F3:
