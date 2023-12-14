@@ -41,6 +41,8 @@ class MainApp(QWidget):
 
     def initUI(self):
         self.setObjectName("mainWindow")
+        self.host = "http://192.168.0.3"
+        self.deviceId = "DailySafe_8afa173b69d9408dbcc90c77f75128a6"
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(0)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -90,6 +92,7 @@ class MainApp(QWidget):
         main_layout = self.layout()
         self.web_view.setUrl(QUrl(url))
         main_layout.replaceWidget(self.video_widget, self.web_view)
+        self.video_widget.setParent(None)
         self.video_widget.hide()
         self.web_view.show()
 
@@ -100,8 +103,13 @@ class MainApp(QWidget):
         self.qml_view.hide()
         self.buttons_view.hide()
 
+        # reinitialize self.web_view
+        if self.web_view.parent() is not None:
+            self.web_view.setParent(None)
+        self.web_view = QWebEngineView()
+        self.configureWebEngineSettings()
+
         self.web_view.setUrl(QUrl(url))
-        self.web_view.setParent(None)
         self.web_view.setWindowFlags(Qt.FramelessWindowHint)
         self.web_view.showFullScreen()
 
@@ -114,21 +122,24 @@ class MainApp(QWidget):
     @pyqtSlot()
     def onDustClicked(self):
         print("Dust button clicked")
-        self.openWebviewOnMp4("https://www.google.com")
+        self.openWebviewOnMp4(self.host +
+                              "/signagemenu/dust.html?appId=" + self.deviceId)
 
     @pyqtSlot()
     def onWeatherClicked(self):
         print("Weather button clicked")
-        self.openWebviewOnMp4("https://www.naver.com")
+        self.openWebviewOnMp4(self.host +
+                              "/signagemenu/weather.html?appId=" + self.deviceId)
 
     @pyqtSlot()
     def onBusClicked(self):
         print("Bus button clicked")
-        self.openWebviewOnMp4("https://www.naver.com")
+        self.openWebviewOnMp4(self.host +
+                              "/signagemenu/traffic.html?appId=" + self.deviceId)
 
     @pyqtSlot()
     def onKioskClicked(self):
-        self.openFullScreenWebView("http://192.168.0.3/kiosk/")
+        self.openFullScreenWebView(self.host + "/kiosk/")
 
 
 if __name__ == '__main__':
