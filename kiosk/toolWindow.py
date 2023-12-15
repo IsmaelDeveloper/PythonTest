@@ -138,11 +138,29 @@ class ToolWindow(QWidget):
         return alarm_widget
 
     def createManagementTabContent(self):
-        management_widget = QWidget()
-        management_layout = QVBoxLayout(management_widget)
-        management_layout.addWidget(
-            QLabel("Management and system settings..."))
-        return management_widget
+        management_container = QWidget()
+        management_layout = QVBoxLayout(management_container)
+        management_layout.setAlignment(Qt.AlignTop)
+        management_layout.setContentsMargins(
+            10, 10, 10, 10)
+        panel_widget = QWidget()
+        panel_widget.setFixedSize(400, 100)
+        panel_widget.setObjectName("ManagementPanel")
+
+        panel_layout = QVBoxLayout(panel_widget)
+        panel_layout.setContentsMargins(10, 10, 10, 10)
+
+        settings_button = QPushButton("시스템 초기화")
+        settings_button.setObjectName("InitializeButton")
+        settings_button.clicked.connect(self.onInitializeClicked)
+        panel_layout.addWidget(settings_button, alignment=Qt.AlignCenter)
+
+        management_layout.addWidget(panel_widget, alignment=Qt.AlignHCenter)
+
+        return management_container
+
+    def onInitializeClicked(self):
+        print("Initialize clicked")
 
     def createLicenseTabContent(self):
         license_widget = QWidget()
