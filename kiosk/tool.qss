@@ -26,3 +26,10 @@ QTabBar::tab {
 QTabBar::tab:last {
   border-bottom: 1px solid rgb(223, 223, 223);
 }
+QPushButton#saveButton,
+QPushButton#cancelButton {
+  border: none;
+  height: 35px;
+  width: 100px;
+  background-color: rgb(255, 223, 223);
+}
