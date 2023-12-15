@@ -8,6 +8,7 @@ from PyQt5.QtQuick import QQuickView
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings, QWebEngineProfile
 from PyQt5.QtGui import QIcon, QPainter
 from customTabBar import CustomTabBar
+from toolWindow import ToolWindow
 
 
 class WebEnginePage(QWebEnginePage):
@@ -99,8 +100,8 @@ class MainApp(QWidget):
         # create tab widget
         self.tabWidget = QTabWidget(self.slideMenu)
         customTabBar = CustomTabBar()
-        customTabBar.firstIconClicked.connect(self.onImageClicked)
-        customTabBar.secondIconClicked.connect(self.onImageClicked)
+        customTabBar.firstIconClicked.connect(self.onToolImageClicked)
+        customTabBar.secondIconClicked.connect(self.onRefreshImageClicked)
 
         self.tabWidget.setTabBar(customTabBar)
         self.tabWidget.setStyleSheet("background-color: white;")
@@ -124,8 +125,13 @@ class MainApp(QWidget):
         self.menuAnimation = QPropertyAnimation(self.slideMenu, b"geometry")
         self.menuAnimation.setDuration(500)
 
-    def onImageClicked(self):
-        print("Image clicked")
+    def onToolImageClicked(self):
+        print("Tool clicked")
+        self.toolWindow = ToolWindow()
+        self.toolWindow.show()
+
+    def onRefreshImageClicked(self):
+        print("Refresh clicked")
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_F3:
