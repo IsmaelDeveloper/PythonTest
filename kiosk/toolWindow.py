@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QSlider, QSpacerItem, QSizePolicy, QTextBrowser, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
 from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets, QtCore, QtGui
+from LocalParameterStorage import LocalParameterStorage
 import markdown
 
 
@@ -130,6 +131,8 @@ class ToolWindow(QWidget):
         self.loadStyleSheet()
 
     def initUI(self):
+        self.parameter = LocalParameterStorage()
+        self.parameterStorage = self.parameter.get_parameters()
         self.setObjectName("toolWindow")
 
         main_layout = QVBoxLayout()
@@ -209,14 +212,14 @@ class ToolWindow(QWidget):
         screen_title.setObjectName("ScreenTitle")
         panel_layout.addWidget(
             screen_title, alignment=Qt.AlignLeft | Qt.AlignTop)
-
+        print(self.parameterStorage)
         # layoun for 날짜
         toggle_layout = QHBoxLayout()
         toggle_layout.setSpacing(0)
         toggle_label = QLabel("날짜")
         toggle_label.setObjectName("ToggleLabel")
         toggle_layout.addWidget(toggle_label, alignment=Qt.AlignLeft)
-        toggle_switch = ToggleSwitch(is_on=False)
+        toggle_switch = ToggleSwitch(is_on=self.parameterStorage['isDate'])
         toggle_layout.addWidget(toggle_switch, alignment=Qt.AlignLeft)
         panel_layout.addLayout(toggle_layout)
 
@@ -229,7 +232,7 @@ class ToolWindow(QWidget):
         toggle_label2 = QLabel("이름")
         toggle_label2.setObjectName("ToggleLabel")
         toggle_layout2.addWidget(toggle_label2, alignment=Qt.AlignLeft)
-        toggle_switch2 = ToggleSwitch(is_on=False)
+        toggle_switch2 = ToggleSwitch(is_on=self.parameterStorage['isName'])
         toggle_layout2.addWidget(toggle_switch2, alignment=Qt.AlignLeft)
         panel_layout.addLayout(toggle_layout2)
 
@@ -242,7 +245,8 @@ class ToolWindow(QWidget):
         toggle_label3 = QLabel("온도")
         toggle_label3.setObjectName("ToggleLabel")
         toggle_layout3.addWidget(toggle_label3, alignment=Qt.AlignLeft)
-        toggle_switch3 = ToggleSwitch(is_on=False)
+        toggle_switch3 = ToggleSwitch(
+            is_on=self.parameterStorage['isTemperature'])
         toggle_layout3.addWidget(toggle_switch3, alignment=Qt.AlignLeft)
         panel_layout.addLayout(toggle_layout3)
 

@@ -9,6 +9,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineS
 from PyQt5.QtGui import QIcon, QPainter
 from customTabBar import CustomTabBar
 from toolWindow import ToolWindow
+from LocalParameterStorage import LocalParameterStorage
 
 
 class WebEnginePage(QWebEnginePage):
@@ -50,6 +51,7 @@ class MainApp(QWidget):
         self.countdown_button.clicked.connect(self.closeWebview)
 
     def initUI(self):
+        self.parameter = LocalParameterStorage()
         self.setObjectName("mainWindow")
         self.host = "http://192.168.0.3"
         self.deviceId = "DailySafe_8afa173b69d9408dbcc90c77f75128a6"
