@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QSlider, QSpacerItem, QSizePolicy, QTextBrowser, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
+from PyQt5.QtWidgets import QSlider, QMessageBox, QSpacerItem, QSizePolicy, QTextBrowser, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
 from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets, QtCore, QtGui
 from LocalParameterStorage import LocalParameterStorage
@@ -185,25 +185,43 @@ class ToolWindow(QWidget):
         self.setGeometry(300, 300, 800, 800)
 
     def onSaveClicked(self):
-        # Récupérer les états des ToggleSwitch
-        isDate = self.screen_tab_content.findChild(
-            ToggleSwitch, "DateToggle").isOn()
-        isName = self.screen_tab_content.findChild(
-            ToggleSwitch, "NameToggle").isOn()
-        isTemperature = self.screen_tab_content.findChild(
-            ToggleSwitch, "TemperatureToggle").isOn()
+        # Créer le message d'alerte
+        msgBox = QMessageBox(self)
+        msgBox.setWindowTitle("저장 ?")
+        msgBox.setText("저장 하시겠습니까 ?")
+        msgBox.setStandardButtons(QMessageBox.Cancel | QMessageBox.Ok)
+        msgBox.setDefaultButton(QMessageBox.Cancel)
+        response = msgBox.exec_()
 
-        # Mettre à jour les paramètres
-        new_params = {
-            'isDate': isDate,
-            'isName': isName,
-            'isTemperature': isTemperature
-        }
+        # Vérifier la réponse de l'utilisateur
+        if response == QMessageBox.Ok:
+            # Récupérer les états des ToggleSwitch
+            isDate = self.screen_tab_content.findChild(
+                ToggleSwitch, "DateToggle").isOn()
+            isName = self.screen_tab_content.findChild(
+                ToggleSwitch, "NameToggle").isOn()
+            isTemperature = self.screen_tab_content.findChild(
+                ToggleSwitch, "TemperatureToggle").isOn()
 
-        # Enregistrer les paramètres dans le localStorage
-        self.parameter.save_parameters(new_params)
+            # Mettre à jour les paramètres
+            new_params = {
+                'isDate': isDate,
+                'isName': isName,
+                'isTemperature': isTemperature
+            }
 
-        print("Paramètres enregistrés")
+            # Enregistrer les paramètres dans le localStorage
+            self.parameter.save_parameters(new_params)
+
+            mssgBoxDone = QMessageBox(self)
+            mssgBoxDone.setWindowTitle("저장 완료")
+            mssgBoxDone.setText("저장 하였습니다.")
+            mssgBoxDone.setStandardButtons(QMessageBox.Ok)
+            mssgBoxDone.setDefaultButton(QMessageBox.Ok)
+            mssgBoxDone.exec_()
+
+        else:
+            print("Canceled")
 
     def onCancelClicked(self):
         print("Cancel clicked")
