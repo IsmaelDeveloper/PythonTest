@@ -5,9 +5,10 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 class TabBar(QtWidgets.QTabBar):
     def tabSizeHint(self, index):
-        s = QtWidgets.QTabBar.tabSizeHint(self, index)
-        s.transpose()
-        return s
+        size = QtWidgets.QTabBar.tabSizeHint(self, index)
+        size.transpose()
+        size.setHeight(80)
+        return size
 
     def paintEvent(self, event):
         painter = QtWidgets.QStylePainter(self)
@@ -60,9 +61,11 @@ class ToolWindow(QWidget):
         self.loadStyleSheet()
 
     def initUI(self):
+        self.setObjectName("toolWindow")
+
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
-        main_layout.setContentsMargins(0, 20, 0, 0)
+        main_layout.setContentsMargins(0, 10, 0, 0)
 
         self.windowTitle = QLabel("사용자 설정")
         self.windowTitle.setObjectName("ToolWindowTitle")
@@ -88,5 +91,5 @@ class ToolWindow(QWidget):
         self.setGeometry(300, 300, 800, 800)
 
     def loadStyleSheet(self):
-        with open('style.qss', 'r') as file:
+        with open('tool.qss', 'r') as file:
             self.setStyleSheet(file.read())

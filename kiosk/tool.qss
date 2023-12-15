@@ -1,0 +1,28 @@
+QWidget#toolWindow {
+  background-color: white;
+}
+QLabel#ToolWindowTitle {
+  padding-top: 10px;
+  border-bottom: 2px solid grey;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+QTabBar::tab:selected {
+  background-color: rgb(45, 136, 255);
+}
+
+QTabBar::tab {
+  background: white;
+  color: black;
+  border: 1px solid rgb(223, 223, 223);
+  border-bottom: none;
+  border-left: none;
+  padding: 5px;
+  font-weight: bold;
+}
+
+QTabBar::tab:last {
+  border-bottom: 1px solid rgb(223, 223, 223);
+}
