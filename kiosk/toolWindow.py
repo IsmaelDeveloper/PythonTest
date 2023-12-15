@@ -1,6 +1,7 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
+from PyQt5.QtWidgets import QTextBrowser, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
 from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets, QtCore, QtGui
+import markdown
 
 
 class TabBar(QtWidgets.QTabBar):
@@ -146,8 +147,21 @@ class ToolWindow(QWidget):
     def createLicenseTabContent(self):
         license_widget = QWidget()
         license_layout = QVBoxLayout(license_widget)
-        license_layout.addWidget(QLabel("Open source licenses..."))
+
+        text_browser = QTextBrowser()
+        markdown_content = self.loadMarkdownContent("./license_markdown.md")
+        html_content = markdown.markdown(markdown_content)
+        text_browser.setHtml(html_content)
+
+        license_layout.addWidget(text_browser)
         return license_widget
+
+    def loadMarkdownContent(self, file_path):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                return file.read()
+        except FileNotFoundError:
+            return "The markdown file doesn't exist or couldn't be load"
 
     def loadStyleSheet(self):
         with open('tool.qss', 'r') as file:
