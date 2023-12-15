@@ -1,7 +1,75 @@
-from PyQt5.QtWidgets import QTextBrowser, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
+from PyQt5.QtWidgets import QSlider, QSpacerItem, QSizePolicy, QTextBrowser, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
 from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets, QtCore, QtGui
 import markdown
+
+
+class ToggleSwitch(QSlider):
+    def __init__(self, parent=None, is_on=True):
+        super().__init__(Qt.Horizontal, parent)
+        self.setMinimum(0)
+        self.setMaximum(1)
+        self.setFixedSize(140, 30)
+        if is_on:
+            self.setValue(1)
+        else:
+            self.setValue(0)
+        self.valueChanged.connect(self.updateStyle)
+        self.updateStyle(self.value())
+
+    def updateStyle(self, value):
+        if value == 1:
+            self.setStyleSheet("""
+                QSlider::groove:horizontal {
+                    height: 15px;
+                    width: 80px;
+                    margin: 0px;
+                    border-radius: 5px;
+                    background: #40FF2B;
+                }
+                QSlider::handle:horizontal {
+                    background: white;
+                    width: 25px;
+                    border: 1px solid lightGray;
+                    margin: -5px 0;
+                    border-radius: 10px;
+                    position: absolute;
+                }
+                QSlider::handle:horizontal:hover {
+                    background: white;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QSlider::groove:horizontal {
+                    height: 15px;
+                    width: 80px;
+                    margin: 0px;
+                    border-radius: 5px;
+                    background: lightGray;
+                }
+                QSlider::handle:horizontal {
+                    background: white; 
+                    width: 25px;
+                    margin: -5px 0;
+                    border: 1px solid lightGray;
+                    border-radius: 10px;
+                    position: absolute;
+                }
+                QSlider::handle:horizontal:hover {
+                    background: white;
+                }
+            """)
+
+    def isOn(self):
+        return self.value() == 1
+
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        if self.value() == 0:
+            self.setValue(1)
+        else:
+            self.setValue(0)
 
 
 class TabBar(QtWidgets.QTabBar):
@@ -126,10 +194,61 @@ class ToolWindow(QWidget):
         return camera_widget
 
     def createScreenTabContent(self):
-        screen_widget = QWidget()
-        screen_layout = QVBoxLayout(screen_widget)
-        screen_layout.addWidget(QLabel("Screen settings..."))
-        return screen_widget
+        screen_container = QWidget()
+        screen_layout = QVBoxLayout(screen_container)
+        screen_layout.setAlignment(Qt.AlignTop)
+        screen_layout.setContentsMargins(10, 10, 10, 10)
+
+        panel_widget = QWidget()
+        panel_widget.setFixedSize(700, 200)
+        panel_widget.setObjectName("ScreenPanel")
+        panel_layout = QVBoxLayout(panel_widget)
+        panel_layout.setContentsMargins(2, 10, 10, 10)
+
+        screen_title = QLabel("검출 내용 표시")
+        screen_title.setObjectName("ScreenTitle")
+        panel_layout.addWidget(
+            screen_title, alignment=Qt.AlignLeft | Qt.AlignTop)
+
+        # layoun for 날짜
+        toggle_layout = QHBoxLayout()
+        toggle_layout.setSpacing(0)
+        toggle_label = QLabel("날짜")
+        toggle_label.setObjectName("ToggleLabel")
+        toggle_layout.addWidget(toggle_label, alignment=Qt.AlignLeft)
+        toggle_switch = ToggleSwitch(is_on=False)
+        toggle_layout.addWidget(toggle_switch, alignment=Qt.AlignLeft)
+        panel_layout.addLayout(toggle_layout)
+
+        spacer = QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        panel_layout.addSpacerItem(spacer)
+
+        # layout for 이름
+        toggle_layout2 = QHBoxLayout()
+        toggle_layout2.setSpacing(0)
+        toggle_label2 = QLabel("이름")
+        toggle_label2.setObjectName("ToggleLabel")
+        toggle_layout2.addWidget(toggle_label2, alignment=Qt.AlignLeft)
+        toggle_switch2 = ToggleSwitch(is_on=False)
+        toggle_layout2.addWidget(toggle_switch2, alignment=Qt.AlignLeft)
+        panel_layout.addLayout(toggle_layout2)
+
+        spacer2 = QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        panel_layout.addSpacerItem(spacer2)
+
+        # layout for 온도
+        toggle_layout3 = QHBoxLayout()
+        toggle_layout3.setSpacing(0)
+        toggle_label3 = QLabel("온도")
+        toggle_label3.setObjectName("ToggleLabel")
+        toggle_layout3.addWidget(toggle_label3, alignment=Qt.AlignLeft)
+        toggle_switch3 = ToggleSwitch(is_on=False)
+        toggle_layout3.addWidget(toggle_switch3, alignment=Qt.AlignLeft)
+        panel_layout.addLayout(toggle_layout3)
+
+        screen_layout.addWidget(panel_widget, alignment=Qt.AlignHCenter)
+
+        return screen_container
 
     def createAlarmTabContent(self):
         alarm_widget = QWidget()

@@ -34,7 +34,8 @@ QPushButton#cancelButton {
   background-color: rgb(255, 223, 223);
 }
 
-QWidget#ManagementPanel {
+QWidget#ManagementPanel,
+QWidget#ScreenPanel {
   border: 1px solid rgb(223, 223, 223);
 }
 
@@ -50,4 +51,15 @@ QPushButton#InitializeButton {
 
 QPushButton#InitializeButton:hover {
   background-color: rgba(255, 255, 255, 0.479);
+}
+
+QLabel#ScreenTitle {
+  font-size: 15px;
+  font-weight: bold;
+  margin-left: 10px;
+}
+QLabel#ToggleLabel {
+  font-size: 15px;
+  font-weight: bold;
+  margin-left: 10px;
 }
