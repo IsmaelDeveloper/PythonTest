@@ -152,6 +152,7 @@ class ToolWindow(QWidget):
         alarm_tab_content = self.createAlarmTabContent()
         management_tab_content = self.createManagementTabContent()
         license_tab_content = self.createLicenseTabContent()
+        self.screen_tab_content = screen_tab_content
         self.tabWidget.addTab(camera_tab_content, QtGui.QIcon(
             "./ressources/images/camera.png"), "가메라")
         self.tabWidget.addTab(screen_tab_content, QtGui.QIcon(
@@ -184,7 +185,25 @@ class ToolWindow(QWidget):
         self.setGeometry(300, 300, 800, 800)
 
     def onSaveClicked(self):
-        print("Save clicked")
+        # Récupérer les états des ToggleSwitch
+        isDate = self.screen_tab_content.findChild(
+            ToggleSwitch, "DateToggle").isOn()
+        isName = self.screen_tab_content.findChild(
+            ToggleSwitch, "NameToggle").isOn()
+        isTemperature = self.screen_tab_content.findChild(
+            ToggleSwitch, "TemperatureToggle").isOn()
+
+        # Mettre à jour les paramètres
+        new_params = {
+            'isDate': isDate,
+            'isName': isName,
+            'isTemperature': isTemperature
+        }
+
+        # Enregistrer les paramètres dans le localStorage
+        self.parameter.save_parameters(new_params)
+
+        print("Paramètres enregistrés")
 
     def onCancelClicked(self):
         print("Cancel clicked")
@@ -249,6 +268,10 @@ class ToolWindow(QWidget):
             is_on=self.parameterStorage['isTemperature'])
         toggle_layout3.addWidget(toggle_switch3, alignment=Qt.AlignLeft)
         panel_layout.addLayout(toggle_layout3)
+
+        toggle_switch.setObjectName("DateToggle")
+        toggle_switch2.setObjectName("NameToggle")
+        toggle_switch3.setObjectName("TemperatureToggle")
 
         screen_layout.addWidget(panel_widget, alignment=Qt.AlignHCenter)
 

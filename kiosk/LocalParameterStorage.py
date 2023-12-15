@@ -23,6 +23,9 @@ class LocalParameterStorage:
         with open(self.file_path, 'w') as file:
             json.dump(parameters, file)
 
+    def save_parameters(self, params):
+        with open(self.file_path, 'w') as file:
+            json.dump(params, file)
 
 # Utilisation de la classe
 # storage = LocalParameterStorage()
