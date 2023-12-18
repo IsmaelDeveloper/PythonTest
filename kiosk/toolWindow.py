@@ -347,6 +347,21 @@ class ToolWindow(QWidget):
         toggle_switch2.setObjectName("MaskAlarmToggle")
         alarm_layout.addWidget(panel_widget, alignment=Qt.AlignHCenter)
 
+        # new border square
+        panel_widget2 = QWidget()
+        panel_widget2.setFixedSize(700, 130)
+        panel_widget2.setObjectName("AlarmPanel2")
+
+        panel_layout2 = QVBoxLayout(panel_widget2)
+        panel_layout2.setContentsMargins(10, 10, 10, 10)
+
+        panel_label2 = QLabel("알림 온도 설정 37.5 (최소 30 ~ 최대 50)")
+        panel_label2.setObjectName("alarmTitle2")
+        panel_layout2.addWidget(
+            panel_label2, alignment=Qt.AlignLeft | Qt.AlignTop)
+
+        alarm_layout.addWidget(panel_widget2, alignment=Qt.AlignHCenter)
+
         return alarm_container
 
     def createManagementTabContent(self):

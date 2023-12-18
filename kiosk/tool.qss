@@ -36,7 +36,8 @@ QPushButton#cancelButton {
 
 QWidget#ManagementPanel,
 QWidget#ScreenPanel,
-QWidget#AlarmPanel {
+QWidget#AlarmPanel,
+QWidget#AlarmPanel2 {
   border: 1px solid rgb(223, 223, 223);
 }
 
@@ -54,13 +55,9 @@ QPushButton#InitializeButton:hover {
   background-color: rgba(255, 255, 255, 0.479);
 }
 
+QLabel#alarmTitle,
+QLabel#alarmTitle2,
 QLabel#ScreenTitle {
-  font-size: 15px;
-  font-weight: bold;
-  margin-left: 10px;
-}
-
-QLabel#alarmTitle {
   font-size: 15px;
   font-weight: bold;
   margin-left: 10px;
