@@ -35,7 +35,8 @@ QPushButton#cancelButton {
 }
 
 QWidget#ManagementPanel,
-QWidget#ScreenPanel {
+QWidget#ScreenPanel,
+QWidget#AlarmPanel {
   border: 1px solid rgb(223, 223, 223);
 }
 
@@ -58,8 +59,13 @@ QLabel#ScreenTitle {
   font-weight: bold;
   margin-left: 10px;
 }
-QLabel#ToggleLabel {
+
+QLabel#alarmTitle {
   font-size: 15px;
   font-weight: bold;
+  margin-left: 10px;
+}
+QLabel#ToggleLabel {
+  font-size: 15px;
   margin-left: 10px;
 }

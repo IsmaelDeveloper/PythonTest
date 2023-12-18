@@ -1,1 +1,1 @@
-{"isDate": false, "isName": false, "isTemperature": true}
+{"isDate": true, "isName": true, "isTemperature": true, "highTemperatureAlarm": true, "isMaskAlarm": true}

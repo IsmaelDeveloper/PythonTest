@@ -202,12 +202,18 @@ class ToolWindow(QWidget):
                 ToggleSwitch, "NameToggle").isOn()
             isTemperature = self.screen_tab_content.findChild(
                 ToggleSwitch, "TemperatureToggle").isOn()
+            isHighTemperatureAlarm = self.tabWidget.findChild(
+                ToggleSwitch, "HighTemperatureAlarmToggle").isOn()
+            isMaskAlarm = self.tabWidget.findChild(
+                ToggleSwitch, "MaskAlarmToggle").isOn()
 
             # Mettre à jour les paramètres
             new_params = {
                 'isDate': isDate,
                 'isName': isName,
-                'isTemperature': isTemperature
+                'isTemperature': isTemperature,
+                'highTemperatureAlarm': isHighTemperatureAlarm,
+                'isMaskAlarm': isMaskAlarm
             }
 
             # Enregistrer les paramètres dans le localStorage
@@ -296,10 +302,52 @@ class ToolWindow(QWidget):
         return screen_container
 
     def createAlarmTabContent(self):
-        alarm_widget = QWidget()
-        alarm_layout = QVBoxLayout(alarm_widget)
-        alarm_layout.addWidget(QLabel("Alarm settings..."))
-        return alarm_widget
+        alarm_container = QWidget()
+        alarm_layout = QVBoxLayout(alarm_container)
+        alarm_layout.setAlignment(Qt.AlignTop)
+        alarm_layout.setContentsMargins(10, 10, 10, 10)
+        panel_widget = QWidget()
+        panel_widget.setFixedSize(700, 130)
+        panel_widget.setObjectName("AlarmPanel")
+
+        panel_layout = QVBoxLayout(panel_widget)
+        panel_layout.setContentsMargins(10, 10, 10, 10)
+
+        panel_label = QLabel("메시지 수신 설정")
+        panel_label.setObjectName("alarmTitle")
+        panel_layout.addWidget(
+            panel_label, alignment=Qt.AlignLeft | Qt.AlignTop)
+
+        # layout for 고온자 수신
+        toggle_layout = QHBoxLayout()
+        toggle_layout.setSpacing(0)
+        toggle_label = QLabel("고온자 수신")
+        toggle_label.setObjectName("ToggleLabel")
+        toggle_layout.addWidget(
+            toggle_label, alignment=Qt.AlignLeft | Qt.AlignTop)
+        toggle_switch = ToggleSwitch(
+            is_on=self.parameterStorage['highTemperatureAlarm'])
+        toggle_layout.addWidget(
+            toggle_switch, alignment=Qt.AlignLeft | Qt.AlignTop)
+        panel_layout.addLayout(toggle_layout)
+
+        # layout for 마스크 미착용자 수신
+        toggle_layout2 = QHBoxLayout()
+        toggle_layout2.setSpacing(0)
+        toggle_label2 = QLabel("마스크 미착용자 수신")
+        toggle_label2.setObjectName("ToggleLabel")
+        toggle_layout2.addWidget(toggle_label2, alignment=Qt.AlignLeft)
+        toggle_switch2 = ToggleSwitch(
+            is_on=self.parameterStorage['isMaskAlarm'])
+        toggle_layout2.addWidget(toggle_switch2, alignment=Qt.AlignLeft)
+        panel_layout.addLayout(toggle_layout2)
+
+        # setObjectName for toggle switch
+        toggle_switch.setObjectName("HighTemperatureAlarmToggle")
+        toggle_switch2.setObjectName("MaskAlarmToggle")
+        alarm_layout.addWidget(panel_widget, alignment=Qt.AlignHCenter)
+
+        return alarm_container
 
     def createManagementTabContent(self):
         management_container = QWidget()
