@@ -46,7 +46,8 @@ class MainApp(QWidget):
         # set Timer for close btn
         self.countdown_timer = QTimer(self)
         self.countdown_timer.timeout.connect(self.updateCountdown)
-        self.countdown_button = QPushButton("50", self)
+        self.countdown_button = QPushButton("닫기 (50)", self)
+        self.countdown_button.setObjectName("webviewCloseButton")
         self.countdown_button.hide()
         self.countdown_button.clicked.connect(self.closeWebview)
 
@@ -195,7 +196,7 @@ class MainApp(QWidget):
 
     def setupCountdown(self):
         self.countdown_time = 50
-        self.countdown_button.setText(str(self.countdown_time))
+        self.countdown_button.setText("닫기 (" + str(self.countdown_time) + ")")
         self.countdown_button.resize(100, 50)
         web_view_geometry = self.web_view.geometry()
         button_x = web_view_geometry.right() - self.countdown_button.width() - 10
@@ -208,7 +209,7 @@ class MainApp(QWidget):
 
     def updateCountdown(self):
         self.countdown_time -= 1
-        self.countdown_button.setText(str(self.countdown_time))
+        self.countdown_button.setText("닫기 (" + str(self.countdown_time) + ")")
         if self.countdown_time <= 0:
             self.closeWebview()
 

@@ -1,3 +1,7 @@
 QWidget#mainWindow {
   background-color: white;
 }
+QPushButton#webviewCloseButton {
+  background-color: rgb(36, 245, 28);
+  border-radius: 5px;
+}
