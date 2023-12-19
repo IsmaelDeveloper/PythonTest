@@ -243,126 +243,93 @@ class ToolWindow(QWidget):
     def createScreenTabContent(self):
         screen_container = QWidget()
         screen_layout = QVBoxLayout(screen_container)
-        screen_layout.setAlignment(Qt.AlignTop)
-        screen_layout.setContentsMargins(10, 10, 10, 10)
+        self.configureLayout(screen_layout, 10, 10, 10, 10)
 
-        panel_widget = QWidget()
-        panel_widget.setFixedSize(700, 200)
-        panel_widget.setObjectName("ScreenPanel")
+        panel_widget = self.createPanelWidget("ScreenPanel", 700, 200)
         panel_layout = QVBoxLayout(panel_widget)
-        panel_layout.setContentsMargins(2, 10, 10, 10)
+        self.configureLayout(panel_layout, 2, 10, 10, 10)
 
-        screen_title = QLabel("검출 내용 표시")
-        screen_title.setObjectName("ScreenTitle")
+        screen_title = self.createLabel("검출 내용 표시", "ScreenTitle")
         panel_layout.addWidget(
             screen_title, alignment=Qt.AlignLeft | Qt.AlignTop)
-        print(self.parameterStorage)
-        # layoun for 날짜
-        toggle_layout = QHBoxLayout()
-        toggle_layout.setSpacing(0)
-        toggle_label = QLabel("날짜")
-        toggle_label.setObjectName("ToggleLabel")
-        toggle_layout.addWidget(toggle_label, alignment=Qt.AlignLeft)
-        toggle_switch = ToggleSwitch(is_on=self.parameterStorage['isDate'])
-        toggle_layout.addWidget(toggle_switch, alignment=Qt.AlignLeft)
-        panel_layout.addLayout(toggle_layout)
 
-        spacer = QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Fixed)
-        panel_layout.addSpacerItem(spacer)
-
-        # layout for 이름
-        toggle_layout2 = QHBoxLayout()
-        toggle_layout2.setSpacing(0)
-        toggle_label2 = QLabel("이름")
-        toggle_label2.setObjectName("ToggleLabel")
-        toggle_layout2.addWidget(toggle_label2, alignment=Qt.AlignLeft)
-        toggle_switch2 = ToggleSwitch(is_on=self.parameterStorage['isName'])
-        toggle_layout2.addWidget(toggle_switch2, alignment=Qt.AlignLeft)
-        panel_layout.addLayout(toggle_layout2)
-
-        spacer2 = QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Fixed)
-        panel_layout.addSpacerItem(spacer2)
-
-        # layout for 온도
-        toggle_layout3 = QHBoxLayout()
-        toggle_layout3.setSpacing(0)
-        toggle_label3 = QLabel("온도")
-        toggle_label3.setObjectName("ToggleLabel")
-        toggle_layout3.addWidget(toggle_label3, alignment=Qt.AlignLeft)
-        toggle_switch3 = ToggleSwitch(
-            is_on=self.parameterStorage['isTemperature'])
-        toggle_layout3.addWidget(toggle_switch3, alignment=Qt.AlignLeft)
-        panel_layout.addLayout(toggle_layout3)
-
-        toggle_switch.setObjectName("DateToggle")
-        toggle_switch2.setObjectName("NameToggle")
-        toggle_switch3.setObjectName("TemperatureToggle")
+        self.addToggleSwitch(panel_layout, "날짜", "isDate", "DateToggle")
+        self.addSpacer(panel_layout, 20, 10)
+        self.addToggleSwitch(panel_layout, "이름", "isName", "NameToggle")
+        self.addSpacer(panel_layout, 20, 10)
+        self.addToggleSwitch(panel_layout, "온도",
+                             "isTemperature", "TemperatureToggle")
 
         screen_layout.addWidget(panel_widget, alignment=Qt.AlignHCenter)
-
         return screen_container
+
+    def addSpacer(self, layout, width, height):
+        spacer = QSpacerItem(
+            width, height, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        layout.addSpacerItem(spacer)
 
     def createAlarmTabContent(self):
         alarm_container = QWidget()
         alarm_layout = QVBoxLayout(alarm_container)
-        alarm_layout.setAlignment(Qt.AlignTop)
-        alarm_layout.setContentsMargins(10, 10, 10, 10)
-        panel_widget = QWidget()
-        panel_widget.setFixedSize(700, 130)
-        panel_widget.setObjectName("AlarmPanel")
+        self.configureLayout(alarm_layout, 10, 10, 10, 10)
 
+        panel_widget = self.createPanelWidget("AlarmPanel", 700, 130)
         panel_layout = QVBoxLayout(panel_widget)
-        panel_layout.setContentsMargins(10, 10, 10, 10)
+        self.configureLayout(panel_layout, 10, 10, 10, 10)
 
-        panel_label = QLabel("메시지 수신 설정")
-        panel_label.setObjectName("alarmTitle")
+        panel_label = self.createLabel("메시지 수신 설정", "alarmTitle")
         panel_layout.addWidget(
             panel_label, alignment=Qt.AlignLeft | Qt.AlignTop)
 
-        # layout for 고온자 수신
-        toggle_layout = QHBoxLayout()
-        toggle_layout.setSpacing(0)
-        toggle_label = QLabel("고온자 수신")
-        toggle_label.setObjectName("ToggleLabel")
-        toggle_layout.addWidget(
-            toggle_label, alignment=Qt.AlignLeft | Qt.AlignTop)
-        toggle_switch = ToggleSwitch(
-            is_on=self.parameterStorage['highTemperatureAlarm'])
-        toggle_layout.addWidget(
-            toggle_switch, alignment=Qt.AlignLeft | Qt.AlignTop)
-        panel_layout.addLayout(toggle_layout)
+        self.addToggleSwitch(
+            panel_layout, "고온자 수신", "highTemperatureAlarm", "HighTemperatureAlarmToggle")
+        self.addToggleSwitch(panel_layout, "마스크 미착용자 수신",
+                             "isMaskAlarm", "MaskAlarmToggle")
 
-        # layout for 마스크 미착용자 수신
-        toggle_layout2 = QHBoxLayout()
-        toggle_layout2.setSpacing(0)
-        toggle_label2 = QLabel("마스크 미착용자 수신")
-        toggle_label2.setObjectName("ToggleLabel")
-        toggle_layout2.addWidget(toggle_label2, alignment=Qt.AlignLeft)
-        toggle_switch2 = ToggleSwitch(
-            is_on=self.parameterStorage['isMaskAlarm'])
-        toggle_layout2.addWidget(toggle_switch2, alignment=Qt.AlignLeft)
-        panel_layout.addLayout(toggle_layout2)
-
-        # setObjectName for toggle switch
-        toggle_switch.setObjectName("HighTemperatureAlarmToggle")
-        toggle_switch2.setObjectName("MaskAlarmToggle")
         alarm_layout.addWidget(panel_widget, alignment=Qt.AlignHCenter)
 
-        # new border square
-        panel_widget2 = QWidget()
-        panel_widget2.setFixedSize(700, 130)
-        panel_widget2.setObjectName("AlarmPanel2")
-
+        panel_widget2 = self.createPanelWidget("AlarmPanel2", 700, 130)
         panel_layout2 = QVBoxLayout(panel_widget2)
-        panel_layout2.setContentsMargins(10, 10, 10, 10)
+        self.configureLayout(panel_layout2, 10, 10, 10, 10)
 
-        panel_label2 = QLabel(
-            "알림 온도 설정 " + str(self.parameterStorage['temperature']) + " (최소 30 ~ 최대 50)")
-        panel_label2.setObjectName("alarmTitle2")
+        temp_label_text = f"알림 온도 설정 {self.parameterStorage['temperature']} (최소 30 ~ 최대 50)"
+        panel_label2 = self.createLabel(temp_label_text, "alarmTitle2")
         panel_layout2.addWidget(
             panel_label2, alignment=Qt.AlignLeft | Qt.AlignTop)
 
-        # layout for btn which control temperature alarm
+        self.addTemperatureControlButtons(panel_layout2)
+
+        alarm_layout.addWidget(panel_widget2, alignment=Qt.AlignHCenter)
+        return alarm_container
+
+    def configureLayout(self, layout, top, left, bottom, right):
+        layout.setAlignment(Qt.AlignTop)
+        layout.setContentsMargins(left, top, right, bottom)
+
+    def createPanelWidget(self, object_name, width, height):
+        panel_widget = QWidget()
+        panel_widget.setFixedSize(width, height)
+        panel_widget.setObjectName(object_name)
+        return panel_widget
+
+    def createLabel(self, text, object_name):
+        label = QLabel(text)
+        label.setObjectName(object_name)
+        return label
+
+    def addToggleSwitch(self, layout, label_text, parameter_key, object_name):
+        toggle_layout = QHBoxLayout()
+        toggle_layout.setSpacing(0)
+        toggle_label = QLabel(label_text)
+        toggle_label.setObjectName("ToggleLabel")
+        toggle_layout.addWidget(toggle_label, alignment=Qt.AlignLeft)
+        toggle_switch = ToggleSwitch(
+            is_on=self.parameterStorage[parameter_key])
+        toggle_switch.setObjectName(object_name)
+        toggle_layout.addWidget(toggle_switch, alignment=Qt.AlignLeft)
+        layout.addLayout(toggle_layout)
+
+    def addTemperatureControlButtons(self, layout):
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(0)
         plus_button = QPushButton("+")
@@ -378,11 +345,7 @@ class ToolWindow(QWidget):
         buttons_layout.addSpacerItem(spacer)
         plus_button.clicked.connect(self.increaseTemperature)
         minus_button.clicked.connect(self.decreaseTemperature)
-        panel_layout2.addLayout(buttons_layout)
-
-        alarm_layout.addWidget(panel_widget2, alignment=Qt.AlignHCenter)
-
-        return alarm_container
+        layout.addLayout(buttons_layout)
 
     def increaseTemperature(self):
         if self.parameterStorage['temperature'] < 50:
