@@ -213,7 +213,8 @@ class ToolWindow(QWidget):
                 'isName': isName,
                 'isTemperature': isTemperature,
                 'highTemperatureAlarm': isHighTemperatureAlarm,
-                'isMaskAlarm': isMaskAlarm
+                'isMaskAlarm': isMaskAlarm,
+                'temperature': self.parameterStorage['temperature'],
             }
 
             # Enregistrer les paramètres dans le localStorage
@@ -355,14 +356,48 @@ class ToolWindow(QWidget):
         panel_layout2 = QVBoxLayout(panel_widget2)
         panel_layout2.setContentsMargins(10, 10, 10, 10)
 
-        panel_label2 = QLabel("알림 온도 설정 37.5 (최소 30 ~ 최대 50)")
+        panel_label2 = QLabel(
+            "알림 온도 설정 " + str(self.parameterStorage['temperature']) + " (최소 30 ~ 최대 50)")
         panel_label2.setObjectName("alarmTitle2")
         panel_layout2.addWidget(
             panel_label2, alignment=Qt.AlignLeft | Qt.AlignTop)
 
+        # layout for btn which control temperature alarm
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(0)
+        plus_button = QPushButton("+")
+        minus_button = QPushButton("-")
+        plus_button.setFixedWidth(70)
+        minus_button.setFixedWidth(70)
+        buttons_layout.addWidget(
+            plus_button, alignment=Qt.AlignTop | Qt.AlignLeft)
+        buttons_layout.addWidget(
+            minus_button, alignment=Qt.AlignTop | Qt.AlignLeft)
+        spacer = QSpacerItem(
+            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        buttons_layout.addSpacerItem(spacer)
+        plus_button.clicked.connect(self.increaseTemperature)
+        minus_button.clicked.connect(self.decreaseTemperature)
+        panel_layout2.addLayout(buttons_layout)
+
         alarm_layout.addWidget(panel_widget2, alignment=Qt.AlignHCenter)
 
         return alarm_container
+
+    def increaseTemperature(self):
+        if self.parameterStorage['temperature'] < 50:
+            self.parameterStorage['temperature'] += 0.5
+            self.updateTemperatureLabel()
+
+    def decreaseTemperature(self):
+        if self.parameterStorage['temperature'] > 30:
+            self.parameterStorage['temperature'] -= 0.5
+            self.updateTemperatureLabel()
+
+    def updateTemperatureLabel(self):
+        label = self.tabWidget.findChild(QLabel, "alarmTitle2")
+        label.setText(
+            "알림 온도 설정 " + str(self.parameterStorage['temperature']) + " (최소 30 ~ 최대 50)")
 
     def createManagementTabContent(self):
         management_container = QWidget()
