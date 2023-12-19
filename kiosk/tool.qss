@@ -37,7 +37,8 @@ QPushButton#cancelButton {
 QWidget#ManagementPanel,
 QWidget#ScreenPanel,
 QWidget#AlarmPanel,
-QWidget#AlarmPanel2 {
+QWidget#AlarmPanel2,
+QWidget#CameraPanel {
   border: 1px solid rgb(223, 223, 223);
 }
 

@@ -110,19 +110,6 @@ class TabWidget(QtWidgets.QTabWidget):
         self.setTabPosition(QtWidgets.QTabWidget.West)
 
 
-class ProxyStyle(QtWidgets.QProxyStyle):
-    def drawControl(self, element, opt, painter, widget):
-        if element == QtWidgets.QStyle.CE_TabBarTabLabel:
-            ic = self.pixelMetric(QtWidgets.QStyle.PM_TabBarIconSize)
-            r = QtCore.QRect(opt.rect)
-            w = 0 if opt.icon.isNull() else opt.rect.width() + \
-                self.pixelMetric(QtWidgets.QStyle.PM_TabBarIconSize)
-            r.setHeight(opt.fontMetrics.width(opt.text) + w)
-            r.moveBottom(opt.rect.bottom())
-            opt.rect = r
-        QtWidgets.QProxyStyle.drawControl(self, element, opt, painter, widget)
-
-
 class ToolWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -215,6 +202,10 @@ class ToolWindow(QWidget):
                 'highTemperatureAlarm': isHighTemperatureAlarm,
                 'isMaskAlarm': isMaskAlarm,
                 'temperature': self.parameterStorage['temperature'],
+                'movement': self.parameterStorage['movement'],
+                'movementVertical': self.parameterStorage['movementVertical'],
+                'width': self.parameterStorage['width'],
+                'height': self.parameterStorage['height']
             }
 
             # Enregistrer les paramètres dans le localStorage
@@ -235,10 +226,49 @@ class ToolWindow(QWidget):
         self.close()
 
     def createCameraTabContent(self):
-        camera_widget = QWidget()
-        camera_layout = QVBoxLayout(camera_widget)
-        camera_layout.addWidget(QLabel("Camera settings..."))
-        return camera_widget
+        camera_container = QWidget()
+        camera_layout = QVBoxLayout(camera_container)
+        self.configureLayout(camera_layout, 10, 10, 10, 10)
+        self.addControlPanel(camera_layout, "movement",
+                             "좌우 이동 설정: ", "왼쪽", "오른쪽", -1, 1)
+        self.addControlPanel(camera_layout, "movementVertical",
+                             "상하 이동 설정: ", "위", "아래", -1, 1)
+        self.addControlPanel(camera_layout, "width",
+                             "너 설정: ", "늘이기", "줄이기", -1, 1)
+        self.addControlPanel(camera_layout, "height",
+                             "상하 높이 설정: ", "늘이기", "줄이기", -1, 1)
+
+        return camera_container
+
+    def addControlPanel(self, layout, param_key, label_text, btn_left_text, btn_right_text, decrement, increment):
+        panel_widget = self.createPanelWidget("CameraPanel", 700, 60)
+        panel_layout = QVBoxLayout(panel_widget)
+        self.configureLayout(panel_layout, 10, 10, 10, 10)
+
+        controlDiv = QHBoxLayout()
+        controlLabel = QLabel(
+            label_text + str(self.parameterStorage[param_key]))
+        controlLabel.setObjectName(param_key + "Label")
+        controlBtnLeft = QPushButton(btn_left_text)
+        controlBtnLeft.clicked.connect(
+            lambda: self.adjustParameter(param_key, decrement, label_text))
+        controlBtnRight = QPushButton(btn_right_text)
+        controlBtnRight.clicked.connect(
+            lambda: self.adjustParameter(param_key, increment, label_text))
+        controlDiv.addWidget(controlLabel)
+        controlDiv.addWidget(controlBtnLeft)
+        controlDiv.addWidget(controlBtnRight)
+        panel_layout.addLayout(controlDiv)
+
+        layout.addWidget(panel_widget, alignment=Qt.AlignHCenter)
+
+    def adjustParameter(self, key, delta, label_text):
+        self.parameterStorage[key] += delta
+        self.updateLabel(key, label_text)
+
+    def updateLabel(self, key, label_text):
+        label = self.tabWidget.findChild(QLabel, key + "Label")
+        label.setText(label_text + str(self.parameterStorage[key]))
 
     def createScreenTabContent(self):
         screen_container = QWidget()
