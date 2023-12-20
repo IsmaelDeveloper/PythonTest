@@ -156,7 +156,7 @@ class MainApp(QWidget):
         self.menuAnimation.start()
 
     def loadStyleSheet(self):
-        with open('style.qss', 'r') as file:
+        with open('ressources/qss/style.qss', 'r') as file:
             self.setStyleSheet(file.read())
 
     def configureWebEngineSettings(self):
