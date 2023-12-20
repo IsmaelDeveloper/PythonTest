@@ -65,7 +65,7 @@ class MainApp(QWidget):
 
         self.buttons_view = QQuickWidget()
         self.buttons_view.rootContext().setContextProperty("homeApp", self)
-        self.buttons_view.setSource(QUrl("home.qml"))
+        self.buttons_view.setSource(QUrl("ressources/qml/home.qml"))
         main_layout.addWidget(self.buttons_view, 1)
 
         # Initialization of QMediaPlayer
