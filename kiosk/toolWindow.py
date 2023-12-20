@@ -401,7 +401,7 @@ class ToolWindow(QWidget):
 
         alarm_layout.addWidget(panel_widget, alignment=Qt.AlignHCenter)
 
-        panel_widget2 = self.createPanelWidget("AlarmPanel2", 700, 130)
+        panel_widget2 = self.createPanelWidget("AlarmPanel2", 700, 80)
         panel_layout2 = QVBoxLayout(panel_widget2)
         self.configureLayout(panel_layout2, 10, 10, 10, 10)
 
