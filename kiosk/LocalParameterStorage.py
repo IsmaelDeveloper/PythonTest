@@ -12,7 +12,7 @@ class LocalParameterStorage:
             with open(self.file_path, 'w') as file:
                 json.dump({'isDate': True, 'isName': True,
                           'isTemperature': True, 'highTemperatureAlarm': True, 'isMaskAlarm': True,
-                           'temperature': 37.0, 'movement': 15, 'movementVertical': 20, 'width': 800, 'height': 400, 'offsetTemperature': 0.0, "WDR": False}, file)
+                           'temperature': 37.0, 'movement': 15, 'movementVertical': 20, 'width': 800, 'height': 400, 'offsetTemperature': 0.0, "WDR": False, 'screenOption': True}, file)
 
     def get_parameters(self):
         with open(self.file_path, 'r') as file:

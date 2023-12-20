@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QSlider, QMessageBox, QSpacerItem, QCheckBox, QSizePolicy, QTextBrowser, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
+from PyQt5.QtWidgets import QSlider, QButtonGroup, QRadioButton, QMessageBox, QSpacerItem, QCheckBox, QSizePolicy, QTextBrowser, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
 from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets, QtCore, QtGui
 from LocalParameterStorage import LocalParameterStorage
@@ -207,7 +207,8 @@ class ToolWindow(QWidget):
                 'width': self.parameterStorage['width'],
                 'height': self.parameterStorage['height'],
                 'offsetTemperature': self.parameterStorage['offsetTemperature'],
-                'WDR': self.parameterStorage['WDR']
+                'WDR': self.parameterStorage['WDR'],
+                'screenOption': self.parameterStorage['screenOption']
             }
 
             # Enregistrer les paramètres dans le localStorage
@@ -231,6 +232,10 @@ class ToolWindow(QWidget):
         camera_container = QWidget()
         camera_layout = QVBoxLayout(camera_container)
         self.configureLayout(camera_layout, 10, 10, 10, 10)
+        self.addRadioButtonPanel(camera_layout, "screenOption",
+                                 "화면 설정 관리",
+                                 [("1", "실 영상만 보기"),
+                                  ("2", "영화상 동시 보기")])
         self.addCheckboxPanel(camera_layout, "WDR", "WDR 설정:")
         self.addControlPanel(camera_layout, "offsetTemperature",
                              "온도 오프셋 설정:", "+", "-", 0.5, -0.5)
@@ -244,6 +249,41 @@ class ToolWindow(QWidget):
                              "상하 높이 설정: ", "늘이기", "줄이기", -1, 1)
 
         return camera_container
+
+    def addRadioButtonPanel(self, layout, param_key, main_label_text, options):
+        panel_widget = self.createPanelWidget("RadioPanel", 700, 100)
+        panel_layout = QVBoxLayout(panel_widget)
+        self.configureLayout(panel_layout, 10, 10, 10, 10)
+
+        mainLabel = QLabel(main_label_text)
+        mainLabel.setObjectName(param_key + "MainLabel")
+        mainLabel.setStyleSheet("font-weight: bold;")  # Mettre en gras
+
+        panel_layout.addWidget(mainLabel)
+
+        spacer = QSpacerItem(20, 20, QSizePolicy.Minimum,
+                             QSizePolicy.Expanding)
+        panel_layout.addSpacerItem(spacer)
+        radioGroup = QButtonGroup(panel_widget)
+
+        for option_value, option_label in options:
+            radioDiv = QHBoxLayout()
+            radioButton = QRadioButton(option_label)
+            if (option_value == '1' and self.parameterStorage[param_key] == True) or (option_value == '2' and self.parameterStorage[param_key] == False):
+                radioButton.setChecked(True)
+            radioButton.setObjectName(param_key + option_value + "Radio")
+            radioGroup.addButton(radioButton)
+            radioDiv.addWidget(radioButton)
+
+            panel_layout.addLayout(radioDiv)
+
+        radioGroup.buttonClicked.connect(
+            lambda btn: self.setRadioParameter(param_key, btn))
+
+        layout.addWidget(panel_widget, alignment=Qt.AlignHCenter)
+
+    def setRadioParameter(self, key, button):
+        self.parameterStorage[key] = button.objectName().endswith("1Radio")
 
     def addCheckboxPanel(self, layout, param_key, label_text):
         panel_widget = self.createPanelWidget("CheckboxPanel", 700, 60)
