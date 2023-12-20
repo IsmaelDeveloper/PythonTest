@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QSlider, QMessageBox, QSpacerItem, QSizePolicy, QTextBrowser, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
+from PyQt5.QtWidgets import QSlider, QMessageBox, QSpacerItem, QCheckBox, QSizePolicy, QTextBrowser, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
 from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets, QtCore, QtGui
 from LocalParameterStorage import LocalParameterStorage
@@ -205,7 +205,9 @@ class ToolWindow(QWidget):
                 'movement': self.parameterStorage['movement'],
                 'movementVertical': self.parameterStorage['movementVertical'],
                 'width': self.parameterStorage['width'],
-                'height': self.parameterStorage['height']
+                'height': self.parameterStorage['height'],
+                'offsetTemperature': self.parameterStorage['offsetTemperature'],
+                'WDR': self.parameterStorage['WDR']
             }
 
             # Enregistrer les paramètres dans le localStorage
@@ -229,6 +231,9 @@ class ToolWindow(QWidget):
         camera_container = QWidget()
         camera_layout = QVBoxLayout(camera_container)
         self.configureLayout(camera_layout, 10, 10, 10, 10)
+        self.addCheckboxPanel(camera_layout, "WDR", "WDR 설정:")
+        self.addControlPanel(camera_layout, "offsetTemperature",
+                             "온도 오프셋 설정:", "+", "-", 0.5, -0.5)
         self.addControlPanel(camera_layout, "movement",
                              "좌우 이동 설정: ", "왼쪽", "오른쪽", -1, 1)
         self.addControlPanel(camera_layout, "movementVertical",
@@ -239,6 +244,44 @@ class ToolWindow(QWidget):
                              "상하 높이 설정: ", "늘이기", "줄이기", -1, 1)
 
         return camera_container
+
+    def addCheckboxPanel(self, layout, param_key, label_text):
+        panel_widget = self.createPanelWidget("CheckboxPanel", 700, 60)
+        panel_layout = QVBoxLayout(panel_widget)
+        self.configureLayout(panel_layout, 10, 10, 10, 10)
+
+        checkboxDiv = QHBoxLayout()
+        checkboxDiv.setSpacing(0)  # Éliminer l'espace entre les widgets
+
+        checkboxLabel = QLabel(label_text)
+        checkboxLabel.setObjectName(param_key + "Label")
+        checkboxLabel.setStyleSheet("font-weight: bold;")  # Mettre en gras
+
+        checkbox = QCheckBox()
+        checkbox.setChecked(self.parameterStorage[param_key])
+        checkbox.stateChanged.connect(
+            lambda: self.toggleCheckbox(param_key, checkbox))
+
+        checkbox_status_label = QLabel(
+            "ON" if self.parameterStorage[param_key] else "OFF")
+        checkbox_status_label.setObjectName(param_key + "StatusLabel")
+
+        checkboxDiv.addWidget(checkboxLabel)
+        checkboxDiv.addWidget(checkbox, 10, alignment=Qt.AlignRight)
+        checkboxDiv.addWidget(checkbox_status_label, 20,
+                              alignment=Qt.AlignLeft)
+        panel_layout.addLayout(checkboxDiv)
+
+        layout.addWidget(panel_widget, alignment=Qt.AlignHCenter)
+
+    def toggleCheckbox(self, key, checkbox):
+        status_label = self.tabWidget.findChild(QLabel, key + "StatusLabel")
+        if checkbox.isChecked():
+            status_label.setText("ON")
+            self.parameterStorage[key] = True
+        else:
+            status_label.setText("OFF")
+            self.parameterStorage[key] = False
 
     def addControlPanel(self, layout, param_key, label_text, btn_left_text, btn_right_text, decrement, increment):
         panel_widget = self.createPanelWidget("CameraPanel", 700, 60)

@@ -38,7 +38,8 @@ QWidget#ManagementPanel,
 QWidget#ScreenPanel,
 QWidget#AlarmPanel,
 QWidget#AlarmPanel2,
-QWidget#CameraPanel {
+QWidget#CameraPanel,
+QWidget#CheckboxPanel {
   border: 1px solid rgb(223, 223, 223);
 }
 
