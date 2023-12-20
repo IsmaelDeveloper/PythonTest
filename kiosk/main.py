@@ -7,9 +7,9 @@ from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtQuick import QQuickView
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings, QWebEngineProfile
 from PyQt5.QtGui import QIcon, QPainter
-from customTabBar import CustomTabBar
-from toolWindow import ToolWindow
-from LocalParameterStorage import LocalParameterStorage
+from utils.customTabBar import CustomTabBar
+from utils.toolWindow import ToolWindow
+from utils.LocalParameterStorage import LocalParameterStorage
 
 
 class WebEnginePage(QWebEnginePage):

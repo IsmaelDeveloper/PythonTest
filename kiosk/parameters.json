@@ -1,1 +1,1 @@
-{"isDate": true, "isName": true, "isTemperature": true, "highTemperatureAlarm": true, "isMaskAlarm": true, "temperature": 37.0, "movement": 15, "movementVertical": 20, "width": 800, "height": 400, "offsetTemperature": 0.0, "WDR": false, "screenOption": true}
+{"isDate": true, "isName": true, "isTemperature": true, "highTemperatureAlarm": true, "isMaskAlarm": false, "temperature": 37.0, "movement": 15, "movementVertical": 20, "width": 800, "height": 400, "offsetTemperature": 0.0, "WDR": true, "screenOption": true}

@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QSlider, QButtonGroup, QRadioButton, QMessageBox, QSpacerItem, QCheckBox, QSizePolicy, QTextBrowser, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
 from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets, QtCore, QtGui
-from LocalParameterStorage import LocalParameterStorage
+from utils.LocalParameterStorage import LocalParameterStorage
 import markdown
 
 
@@ -505,7 +505,8 @@ class ToolWindow(QWidget):
         license_layout = QVBoxLayout(license_widget)
 
         text_browser = QTextBrowser()
-        markdown_content = self.loadMarkdownContent("./license_markdown.md")
+        markdown_content = self.loadMarkdownContent(
+            "./ressources/license_markdown.md")
         html_content = markdown.markdown(markdown_content)
         text_browser.setHtml(html_content)
 
