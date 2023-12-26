@@ -54,8 +54,8 @@ class MainApp(QWidget):
     def initUI(self):
         self.parameter = LocalParameterStorage()
         self.setObjectName("mainWindow")
-        self.host = "http://192.168.0.3"
-        self.deviceId = "DailySafe_8afa173b69d9408dbcc90c77f75128a6"
+        self.host = "http://211.46.245.40:81"
+        self.deviceId = "DailySafe_51b51c691e4d4f379ce9a8c98585bff5"
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(0)
         main_layout.setContentsMargins(0, 0, 0, 0)
