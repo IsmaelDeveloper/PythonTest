@@ -498,7 +498,18 @@ class ToolWindow(QWidget):
         return management_container
 
     def onInitializeClicked(self):
-        print("Initialize clicked")
+        msgBox = QMessageBox(self)
+        msgBox.setWindowTitle("초기화 확인")
+        msgBox.setText("정말로 매개 변수를 초기화하시겠습니까?")
+        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msgBox.setDefaultButton(QMessageBox.No)
+        response = msgBox.exec_()
+
+        if response == QMessageBox.Yes:
+            self.parameter.reset_parameters()
+            self.close()
+        else:
+            pass
 
     def createLicenseTabContent(self):
         license_widget = QWidget()
