@@ -52,6 +52,7 @@ class MainApp(QWidget):
         self.countdown_button.clicked.connect(self.closeWebview)
 
     def initUI(self):
+        self.widget_states = None
         self.parameter = LocalParameterStorage()
         self.setObjectName("mainWindow")
         self.host = "http://211.46.245.40:81"
@@ -178,8 +179,10 @@ class MainApp(QWidget):
         QTimer.singleShot(100, self.setupCountdown)
 
     def openFullScreenWebView(self, url):
+        self.storeWidgetStates()
         self.clearCache()
         self.video_player.stop()
+        self.video_widget.setParent(None)
         self.video_widget.hide()
         self.qml_view.hide()
         self.buttons_view.hide()
@@ -193,6 +196,29 @@ class MainApp(QWidget):
         self.web_view.setUrl(QUrl(url))
         self.web_view.setWindowFlags(Qt.FramelessWindowHint)
         self.web_view.showFullScreen()
+
+    def storeWidgetStates(self):
+        self.widget_states = {
+            'video_widget': self.video_widget.isVisible(),
+            'qml_view': self.qml_view.isVisible(),
+            'buttons_view': self.buttons_view.isVisible(),
+            'web_view': self.web_view.isVisible()
+        }
+
+    def closeFullScreenWebView(self):
+        # close webview
+        self.web_view.setParent(None)
+        self.web_view.hide()
+
+        # resto widget states
+        self.video_widget.setVisible(self.widget_states['video_widget'])
+        self.qml_view.setVisible(self.widget_states['qml_view'])
+        self.buttons_view.setVisible(self.widget_states['buttons_view'])
+        self.web_view.setVisible(self.widget_states['web_view'])
+
+        # restore video lecture
+        if self.widget_states['video_widget']:
+            self.restoreVideoView()
 
     def setupCountdown(self):
         self.countdown_time = 50
