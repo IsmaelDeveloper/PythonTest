@@ -1,4 +1,5 @@
 import sys
+import os
 from PyQt5.QtWidgets import QLabel, QTabBar, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
 from PyQt5.QtCore import Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect
 from PyQt5.QtQuickWidgets import QQuickWidget
@@ -260,6 +261,9 @@ class MainApp(QWidget):
         self.web_view.hide()
 
     def restoreVideoView(self):
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        mp4_path = os.path.join(base_path, 'ressources', 'default_media.mp4')
+
         self.video_widget.setParent(self)
         main_layout = self.layout()
         main_layout.addWidget(self.video_widget, 3)
@@ -267,7 +271,7 @@ class MainApp(QWidget):
         self.video_widget.show()
         self.video_player.stop()
         self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(
-            "./ressources/default_media.mp4")))
+            mp4_path)))
         self.video_player.play()
 
     @pyqtSlot()
