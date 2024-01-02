@@ -234,7 +234,11 @@ class MainApp(QWidget):
 
         # restore video lecture
         if self.widget_states['video_widget']:
+            self.video_widget.setParent(self)
+            main_layout = self.layout()
+            main_layout.addWidget(self.video_widget, 3)
             self.restoreVideoView()
+        self.video_widget.show()
 
     def setupCountdown(self):
         self.countdown_time = 50
