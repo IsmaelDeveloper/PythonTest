@@ -90,8 +90,10 @@ class MainApp(QWidget):
         # Add QVideoWidget to the layout
         main_layout.addWidget(self.video_widget, 3)
 
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        mp4_path = os.path.join(base_path, 'ressources', 'default_media.mp4')
         self.video_player.setMedia(QMediaContent(
-            QUrl.fromLocalFile("./ressources/default_media.mp4")))
+            QUrl.fromLocalFile(mp4_path)))
         self.video_player.mediaStatusChanged.connect(self.onMediaStatusChanged)
         self.video_player.play()
 
