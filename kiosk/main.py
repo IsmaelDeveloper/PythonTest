@@ -222,23 +222,20 @@ class MainApp(QWidget):
         }
 
     def closeFullScreenWebView(self):
-        # close webview
         self.web_view.setParent(None)
         self.web_view.hide()
 
-        # resto widget states
-        self.video_widget.setVisible(self.widget_states['video_widget'])
+        self.video_widget.setParent(self)
+        main_layout = self.layout()
+
+        if self.widget_states['video_widget']:
+            main_layout.addWidget(self.video_widget, 3)
+            self.video_widget.show()
+            self.restoreVideoView()
+
         self.qml_view.setVisible(self.widget_states['qml_view'])
         self.buttons_view.setVisible(self.widget_states['buttons_view'])
         self.web_view.setVisible(self.widget_states['web_view'])
-
-        # restore video lecture
-        if self.widget_states['video_widget']:
-            self.video_widget.setParent(self)
-            main_layout = self.layout()
-            main_layout.addWidget(self.video_widget, 3)
-            self.restoreVideoView()
-        self.video_widget.show()
 
     def setupCountdown(self):
         self.countdown_time = 50
