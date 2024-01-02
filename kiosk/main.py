@@ -222,6 +222,7 @@ class MainApp(QWidget):
         }
 
     def closeFullScreenWebView(self):
+        self.web_view.setUrl(QUrl("about:blank"))
         self.web_view.setParent(None)
         self.web_view.hide()
 
