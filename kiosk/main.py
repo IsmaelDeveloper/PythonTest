@@ -13,10 +13,20 @@ from utils.LocalParameterStorage import LocalParameterStorage
 
 
 class WebEnginePage(QWebEnginePage):
+    closeViewRequested = pyqtSignal()
+
     def __init__(self, *args, **kwargs):
         super(WebEnginePage, self).__init__(*args, **kwargs)
         self.featurePermissionRequested.connect(
             self.onFeaturePermissionRequested)
+
+    def acceptNavigationRequest(self, url, nav_type, is_main_frame):
+        print(url)
+        if url.scheme() == "closewebview":
+            print("URL personnalisée détectée :", url.toString())
+            self.closeViewRequested.emit()
+            return False
+        return super(WebEnginePage, self).acceptNavigationRequest(url, nav_type, is_main_frame)
 
     def onFeaturePermissionRequested(self, url, feature):
         # Accorder automatiquement toutes les permissions nécessaires
@@ -192,6 +202,9 @@ class MainApp(QWidget):
             self.web_view.setParent(None)
         self.web_view = QWebEngineView()
         self.configureWebEngineSettings()
+        custom_page = WebEnginePage(self.web_view)
+        custom_page.closeViewRequested.connect(self.closeFullScreenWebView)
+        self.web_view.setPage(custom_page)
 
         self.web_view.setUrl(QUrl(url))
         self.web_view.setWindowFlags(Qt.FramelessWindowHint)
