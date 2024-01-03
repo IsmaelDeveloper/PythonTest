@@ -27,16 +27,16 @@ class WebcamWidget(QWidget):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_frame)
-        self.timer.start(100)  # Mettre à jour toutes les 100 ms
+        self.timer.start(100)
 
     def update_frame(self):
         ret, frame = self.video_capture.read()
         if ret:
-            # Redimensionner l'image pour qu'elle s'adapte au QLabel
+            # Resize image
             frame = cv2.resize(frame, (self.image_label.width(
             ), self.image_label.height()), interpolation=cv2.INTER_AREA)
 
-            # Convertir l'image en format Qt
+            # Convert Image to PyQt5 compatible format
             image = QImage(frame, frame.shape[1], frame.shape[0],
                            frame.strides[0], QImage.Format_RGB888).rgbSwapped()
             self.image_label.setPixmap(QPixmap.fromImage(image))
@@ -59,7 +59,6 @@ class WebEnginePage(QWebEnginePage):
         return super(WebEnginePage, self).acceptNavigationRequest(url, nav_type, is_main_frame)
 
     def onFeaturePermissionRequested(self, url, feature):
-        # Accorder automatiquement toutes les permissions nécessaires
         if feature in (QWebEnginePage.MediaAudioCapture,
                        QWebEnginePage.MediaVideoCapture,
                        QWebEnginePage.MediaAudioVideoCapture):
