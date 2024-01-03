@@ -1,16 +1,45 @@
 import sys
+import cv2
 import os
-from PyQt5.QtWidgets import QLabel, QTabBar, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
+from PyQt5.QtWidgets import QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
 from PyQt5.QtCore import Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect
 from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtQuick import QQuickView
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings, QWebEngineProfile
-from PyQt5.QtGui import QIcon, QPainter
+from PyQt5.QtGui import QImage, QPixmap
 from utils.customTabBar import CustomTabBar
 from utils.toolWindow import ToolWindow
 from utils.LocalParameterStorage import LocalParameterStorage
+
+
+class WebcamWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.video_capture = cv2.VideoCapture(0)
+
+        self.image_label = QLabel(self)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.image_label)
+        self.setLayout(layout)
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_frame)
+        self.timer.start(100)  # Mettre à jour toutes les 100 ms
+
+    def update_frame(self):
+        ret, frame = self.video_capture.read()
+        if ret:
+            # Redimensionner l'image pour qu'elle s'adapte au QLabel
+            frame = cv2.resize(frame, (self.image_label.width(
+            ), self.image_label.height()), interpolation=cv2.INTER_AREA)
+
+            # Convertir l'image en format Qt
+            image = QImage(frame, frame.shape[1], frame.shape[0],
+                           frame.strides[0], QImage.Format_RGB888).rgbSwapped()
+            self.image_label.setPixmap(QPixmap.fromImage(image))
 
 
 class WebEnginePage(QWebEnginePage):
@@ -58,9 +87,11 @@ class MainApp(QWidget):
         self.countdown_timer = QTimer(self)
         self.countdown_timer.timeout.connect(self.updateCountdown)
         self.countdown_button = QPushButton("닫기 (50)", self)
+
         self.countdown_button.setObjectName("webviewCloseButton")
         self.countdown_button.hide()
         self.countdown_button.clicked.connect(self.closeWebview)
+        self.isWebviewOnMp4Open = False
 
     def initUI(self):
         self.widget_states = None
@@ -72,8 +103,14 @@ class MainApp(QWidget):
         main_layout.setSpacing(0)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.qml_view = QQuickWidget()
-        main_layout.addWidget(self.qml_view, 4)
+        self.webcam_widget = WebcamWidget(self)
+        self.webcam_widget.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Expanding)
+        main_layout.addWidget(self.webcam_widget, 4)
+
+        spacer_top = QSpacerItem(
+            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        main_layout.addItem(spacer_top)
 
         self.buttons_view = QQuickWidget()
         self.buttons_view.rootContext().setContextProperty("homeApp", self)
@@ -85,6 +122,7 @@ class MainApp(QWidget):
 
         # Creation and configuration of QVideoWidget
         self.video_widget = QVideoWidget()
+
         self.video_widget.setAspectRatioMode(Qt.IgnoreAspectRatio)
         self.video_player.setVideoOutput(self.video_widget)
         # Add QVideoWidget to the layout
@@ -189,16 +227,19 @@ class MainApp(QWidget):
         self.video_widget.setParent(None)
         self.video_widget.hide()
         self.web_view.show()
+        self.isWebviewOnMp4Open = True
         QTimer.singleShot(100, self.setupCountdown)
 
     def openFullScreenWebView(self, url):
+        if self.isWebviewOnMp4Open:
+            self.closeWebview()
         self.storeWidgetStates()
         self.clearCache()
         self.video_player.stop()
         self.video_widget.setParent(None)
         self.video_widget.hide()
-        self.qml_view.hide()
         self.buttons_view.hide()
+        self.webcam_widget.hide()
 
         # reinitialize self.web_view
         if self.web_view.parent() is not None:
@@ -216,7 +257,6 @@ class MainApp(QWidget):
     def storeWidgetStates(self):
         self.widget_states = {
             'video_widget': self.video_widget.isVisible(),
-            'qml_view': self.qml_view.isVisible(),
             'buttons_view': self.buttons_view.isVisible(),
             'web_view': self.web_view.isVisible()
         }
@@ -234,7 +274,7 @@ class MainApp(QWidget):
             self.video_widget.show()
             self.restoreVideoView()
 
-        self.qml_view.setVisible(self.widget_states['qml_view'])
+        self.webcam_widget.show()
         self.buttons_view.setVisible(self.widget_states['buttons_view'])
         self.web_view.setVisible(self.widget_states['web_view'])
 
@@ -263,6 +303,7 @@ class MainApp(QWidget):
         self.restoreVideoView()
         self.web_view.setParent(None)
         self.web_view.hide()
+        self.isWebviewOnMp4Open = False
 
     def restoreVideoView(self):
         base_path = os.path.dirname(os.path.abspath(__file__))
