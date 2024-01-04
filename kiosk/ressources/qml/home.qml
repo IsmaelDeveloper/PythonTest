@@ -1,13 +1,16 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.3
 
-Item { 
+Item {  
     RowLayout { 
+        spacing : 0 
         Image {
+            
             id: dustButton
             source: "../images/bt_Dust.png"  
-            width: dustButton.sourceSize.width    
-            height: dustButton.sourceSize.height  
+            // scale: 0.8
+            width: dustButton.sourceSize.width 
+            height: dustButton.sourceSize.height 
             MouseArea {
                 anchors.fill: parent 
                 onClicked: homeApp.dustClicked()
@@ -19,8 +22,9 @@ Item {
         }
         Image {
             id: weatherButton
-            source: "../images/bt_weather.png"  
-            width: weatherButton.sourceSize.width    
+            source: "../images/bt_weather.png" 
+            // scale: 0.8
+            width: weatherButton.sourceSize.width  
             height: weatherButton.sourceSize.height  
             MouseArea {
                 anchors.fill: parent 
@@ -33,8 +37,9 @@ Item {
         Image {
             id: busButton
             source: "../images/bus_and_subway.png"  
-            width: busButton.sourceSize.width    
-            height: busButton.sourceSize.height  
+            // scale: 0.8
+            width: busButton.sourceSize.width   
+            height: busButton.sourceSize.height
             MouseArea {
                 anchors.fill: parent 
                 onClicked: homeApp.busClicked()
@@ -46,8 +51,9 @@ Item {
         Image {
             id: kiosButton
             source: "../images/kiosk_btn.png"  
-            width: kiosButton.sourceSize.width    
-            height: kiosButton.sourceSize.height  
+            // scale: 0.8
+            width: kiosButton.sourceSize.width  
+            height: kiosButton.sourceSize.height
             MouseArea {
                 anchors.fill: parent 
                 onClicked: homeApp.kioskClicked()
@@ -56,5 +62,19 @@ Item {
 
             }
         }
+        // Image {
+        //     id: callButton
+        //     source: "../images/bt_call.png"  
+        //     scale: 0.8
+        //     width: callButton.sourceSize.width 
+        //     height: callButton.sourceSize.height 
+        //     MouseArea {
+        //         anchors.fill: parent 
+        //         onClicked: homeApp.kioskClicked()
+        //         onEntered: callButton.source = "../images/bt_call_hover.png"
+        //         onExited: callButton.source = "../images/bt_call.png"
+
+        //     }
+        // }
     }
 }
