@@ -20,8 +20,12 @@ class WebcamWidget(QWidget):
         self.video_capture = cv2.VideoCapture(0)
 
         self.image_label = QLabel(self)
+        self.image_label.setSizePolicy(
+            QSizePolicy.Ignored, QSizePolicy.Ignored)
+        self.image_label.setScaledContents(True)
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.image_label)
         self.setLayout(layout)
 
