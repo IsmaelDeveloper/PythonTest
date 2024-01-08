@@ -3,6 +3,9 @@ from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets, QtCore, QtGui
 from utils.LocalParameterStorage import LocalParameterStorage
 import markdown
+import os
+import platform
+import subprocess
 
 
 class ToggleSwitch(QSlider):
@@ -479,8 +482,24 @@ class ToolWindow(QWidget):
         management_container = QWidget()
         management_layout = QVBoxLayout(management_container)
         management_layout.setAlignment(Qt.AlignTop)
-        management_layout.setContentsMargins(
-            10, 10, 10, 10)
+        management_layout.setContentsMargins(10, 10, 10, 10)
+
+        initialize_panel = self.createManagementPanel(
+            "시스템 초기화", self.onInitializeClicked)
+        management_layout.addWidget(
+            initialize_panel, alignment=Qt.AlignHCenter)
+
+        shutdown_panel = self.createManagementPanel(
+            "컴퓨터 종료", self.onShutdownClicked)
+        management_layout.addWidget(shutdown_panel, alignment=Qt.AlignHCenter)
+
+        reboot_panel = self.createManagementPanel(
+            "컴퓨터 재시작", self.onRebootClicked)
+        management_layout.addWidget(reboot_panel, alignment=Qt.AlignHCenter)
+
+        return management_container
+
+    def createManagementPanel(self, button_text, button_slot):
         panel_widget = QWidget()
         panel_widget.setFixedSize(400, 100)
         panel_widget.setObjectName("ManagementPanel")
@@ -488,14 +507,50 @@ class ToolWindow(QWidget):
         panel_layout = QVBoxLayout(panel_widget)
         panel_layout.setContentsMargins(10, 10, 10, 10)
 
-        settings_button = QPushButton("시스템 초기화")
-        settings_button.setObjectName("InitializeButton")
-        settings_button.clicked.connect(self.onInitializeClicked)
-        panel_layout.addWidget(settings_button, alignment=Qt.AlignCenter)
+        button = QPushButton(button_text)
+        button.setObjectName("ButtonManagement")
+        button.clicked.connect(button_slot)
+        panel_layout.addWidget(button, alignment=Qt.AlignCenter)
 
-        management_layout.addWidget(panel_widget, alignment=Qt.AlignHCenter)
+        return panel_widget
 
-        return management_container
+    def onRebootClicked(self):
+        reply = QMessageBox.question(self, '확인',
+                                     "정말 컴퓨터를 다시 시작하시겠습니까?",
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            os_type = platform.system()
+
+            try:
+                if os_type == 'Windows':
+                    subprocess.run(["shutdown", "/r", "/t", "0"])
+                elif os_type == 'Linux':
+                    subprocess.run(["reboot"])
+                else:
+                    print("wrong os type, reboot command not executed")
+            except Exception as e:
+                print(f"error: {e}")
+
+    def onShutdownClicked(self):
+        reply = QMessageBox.question(self, '확인',
+                                     "정말 컴퓨터 끄시겠습니까?",
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            os_type = platform.system()
+
+            try:
+                if os_type == 'Windows':
+                    subprocess.run(["shutdown", "/s", "/t", "0"])
+                elif os_type == 'Linux':
+                    subprocess.run(["shutdown", "-h", "now"])
+                else:
+                    print(
+                        "wrong os type, shutdown command not executed")
+            except Exception as e:
+                print(
+                    f"error: {e}")
 
     def onInitializeClicked(self):
         msgBox = QMessageBox(self)

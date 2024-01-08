@@ -44,7 +44,7 @@ QWidget#RadioPanel {
   border: 1px solid rgb(223, 223, 223);
 }
 
-QPushButton#InitializeButton {
+QPushButton#ButtonManagement {
   margin-top: 10px;
   height: 35px;
   width: 100px;
@@ -54,7 +54,7 @@ QPushButton#InitializeButton {
   color: orange;
 }
 
-QPushButton#InitializeButton:hover {
+QPushButton#ButtonManagement:hover {
   background-color: rgba(255, 255, 255, 0.479);
 }
 
