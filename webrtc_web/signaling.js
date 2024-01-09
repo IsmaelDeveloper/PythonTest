@@ -1,9 +1,16 @@
 const express = require("express");
-const http = require("http");
+const https = require("https");
 const socketIo = require("socket.io");
 const cors = require("cors");
+const fs = require("fs");
 
 const app = express();
+const certPath = "./cert/";
+const privateKey = fs.readFileSync(certPath + "lo.cal.com.key", "utf8");
+const certificate = fs.readFileSync(certPath + "lo.cal.com.crt", "utf8");
+const credentials = { key: privateKey, cert: certificate };
+const httpsServer = https.createServer(credentials, app);
+
 app.use(
   cors({
     origin: "*",
@@ -11,8 +18,7 @@ app.use(
   })
 );
 app.use(express.urlencoded({ extended: true }));
-const server = http.createServer(app);
-const io = socketIo(server, {
+const io = socketIo(httpsServer, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
@@ -104,6 +110,6 @@ function broadcastAnswer(answerData) {
 }
 
 const PORT = 6969;
-server.listen(PORT, () => {
+httpsServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
