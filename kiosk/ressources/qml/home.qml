@@ -20,20 +20,20 @@ Item {
             Layout.alignment: Qt.AlignLeft
             Layout.leftMargin: 50
         }
-        Image {
-            id: weatherButton
-            source: "../images/bt_weather.png" 
-            // scale: 0.8
-            width: weatherButton.sourceSize.width  
-            height: weatherButton.sourceSize.height  
-            MouseArea {
-                anchors.fill: parent 
-                onClicked: homeApp.weatherClicked()
-                onEntered: weatherButton.source = "../images/bt_weather_hover.png"
-                onExited: weatherButton.source = "../images/bt_weather.png"
+        // Image {
+        //     id: weatherButton
+        //     source: "../images/bt_weather.png" 
+        //     // scale: 0.8
+        //     width: weatherButton.sourceSize.width  
+        //     height: weatherButton.sourceSize.height  
+        //     MouseArea {
+        //         anchors.fill: parent 
+        //         onClicked: homeApp.weatherClicked()
+        //         onEntered: weatherButton.source = "../images/bt_weather_hover.png"
+        //         onExited: weatherButton.source = "../images/bt_weather.png"
 
-            }
-        }
+        //     }
+        // }
         Image {
             id: busButton
             source: "../images/bus_and_subway.png"  
@@ -62,19 +62,19 @@ Item {
 
             }
         }
-        // Image {
-        //     id: callButton
-        //     source: "../images/bt_call.png"  
-        //     scale: 0.8
-        //     width: callButton.sourceSize.width 
-        //     height: callButton.sourceSize.height 
-        //     MouseArea {
-        //         anchors.fill: parent 
-        //         onClicked: homeApp.kioskClicked()
-        //         onEntered: callButton.source = "../images/bt_call_hover.png"
-        //         onExited: callButton.source = "../images/bt_call.png"
+        Image {
+            id: callButton
+            source: "../images/bt_call.png"  
+            // scale: 0.8
+            width: callButton.sourceSize.width 
+            height: callButton.sourceSize.height 
+            MouseArea {
+                anchors.fill: parent 
+                onClicked: homeApp.callClicked()
+                onEntered: callButton.source = "../images/bt_call_hover.png"
+                onExited: callButton.source = "../images/bt_call.png"
 
-        //     }
-        // }
+            }
+        }
     }
 }

@@ -77,6 +77,7 @@ class MainApp(QWidget):
     weatherClicked = pyqtSignal()
     busClicked = pyqtSignal()
     kioskClicked = pyqtSignal()
+    callClicked = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -85,6 +86,7 @@ class MainApp(QWidget):
         self.weatherClicked.connect(self.onWeatherClicked)
         self.busClicked.connect(self.onBusClicked)
         self.kioskClicked.connect(self.onKioskClicked)
+        self.callClicked.connect(self.onCallClicked)
 
         # set Timer for close btn
         self.countdown_timer = QTimer(self)
@@ -349,6 +351,11 @@ class MainApp(QWidget):
     @pyqtSlot()
     def onKioskClicked(self):
         self.openFullScreenWebView(self.host + "/kiosk/")
+
+    @pyqtSlot()
+    def onCallClicked(self):
+        self.openFullScreenWebView(
+            "https://musicen.com:6968/userInterface.html?username=test")
 
 
 if __name__ == '__main__':
