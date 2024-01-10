@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function sendOfferToServer(offerData) {
-    fetch("http://" + serverUrl + "/offer", {
+    fetch(serverUrl + "/offer", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",

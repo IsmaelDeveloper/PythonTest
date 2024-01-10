@@ -1,8 +1,10 @@
 import sys
 import cv2
 import os
+import socketio
+import ssl
 from PyQt5.QtWidgets import QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
-from PyQt5.QtCore import Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect
+from PyQt5.QtCore import QThread, Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect
 from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -45,6 +47,15 @@ class WebcamWidget(QWidget):
                            frame.strides[0], QImage.Format_RGB888).rgbSwapped()
             self.image_label.setPixmap(QPixmap.fromImage(image))
 
+    def releaseCamera(self):
+        self.timer.stop()
+        self.video_capture.release()
+
+    def reactivateCamera(self):
+        if not self.video_capture.isOpened():
+            self.video_capture = cv2.VideoCapture(0)
+            self.timer.start(100)
+
 
 class WebEnginePage(QWebEnginePage):
     closeViewRequested = pyqtSignal()
@@ -72,6 +83,28 @@ class WebEnginePage(QWebEnginePage):
             super(WebEnginePage, self).onFeaturePermissionRequested(url, feature)
 
 
+class SocketIOThread(QThread):
+    def __init__(self, url, username):
+        QThread.__init__(self)
+        self.url = url
+        self.username = username
+
+    def run(self):
+        sio = socketio.Client(ssl_verify=False)
+
+        @sio.event
+        def connect():
+            print("Connected to server")
+            sio.emit('register', {'username': self.username})
+
+        @sio.event
+        def disconnect():
+            print("Disconnected from server")
+
+        sio.connect(self.url)
+        sio.wait()
+
+
 class MainApp(QWidget):
     dustClicked = pyqtSignal()
     weatherClicked = pyqtSignal()
@@ -97,6 +130,9 @@ class MainApp(QWidget):
         self.countdown_button.hide()
         self.countdown_button.clicked.connect(self.closeWebview)
         self.isWebviewOnMp4Open = False
+        self.socket_thread = SocketIOThread(
+            'https://210.180.118.158:6969', 'test')
+        self.socket_thread.start()
 
     def initUI(self):
         self.widget_states = None
@@ -279,6 +315,7 @@ class MainApp(QWidget):
             self.video_widget.show()
             self.restoreVideoView()
 
+        self.webcam_widget.reactivateCamera()
         self.webcam_widget.show()
         self.buttons_view.setVisible(self.widget_states['buttons_view'])
         self.web_view.setVisible(self.widget_states['web_view'])
@@ -354,6 +391,7 @@ class MainApp(QWidget):
 
     @pyqtSlot()
     def onCallClicked(self):
+        self.webcam_widget.releaseCamera()
         self.openFullScreenWebView(
             "https://musicen.com:6968/userInterface.html?username=test")
 
