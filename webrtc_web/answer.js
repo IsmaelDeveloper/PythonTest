@@ -56,6 +56,10 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   socket.on("getOffer", function (data) {
+    getOffer(data);
+  });
+
+  function getOffer(data) {
     if (data.target === username) {
       var callerUsername = data.from; // Ajout du nom de l'utilisateur appelant
       displayCallPopup(callerUsername);
@@ -82,8 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // Vous pouvez ajouter ici une logique pour informer l'autre utilisateur que l'appel a été décliné
       };
     }
-  });
-
+  }
   function displayCallPopup(callerUsername) {
     document.getElementById(
       "callPopup"

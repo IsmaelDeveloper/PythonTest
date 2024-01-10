@@ -330,7 +330,7 @@ class MainApp(QWidget):
     def sendOfferToWebView(self, offerData):
         # Convertir l'offre en chaîne JSON pour JavaScript
         offerJson = json.dumps(offerData)
-        jsCode = f"receiveOfferFromPyQt({offerJson})"
+        jsCode = f"getOffer({offerJson})"
         self.web_view.page().runJavaScript(jsCode)
 
     def storeWidgetStates(self):
