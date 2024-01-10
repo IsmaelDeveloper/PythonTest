@@ -67,8 +67,8 @@ button:hover {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 70vw; /* 70% de la largeur de la fenêtre */
-  height: 80vh; /* 70% de la hauteur de la fenêtre */
+  width: 70vw;
+  height: 80vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -80,31 +80,31 @@ button:hover {
 }
 
 .local-overlay {
-  position: absolute; /* Positionnement absolu par rapport à videoPopup */
-  top: 20px; /* Espacement depuis le haut */
-  right: 20px; /* Espacement depuis la droite */
-  width: 40% !important; /* Largeur de la vidéo locale */
-  height: auto !important; /* Hauteur ajustée automatiquement */
-  border: 2px solid #ffff; /* Bordure optionnelle pour la distinction */
-  border-radius: 10px; /* Coins arrondis pour l'esthétique */
-  z-index: 200; /* S'assurer qu'il est au-dessus de remoteVideo */
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40% !important;
+  height: auto !important;
+  border: 2px solid #ffff;
+  border-radius: 10px;
+  z-index: 200;
 }
 
 #videoPopup > video {
-  border-radius: 10px; /* Coins arrondis pour l'esthétique */
-  width: 100%; /* Remplir la largeur de la popup */
-  height: 90%; /* Prendre la majorité de la hauteur de la popup */
-  object-fit: cover; /* Conserver le ratio d'aspect sans étirer la vidéo */
+  border-radius: 10px;
+  width: 100%;
+  height: 90%;
+  object-fit: cover;
 }
 
 #closeVideo {
-  width: auto; /* Taille automatique basée sur le contenu */
-  margin-top: 10px; /* Espacement entre la vidéo et le bouton */
+  width: auto;
+  margin-top: 10px;
 }
 
 #buttonContainer {
-  width: 100%; /* Utiliser toute la largeur de la popup */
+  width: 100%;
   display: flex;
-  justify-content: center; /* Centrer le bouton horizontalement */
-  margin-top: 20px; /* Espacement entre la vidéo et le bouton */
+  justify-content: center;
+  margin-top: 20px;
 }
