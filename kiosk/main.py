@@ -3,7 +3,8 @@ import cv2
 import os
 import socketio
 import ssl
-from PyQt5.QtWidgets import QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
+import json
+from PyQt5.QtWidgets import QMessageBox, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
 from PyQt5.QtCore import QThread, Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect
 from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -14,6 +15,7 @@ from PyQt5.QtGui import QImage, QPixmap
 from utils.customTabBar import CustomTabBar
 from utils.toolWindow import ToolWindow
 from utils.LocalParameterStorage import LocalParameterStorage
+from urllib.parse import quote
 
 
 class WebcamWidget(QWidget):
@@ -84,6 +86,8 @@ class WebEnginePage(QWebEnginePage):
 
 
 class SocketIOThread(QThread):
+    offerReceived = pyqtSignal(dict)
+
     def __init__(self, url, username):
         QThread.__init__(self)
         self.url = url
@@ -101,6 +105,10 @@ class SocketIOThread(QThread):
         def disconnect():
             print("Disconnected from server")
 
+        @sio.event
+        def getOffer(data):
+            self.offerReceived.emit(data)
+
         sio.connect(self.url)
         sio.wait()
 
@@ -111,6 +119,7 @@ class MainApp(QWidget):
     busClicked = pyqtSignal()
     kioskClicked = pyqtSignal()
     callClicked = pyqtSignal()
+    openWebViewSignal = pyqtSignal(dict)
 
     def __init__(self):
         super().__init__()
@@ -131,15 +140,20 @@ class MainApp(QWidget):
         self.countdown_button.clicked.connect(self.closeWebview)
         self.isWebviewOnMp4Open = False
         self.socket_thread = SocketIOThread(
-            'https://210.180.118.158:6969', 'test')
+            'https://210.180.118.158:6969', self.username)
         self.socket_thread.start()
+        self.socket_thread.offerReceived.connect(self.handleOffer)
+        self.openWebViewSignal.connect(self.openFullScreenWebViewSlot)
 
     def initUI(self):
         self.widget_states = None
         self.parameter = LocalParameterStorage()
         self.setObjectName("mainWindow")
-        self.host = "http://211.46.245.40:81"
         self.deviceId = "DailySafe_51b51c691e4d4f379ce9a8c98585bff5"
+        self.username = "test"
+        self.host = "http://211.46.245.40:81"
+        self.callingWebviewUrl = "https://musicen.com:6968/userInterface.html?username=" + self.username
+
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(0)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -182,6 +196,20 @@ class MainApp(QWidget):
 
         self.loadStyleSheet()
         self.addSlideMenu()
+
+    def handleOffer(self, offerData):
+        reply = QMessageBox.question(self, '전화',
+                                     "누군가 자네를 부르고 있네",
+                                     QMessageBox.Yes | QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            self.openWebViewSignal.emit(offerData)
+
+    @pyqtSlot(dict)
+    def openFullScreenWebViewSlot(self, offerData):
+        self.webcam_widget.releaseCamera()
+        url = self.callingWebviewUrl
+        self.openFullScreenWebView(url, offerData)
 
     def addSlideMenu(self):
         menu_width = 250
@@ -271,7 +299,7 @@ class MainApp(QWidget):
         self.isWebviewOnMp4Open = True
         QTimer.singleShot(100, self.setupCountdown)
 
-    def openFullScreenWebView(self, url):
+    def openFullScreenWebView(self, url, offerData=None):
         if self.isWebviewOnMp4Open:
             self.closeWebview()
         self.storeWidgetStates()
@@ -294,6 +322,16 @@ class MainApp(QWidget):
         self.web_view.setUrl(QUrl(url))
         self.web_view.setWindowFlags(Qt.FramelessWindowHint)
         self.web_view.showFullScreen()
+
+        if offerData is not None:
+            self.web_view.loadFinished.connect(
+                lambda: self.sendOfferToWebView(offerData))
+
+    def sendOfferToWebView(self, offerData):
+        # Convertir l'offre en chaîne JSON pour JavaScript
+        offerJson = json.dumps(offerData)
+        jsCode = f"receiveOfferFromPyQt({offerJson})"
+        self.web_view.page().runJavaScript(jsCode)
 
     def storeWidgetStates(self):
         self.widget_states = {
@@ -393,7 +431,7 @@ class MainApp(QWidget):
     def onCallClicked(self):
         self.webcam_widget.releaseCamera()
         self.openFullScreenWebView(
-            "https://musicen.com:6968/userInterface.html?username=test")
+            self.callingWebviewUrl)
 
 
 if __name__ == '__main__':
