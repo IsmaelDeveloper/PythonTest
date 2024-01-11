@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
   socket.on("getOffer", function (data) {
     getOffer(data);
   });
-
+  window.getOffer = getOffer;
   function getOffer(data) {
     if (data.target === username) {
       var callerUsername = data.from; // Ajout du nom de l'utilisateur appelant

@@ -143,6 +143,7 @@ class MainApp(QWidget):
             'https://210.180.118.158:6969', self.username)
         self.socket_thread.start()
         self.socket_thread.offerReceived.connect(self.handleOffer)
+        self.offerSent = False
         self.openWebViewSignal.connect(self.openFullScreenWebViewSlot)
 
     def initUI(self):
@@ -323,15 +324,18 @@ class MainApp(QWidget):
         self.web_view.setWindowFlags(Qt.FramelessWindowHint)
         self.web_view.showFullScreen()
 
+        self.offerSent = False
+
         if offerData is not None:
             self.web_view.loadFinished.connect(
                 lambda: self.sendOfferToWebView(offerData))
 
     def sendOfferToWebView(self, offerData):
-        # Convertir l'offre en chaîne JSON pour JavaScript
-        offerJson = json.dumps(offerData)
-        jsCode = f"getOffer({offerJson})"
-        self.web_view.page().runJavaScript(jsCode)
+        if not self.offerSent:
+            offerJson = json.dumps(offerData)
+            jsCode = f"window.getOffer({offerJson})"
+            self.web_view.page().runJavaScript(jsCode)
+            self.offerSent = True
 
     def storeWidgetStates(self):
         self.widget_states = {
