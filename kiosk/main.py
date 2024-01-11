@@ -199,12 +199,12 @@ class MainApp(QWidget):
         self.addSlideMenu()
 
     def handleOffer(self, offerData):
-        reply = QMessageBox.question(self, '전화',
-                                     "누군가 자네를 부르고 있네",
-                                     QMessageBox.Yes | QMessageBox.No)
-
-        if reply == QMessageBox.Yes:
-            self.openWebViewSignal.emit(offerData)
+        if offerData.get("target") == self.username:
+            reply = QMessageBox.question(
+                self, '전화', "누군가 자네를 부르고 있네", QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                QTimer.singleShot(
+                    1000, lambda: self.openWebViewSignal.emit(offerData))
 
     @pyqtSlot(dict)
     def openFullScreenWebViewSlot(self, offerData):
@@ -328,12 +328,11 @@ class MainApp(QWidget):
 
         if offerData is not None:
             self.web_view.loadFinished.connect(
-                lambda: self.sendOfferToWebView(offerData))
+                lambda:  self.sendOfferToWebView(offerData))
 
     def sendOfferToWebView(self, offerData):
         if not self.offerSent:
-            offerJson = json.dumps(offerData)
-            jsCode = f"window.getOffer({offerJson})"
+            jsCode = f"window.getOffer({offerData})"
             self.web_view.page().runJavaScript(jsCode)
             self.offerSent = True
 
