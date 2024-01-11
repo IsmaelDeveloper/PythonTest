@@ -1,5 +1,7 @@
 // config.js
-export const serverUrl = "https://210.180.118.158:6969";
+//export const serverUrl = "192.168.0.136:6969";
+export const serverUrl = `${location.protocol}//${location.hostname}:6969`;
+
 export const rtcConfig = {
   iceServers: [
     {
