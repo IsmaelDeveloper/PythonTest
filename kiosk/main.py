@@ -94,6 +94,7 @@ class WebEnginePage(QWebEnginePage):
 
 class SocketIOThread(QThread):
     offerReceived = pyqtSignal(dict)
+    iceCandidateReceived = pyqtSignal(dict)
 
     def __init__(self, url, username):
         QThread.__init__(self)
@@ -116,6 +117,10 @@ class SocketIOThread(QThread):
         def getOffer(data):
             self.offerReceived.emit(data)
 
+        @sio.event
+        def receiveCandidateInAnswer(data):
+            self.iceCandidateReceived.emit(data)
+
         sio.connect(self.url)
         sio.wait()
 
@@ -137,6 +142,8 @@ class MainApp(QWidget):
         self.kioskClicked.connect(self.onKioskClicked)
         self.callClicked.connect(self.onCallClicked)
 
+        self.iceCandidatesQueue = []
+
         # set Timer for close btn
         self.countdown_timer = QTimer(self)
         self.countdown_timer.timeout.connect(self.updateCountdown)
@@ -150,6 +157,9 @@ class MainApp(QWidget):
             'https://210.180.118.158:6969', self.username)
         self.socket_thread.start()
         self.socket_thread.offerReceived.connect(self.handleOffer)
+        self.socket_thread.iceCandidateReceived.connect(
+            lambda data: self.iceCandidatesQueue.append(data)
+        )
         self.offerSent = False
         self.openWebViewSignal.connect(self.openFullScreenWebViewSlot)
 
@@ -211,13 +221,17 @@ class MainApp(QWidget):
                 self, '전화', "누군가 자네를 부르고 있네", QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 QTimer.singleShot(
-                    1000, lambda: self.openWebViewSignal.emit(offerData))
+                    2000, lambda: self.openWebViewSignal.emit(offerData))
 
     @pyqtSlot(dict)
     def openFullScreenWebViewSlot(self, offerData):
         self.webcam_widget.releaseCamera()
         url = self.callingWebviewUrl
         self.openFullScreenWebView(url, offerData)
+
+    def sendIceCandidateToWebView(self, candidateData):
+        jsCode = f"window.receiveCandidateInAnswer({json.dumps(candidateData)})"
+        self.web_view.page().runJavaScript(jsCode)
 
     def addSlideMenu(self):
         menu_width = 250
@@ -339,6 +353,10 @@ class MainApp(QWidget):
 
     def sendOfferToWebView(self, offerData):
         if not self.offerSent:
+            for candidate in self.iceCandidatesQueue:
+                print("Sending candidate to webview")
+                self.sendIceCandidateToWebView(candidate)
+            self.iceCandidatesQueue.clear()
             jsCode = f"window.getOffer({offerData})"
             self.web_view.page().runJavaScript(jsCode)
             self.offerSent = True

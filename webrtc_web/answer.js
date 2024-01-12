@@ -20,6 +20,12 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   socket.on("receiveCandidateInAnswer", function (data) {
+    receiveCandidateInAnswer(data);
+  });
+
+  window.receiveCandidateInAnswer = receiveCandidateInAnswer;
+
+  function receiveCandidateInAnswer(data) {
     if (data.target === username) {
       var candidate = new RTCIceCandidate(data.candidate);
       if (localConnection.remoteDescription) {
@@ -28,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
         iceCandidateQueue.push(candidate);
       }
     }
-  });
+  }
 
   // Enregistrement des événements d'état ICE
   localConnection.oniceconnectionstatechange = function (event) {
