@@ -84,6 +84,13 @@ class WebEnginePage(QWebEnginePage):
         else:
             super(WebEnginePage, self).onFeaturePermissionRequested(url, feature)
 
+    def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
+        if level == QWebEnginePage.JavaScriptConsoleMessageLevel.ErrorMessageLevel:
+            print(
+                f"JS Error: {message} (line: {lineNumber}, source: {sourceID})")
+        else:
+            print(f"JS: {message} (line: {lineNumber}, source: {sourceID})")
+
 
 class SocketIOThread(QThread):
     offerReceived = pyqtSignal(dict)
