@@ -216,12 +216,13 @@ class MainApp(QWidget):
         self.addSlideMenu()
 
     def handleOffer(self, offerData):
-        if offerData.get("target") == self.username:
-            reply = QMessageBox.question(
-                self, '전화', "누군가 자네를 부르고 있네", QMessageBox.Yes | QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                QTimer.singleShot(
-                    2000, lambda: self.openWebViewSignal.emit(offerData))
+        if self.offerSent == False:
+            if offerData.get("target") == self.username:
+                reply = QMessageBox.question(
+                    self, '전화', "누군가 자네를 부르고 있네", QMessageBox.Yes | QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    QTimer.singleShot(
+                        2000, lambda: self.openWebViewSignal.emit(offerData))
 
     @pyqtSlot(dict)
     def openFullScreenWebViewSlot(self, offerData):
