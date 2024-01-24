@@ -16,47 +16,7 @@ from utils.customTabBar import CustomTabBar
 from utils.toolWindow import ToolWindow
 from utils.LocalParameterStorage import LocalParameterStorage
 from urllib.parse import quote
-
-
-class WebcamWidget(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.video_capture = cv2.VideoCapture(0)
-
-        self.image_label = QLabel(self)
-        self.image_label.setSizePolicy(
-            QSizePolicy.Ignored, QSizePolicy.Ignored)
-        self.image_label.setScaledContents(True)
-
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.image_label)
-        self.setLayout(layout)
-
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_frame)
-        self.timer.start(100)
-
-    def update_frame(self):
-        ret, frame = self.video_capture.read()
-        if ret:
-            # Resize image
-            frame = cv2.resize(frame, (self.image_label.width(
-            ), self.image_label.height()), interpolation=cv2.INTER_AREA)
-
-            # Convert Image to PyQt5 compatible format
-            image = QImage(frame, frame.shape[1], frame.shape[0],
-                           frame.strides[0], QImage.Format_RGB888).rgbSwapped()
-            self.image_label.setPixmap(QPixmap.fromImage(image))
-
-    def releaseCamera(self):
-        self.timer.stop()
-        self.video_capture.release()
-
-    def reactivateCamera(self):
-        if not self.video_capture.isOpened():
-            self.video_capture = cv2.VideoCapture(0)
-            self.timer.start(100)
+from utils.faceRecognition import WebcamWidget
 
 
 class WebEnginePage(QWebEnginePage):

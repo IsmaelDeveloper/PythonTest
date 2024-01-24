@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 12
+names: ['b5', 'b6', 'b7', 'b8', 'c5', 'c6', 'c7', 'c8', 's5', 's6', 's7', 's8']
+
+roboflow:
+  workspace: incheon-national-university-5ndlt
+  project: precast-concrete
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/incheon-national-university-5ndlt/precast-concrete/dataset/2
