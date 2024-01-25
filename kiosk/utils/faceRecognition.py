@@ -19,7 +19,7 @@ class WebcamWidget(QWidget):
         self.face_similarity_model = InceptionResnetV1(
             pretrained='vggface2').eval()
 
-        self.thermal_cam = cv2.VideoCapture(1)
+        self.thermal_cam = cv2.VideoCapture(2)
         self.thermal_cam.set(cv2.CAP_PROP_FOURCC,
                              cv2.VideoWriter.fourcc('Y', '1', '6', ' '))
         self.thermal_cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
@@ -108,7 +108,13 @@ class WebcamWidget(QWidget):
     def releaseCamera(self):
         self.timer.stop()
         self.video_capture.release()
+        self.thermal_cam.release()
 
     def reactivateCamera(self):
         if not self.video_capture.isOpened():
             self.video_capture = cv2.VideoCapture(0)
+        if (not self.thermal_cam.isOpened()):
+            self.thermal_cam = cv2.VideoCapture(2)
+            self.thermal_cam.set(cv2.CAP_PROP_FOURCC,
+                                 cv2.VideoWriter.fourcc('Y', '1', '6', ' '))
+            self.thermal_cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
