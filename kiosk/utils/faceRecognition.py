@@ -51,6 +51,15 @@ class WebcamWidget(QWidget):
         self.timer.start(100)
         self.mse_choose = 0.9
 
+    def ompensateHumanTemperature(self, tempC):
+        if 20.0 < tempC and tempC <= 37.5:
+            return tempC - (0.9 * (tempC - 36.5) + 0.2)
+        elif 37.5 < tempC and tempC <= 40.0:
+            return tempC - (0.9 * (tempC - 37.3))
+        elif tempC > 40.0:
+            return tempC
+        return tempC
+
     def convert_raw_to_celsius(self, raw):
 
         temperature_celsius = raw / 100 - self.CONST_KELVIN2CELSIUS
@@ -91,13 +100,11 @@ class WebcamWidget(QWidget):
                 result = self.get_result(face_img)
                 low_mse_value, low_mse_person_name = self.get_mse_value_person(
                     result, self.embed_dict)
-                if low_mse_value <= self.mse_choose:
-                    color = (0, 255, 0)
-                else:
-                    color = (0, 0, 255)
+                color = (0, 255, 0) if low_mse_value <= self.mse_choose else (
+                    0, 0, 255)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                temp_1 = self.convert_raw_to_celsius(
-                    frame_thermal[int((x1+x2)/2/10.7)][int((y1+y2)/2/8)])
+                temp_1 = self.ompensateHumanTemperature(self.convert_raw_to_celsius(
+                    frame_thermal[int((x1+x2)/2/10.7)][int((y1+y2)/2/8)]))
                 text = f'Name: {low_mse_person_name}, temp: {temp_1:.2f}' if low_mse_value <= self.mse_choose else f'Unknown, temp: {temp_1:.2f}'
                 cv2.putText(frame, text, (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
