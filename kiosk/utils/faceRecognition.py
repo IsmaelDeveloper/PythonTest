@@ -7,16 +7,21 @@ import torch
 from facenet_pytorch import InceptionResnetV1
 from sklearn.metrics.pairwise import cosine_similarity
 import os
+import sys
 
 
 class WebcamWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(
+            os.path.abspath(__file__)))
         # Initialisation du modèle de détection de visages et de similarité
         # DNN 얼굴 탐지 모델 가중치 파일 경로
-        face_detection_model_path = "utils/resources/model/res10_300x300_ssd_iter_140000.caffemodel"
-        model_proto_path = "utils/resources/model/deploy.prototxt"  # DNN 모델 프로토콜 파일 경로
+        face_detection_model_path = model_proto_path = os.path.join(
+            base_path, "resources", "model", "res10_300x300_ssd_iter_140000.caffemodel")
+        model_proto_path = model_proto_path = os.path.join(
+            base_path, "resources", "model", "deploy.prototxt")
+ # DNN 모델 프로토콜 파일 경로
         self.face_detection_model = cv2.dnn.readNetFromCaffe(
             model_proto_path, face_detection_model_path)
         self.face_similarity_model = InceptionResnetV1(
@@ -24,7 +29,8 @@ class WebcamWidget(QWidget):
         self.cosine_threshold = 0.75
 
         # Chargement des embeddings
-        self.embed_path = 'utils/datasets/webcam_test/member/'
+        self.embed_path = os.path.join(
+            base_path, "datasets", "webcam_test", "member")
         self.embed_dict = self.load_embeddings(self.embed_path)
 
         # Configuration de la caméra
