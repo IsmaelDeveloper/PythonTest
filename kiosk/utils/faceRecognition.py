@@ -4,110 +4,110 @@ from PyQt5.QtGui import QImage, QPixmap
 import cv2
 import numpy as np
 import torch
-import os
-from ultralytics import YOLO
 from facenet_pytorch import InceptionResnetV1
+from sklearn.metrics.pairwise import cosine_similarity
+import os
 
 
 class WebcamWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.CONST_KELVIN2CELSIUS = 262.15
 
-        weights_path = './utils/weights/yolov8n-face.pt'
-        self.face_detection_model = YOLO(weights_path)
+        # Initialisation du modèle de détection de visages et de similarité
+        # DNN 얼굴 탐지 모델 가중치 파일 경로
+        face_detection_model_path = "resources/model/res10_300x300_ssd_iter_140000.caffemodel"
+        model_proto_path = "resources/model/deploy.prototxt"  # DNN 모델 프로토콜 파일 경로
+        self.face_detection_model = cv2.dnn.readNetFromCaffe(
+            model_proto_path, face_detection_model_path)
         self.face_similarity_model = InceptionResnetV1(
             pretrained='vggface2').eval()
+        self.cosine_threshold = 0.75
 
-        self.thermal_cam = cv2.VideoCapture(2)
-        self.thermal_cam.set(cv2.CAP_PROP_FOURCC,
-                             cv2.VideoWriter.fourcc('Y', '1', '6', ' '))
-        self.thermal_cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
+        # Chargement des embeddings
+        self.embed_path = './datasets/webcam_test/member/'
+        self.embed_dict = self.load_embeddings(self.embed_path)
 
-        self.embed_path = './utils/datasets/webcam_test/member/'
-        embed_lid = os.listdir(self.embed_path)
-        self.embed_dict = {}
-        for registered_person in embed_lid:
-            embed_path2 = self.embed_path + registered_person + '/embeddings/'
-            embed_lid2 = os.listdir(embed_path2)
-            tmp_list = []
-            for npy_name in embed_lid2:
-                embeddings = np.load(embed_path2 + npy_name)
-                tmp_list.append(embeddings)
-            tmp = np.vstack(tmp_list)
-            self.embed_dict[f'{registered_person}'] = tmp
-
+        # Configuration de la caméra
         self.video_capture = cv2.VideoCapture(0)
+
+        # Configuration de l'interface utilisateur
         self.image_label = QLabel(self)
         self.image_label.setSizePolicy(
             QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.image_label.setScaledContents(True)
         layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.image_label)
         self.setLayout(layout)
+
+        # Timer pour la mise à jour de l'image
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_frame)
         self.timer.start(100)
-        self.mse_choose = 0.9
 
-    def ompensateHumanTemperature(self, tempC):
-        if 20.0 < tempC and tempC <= 37.5:
-            return tempC - (0.9 * (tempC - 36.5) + 0.2)
-        elif 37.5 < tempC and tempC <= 40.0:
-            return tempC - (0.9 * (tempC - 37.3))
-        elif tempC > 40.0:
-            return tempC
-        return tempC
-
-    def convert_raw_to_celsius(self, raw):
-
-        temperature_celsius = raw / 100 - self.CONST_KELVIN2CELSIUS
-
-        return temperature_celsius
+    def load_embeddings(self, embed_path):
+        embed_dict = {}
+        for registered_person in os.listdir(embed_path):
+            embed_lid2 = os.listdir(os.path.join(
+                embed_path, registered_person, 'embeddings'))
+            tmp_list = [np.load(os.path.join(
+                embed_path, registered_person, 'embeddings', npy_name)) for npy_name in embed_lid2]
+            embed_dict[registered_person] = np.vstack(tmp_list)
+        return embed_dict
 
     def preprocessing_image(self, face_img):
         face_img = cv2.resize(face_img, (160, 160))
         face_img = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
+        face_img = face_img.transpose((2, 0, 1))
         return face_img
 
     def get_result(self, face_img):
-        face_img = torch.from_numpy(
-            face_img.transpose((2, 0, 1))).float() / 255.0
+        face_img = torch.from_numpy(face_img).float() / 255.0
+        face_img = torch.unsqueeze(face_img, 0)
         with torch.no_grad():
-            result = self.face_similarity_model(face_img.unsqueeze(0))
+            result = self.face_similarity_model(face_img)
         return result.numpy()
 
-    def get_mse_value_person(self, face_embedding_result, embed_dict):
-        low_mse_value = 1e+10
-        for registered_person, _ in embed_dict.items():
-            mse = min(np.mean(
-                (embed_dict[registered_person] - face_embedding_result)**2, axis=1) * 1000)
-            if mse < low_mse_value:
-                low_mse_value = mse
-                low_mse_person_name = registered_person
-        return low_mse_value, low_mse_person_name
+    def get_cosine_similarity(self, face_embedding_result):
+        max_cosine_similarity = -1
+        most_similar_person_name = ''
+        for registered_person, embeddings in self.embed_dict.items():
+            cosine_similarities = cosine_similarity(
+                embeddings, face_embedding_result)
+            max_similarity = np.max(cosine_similarities)
+            if max_similarity > max_cosine_similarity:
+                max_cosine_similarity = max_similarity
+                most_similar_person_name = registered_person
+        return max_cosine_similarity, most_similar_person_name
 
     def update_frame(self):
         ret, frame = self.video_capture.read()
-        ret_thermal, frame_thermal = self.thermal_cam.read()
-        if ret and ret_thermal:
-            result = self.face_detection_model.predict(source=frame, conf=0.6)
-            result = result[0].cpu().numpy()
-            for box in result.boxes:
-                x1, y1, x2, y2 = box.xyxy[0].astype(int).tolist()
-                face_img = self.preprocessing_image(frame[y1:y2, x1:x2])
-                result = self.get_result(face_img)
-                low_mse_value, low_mse_person_name = self.get_mse_value_person(
-                    result, self.embed_dict)
-                color = (0, 255, 0) if low_mse_value <= self.mse_choose else (
-                    0, 0, 255)
-                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                temp_1 = self.ompensateHumanTemperature(self.convert_raw_to_celsius(
-                    frame_thermal[int((x1+x2)/2/10.7)][int((y1+y2)/2/8)]))
-                text = f'Name: {low_mse_person_name}, temp: {temp_1:.2f}' if low_mse_value <= self.mse_choose else f'Unknown, temp: {temp_1:.2f}'
-                cv2.putText(frame, text, (x1, y1 - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
+        if ret:
+            frame = cv2.flip(frame, 1)
+            (h, w) = frame.shape[:2]
+            blob = cv2.dnn.blobFromImage(cv2.resize(
+                frame, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
+            self.face_detection_model.setInput(blob)
+            detections = self.face_detection_model.forward()
+
+            for i in range(0, detections.shape[2]):
+                confidence = detections[0, 0, i, 2]
+                if confidence > 0.3:
+                    box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                    (startX, startY, endX, endY) = box.astype("int")
+                    face_img = frame[startY:endY, startX:endX]
+                    if face_img.size == 0:
+                        continue
+
+                    face_img = self.preprocessing_image(face_img)
+                    result = self.get_result(face_img)
+                    max_cosine_similarity, most_similar_person_name = self.get_cosine_similarity(
+                        result)
+                    text = f'Name: {most_similar_person_name}, cos: {max_cosine_similarity:.2f}' if max_cosine_similarity >= self.cosine_threshold else 'Unknown'
+                    cv2.putText(frame, text, (startX, startY - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                    cv2.rectangle(frame, (startX, startY),
+                                  (endX, endY), (0, 255, 0), 2)
+
             image = QImage(frame, frame.shape[1], frame.shape[0],
                            frame.strides[0], QImage.Format_RGB888).rgbSwapped()
             self.image_label.setPixmap(QPixmap.fromImage(image))
@@ -115,13 +115,7 @@ class WebcamWidget(QWidget):
     def releaseCamera(self):
         self.timer.stop()
         self.video_capture.release()
-        self.thermal_cam.release()
 
     def reactivateCamera(self):
         if not self.video_capture.isOpened():
             self.video_capture = cv2.VideoCapture(0)
-        if (not self.thermal_cam.isOpened()):
-            self.thermal_cam = cv2.VideoCapture(2)
-            self.thermal_cam.set(cv2.CAP_PROP_FOURCC,
-                                 cv2.VideoWriter.fourcc('Y', '1', '6', ' '))
-            self.thermal_cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
