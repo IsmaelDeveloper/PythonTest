@@ -146,8 +146,12 @@ class MainApp(QWidget):
         main_layout.addItem(spacer_top)
 
         self.buttons_view = QQuickWidget()
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(
+            os.path.abspath(__file__)))
+        qml_path = os.path.join(base_path, 'ressources', 'qml', 'home.qml')
+
         self.buttons_view.rootContext().setContextProperty("homeApp", self)
-        self.buttons_view.setSource(QUrl("ressources/qml/home.qml"))
+        self.buttons_view.setSource(QUrl.fromLocalFile(qml_path))
         main_layout.addWidget(self.buttons_view, 1)
 
         # Initialization of QMediaPlayer
@@ -260,7 +264,10 @@ class MainApp(QWidget):
         self.menuAnimation.start()
 
     def loadStyleSheet(self):
-        with open('ressources/qss/style.qss', 'r') as file:
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(
+            os.path.abspath(__file__)))
+        qss_path = os.path.join(base_path, 'ressources', 'qss', 'style.qss')
+        with open(qss_path, 'r') as file:
             self.setStyleSheet(file.read())
 
     def configureWebEngineSettings(self):
