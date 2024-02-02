@@ -146,9 +146,10 @@ class MainApp(QWidget):
         main_layout.addItem(spacer_top)
 
         self.buttons_view = QQuickWidget()
-        base_path = getattr(sys, '_MEIPASS', os.path.dirname(
+        self.base_path = getattr(sys, '_MEIPASS', os.path.dirname(
             os.path.abspath(__file__)))
-        qml_path = os.path.join(base_path, 'ressources', 'qml', 'home.qml')
+        qml_path = os.path.join(
+            self.base_path, 'ressources', 'qml', 'home.qml')
 
         self.buttons_view.rootContext().setContextProperty("homeApp", self)
         self.buttons_view.setSource(QUrl.fromLocalFile(qml_path))
@@ -165,8 +166,8 @@ class MainApp(QWidget):
         # Add QVideoWidget to the layout
         main_layout.addWidget(self.video_widget, 3)
 
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        mp4_path = os.path.join(base_path, 'ressources', 'default_media.mp4')
+        mp4_path = os.path.join(
+            self.base_path, 'ressources', 'default_media.mp4')
         self.video_player.setMedia(QMediaContent(
             QUrl.fromLocalFile(mp4_path)))
         self.video_player.mediaStatusChanged.connect(self.onMediaStatusChanged)
@@ -264,9 +265,8 @@ class MainApp(QWidget):
         self.menuAnimation.start()
 
     def loadStyleSheet(self):
-        base_path = getattr(sys, '_MEIPASS', os.path.dirname(
-            os.path.abspath(__file__)))
-        qss_path = os.path.join(base_path, 'ressources', 'qss', 'style.qss')
+        qss_path = os.path.join(
+            self.base_path, 'ressources', 'qss', 'style.qss')
         with open(qss_path, 'r') as file:
             self.setStyleSheet(file.read())
 
@@ -382,8 +382,8 @@ class MainApp(QWidget):
         self.isWebviewOnMp4Open = False
 
     def restoreVideoView(self):
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        mp4_path = os.path.join(base_path, 'ressources', 'default_media.mp4')
+        mp4_path = os.path.join(
+            self.base_path, 'ressources', 'default_media.mp4')
 
         self.video_widget.setParent(self)
         main_layout = self.layout()
