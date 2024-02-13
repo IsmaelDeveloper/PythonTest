@@ -6,7 +6,7 @@ import markdown
 import os
 import platform
 import subprocess
-
+import sys
 
 class ToggleSwitch(QSlider):
     def __init__(self, parent=None, is_on=True):
@@ -121,6 +121,8 @@ class ToolWindow(QWidget):
         self.loadStyleSheet()
 
     def initUI(self):
+        self.base_path = getattr(sys, '_MEIPASS', os.path.dirname(
+            os.path.abspath(__file__)))
         self.parameter = LocalParameterStorage()
         self.parameterStorage = self.parameter.get_parameters()
         self.setObjectName("toolWindow")
@@ -586,6 +588,8 @@ class ToolWindow(QWidget):
         except FileNotFoundError:
             return "The markdown file doesn't exist or couldn't be load"
 
-    def loadStyleSheet(self):
-        with open('ressources/qss/tool.qss', 'r') as file:
+    def loadStyleSheet(self): 
+        # parent_dir = os.path.dirname(self.base_path) 
+        qss_path = os.path.join(self.base_path, 'ressources', 'qss', 'style.qss')
+        with open(qss_path, 'r') as file:
             self.setStyleSheet(file.read())

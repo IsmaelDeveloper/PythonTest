@@ -1,4 +1,5 @@
 import sys
+import os
 from PyQt5.QtWidgets import QTabBar
 from PyQt5.QtCore import pyqtSignal, QRect
 
@@ -11,8 +12,13 @@ class CustomTabBar(QTabBar):
 
     def __init__(self, parent=None):
         super(CustomTabBar, self).__init__(parent)
-        self.firstIcon = QIcon("./ressources/images/configure-dark.png")
-        self.secondIcon = QIcon("./ressources/images/refresh.png")
+        self.base_path = getattr(sys, '_MEIPASS', os.path.dirname(
+            os.path.abspath(__file__)))
+        #parent_dir = os.path.dirname(self.base_path) 
+        configure_dark = os.path.join(self.base_path, 'ressources', 'images', 'configure-dark.png')
+        refresh_image = os.path.join(self.base_path, 'ressources', 'images', 'refresh.png')
+        self.firstIcon = QIcon(configure_dark)
+        self.secondIcon = QIcon(refresh_image)
 
         # Add fake tabs to reserve space for the icons
         self.addTab("")
