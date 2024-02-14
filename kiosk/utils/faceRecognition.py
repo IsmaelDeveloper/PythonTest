@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import torch
 import os
+import sys
 from ultralytics import YOLO
 from facenet_pytorch import InceptionResnetV1
 
@@ -14,21 +15,25 @@ class WebcamWidget(QWidget):
         super().__init__(parent)
         self.CONST_KELVIN2CELSIUS = 262.15
 
-        weights_path = './utils/weights/yolov8n-face.pt'
+        self.base_path = getattr(sys, '_MEIPASS', os.path.dirname(
+            os.path.abspath(__file__)))
+        weights_path = os.path.join(
+            self.base_path, 'weights', 'yolov8n-face.pt')
         self.face_detection_model = YOLO(weights_path)
         self.face_similarity_model = InceptionResnetV1(
             pretrained='vggface2').eval()
 
-        self.thermal_cam = cv2.VideoCapture(2)
-        self.thermal_cam.set(cv2.CAP_PROP_FOURCC,
-                             cv2.VideoWriter.fourcc('Y', '1', '6', ' '))
-        self.thermal_cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
+        # self.thermal_cam = cv2.VideoCapture(2)
+        # self.thermal_cam.set(cv2.CAP_PROP_FOURCC,
+        #                      cv2.VideoWriter.fourcc('Y', '1', '6', ' '))
+        # self.thermal_cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
 
-        self.embed_path = './utils/datasets/webcam_test/member/'
+        self.embed_path =  os.path.join(
+            self.base_path, 'datasets', 'webcam_test' , 'member') 
         embed_lid = os.listdir(self.embed_path)
         self.embed_dict = {}
         for registered_person in embed_lid:
-            embed_path2 = self.embed_path + registered_person + '/embeddings/'
+            embed_path2 = self.embed_path + '/' + registered_person + '/embeddings/'
             embed_lid2 = os.listdir(embed_path2)
             tmp_list = []
             for npy_name in embed_lid2:
@@ -90,8 +95,9 @@ class WebcamWidget(QWidget):
 
     def update_frame(self):
         ret, frame = self.video_capture.read()
-        ret_thermal, frame_thermal = self.thermal_cam.read()
-        if ret and ret_thermal:
+        # ret_thermal, frame_thermal = self.thermal_cam.read()
+        # if ret and ret_thermal:
+        if ret :
             result = self.face_detection_model.predict(source=frame, conf=0.6)
             result = result[0].cpu().numpy()
             for box in result.boxes:
@@ -103,8 +109,9 @@ class WebcamWidget(QWidget):
                 color = (0, 255, 0) if low_mse_value <= self.mse_choose else (
                     0, 0, 255)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                temp_1 = self.ompensateHumanTemperature(self.convert_raw_to_celsius(
-                    frame_thermal[int((x1+x2)/2/10.7)][int((y1+y2)/2/8)]))
+                # temp_1 = self.ompensateHumanTemperature(self.convert_raw_to_celsius(
+                #     frame_thermal[int((x1+x2)/2/10.7)][int((y1+y2)/2/8)]))
+                temp_1 = 0
                 text = f'Name: {low_mse_person_name}, temp: {temp_1:.2f}' if low_mse_value <= self.mse_choose else f'Unknown, temp: {temp_1:.2f}'
                 cv2.putText(frame, text, (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
@@ -115,13 +122,13 @@ class WebcamWidget(QWidget):
     def releaseCamera(self):
         self.timer.stop()
         self.video_capture.release()
-        self.thermal_cam.release()
+        # self.thermal_cam.release()
 
     def reactivateCamera(self):
         if not self.video_capture.isOpened():
             self.video_capture = cv2.VideoCapture(0)
-        if (not self.thermal_cam.isOpened()):
-            self.thermal_cam = cv2.VideoCapture(2)
-            self.thermal_cam.set(cv2.CAP_PROP_FOURCC,
-                                 cv2.VideoWriter.fourcc('Y', '1', '6', ' '))
-            self.thermal_cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
+        # if (not self.thermal_cam.isOpened()):
+        #     self.thermal_cam = cv2.VideoCapture(2)
+        #     self.thermal_cam.set(cv2.CAP_PROP_FOURCC,
+        #                          cv2.VideoWriter.fourcc('Y', '1', '6', ' '))
+        #     self.thermal_cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
