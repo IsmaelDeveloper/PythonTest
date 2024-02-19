@@ -603,6 +603,6 @@ class ToolWindow(QWidget):
             return "The markdown file doesn't exist or couldn't be load"
 
     def loadStyleSheet(self):  
-        qss_path = os.path.join(self.parent_dir, 'ressources', 'qss', 'style.qss')
+        qss_path = os.path.join(self.parent_dir, 'ressources', 'qss', 'tool.qss')
         with open(qss_path, 'r') as file:
             self.setStyleSheet(file.read())
