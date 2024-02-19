@@ -2,11 +2,13 @@ from PyQt5.QtWidgets import QSlider, QButtonGroup, QRadioButton, QMessageBox, QS
 from PyQt5.QtCore import Qt
 from PyQt5 import QtWidgets, QtCore, QtGui
 from utils.LocalParameterStorage import LocalParameterStorage
+from dotenv import load_dotenv
 import markdown
 import os
 import platform
 import subprocess
 import sys
+
 
 class ToggleSwitch(QSlider):
     def __init__(self, parent=None, is_on=True):
@@ -121,8 +123,14 @@ class ToolWindow(QWidget):
         self.loadStyleSheet()
 
     def initUI(self):
-        self.base_path = getattr(sys, '_MEIPASS', os.path.dirname(
-            os.path.abspath(__file__)))
+        load_dotenv()
+        mode = os.getenv('MODE', 'production') 
+        print(mode)
+        self.base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        if mode == 'dev' :
+            self.parent_dir = os.path.dirname(self.base_path)
+        else : 
+            self.parent_dir = self.base_path
         self.parameter = LocalParameterStorage()
         self.parameterStorage = self.parameter.get_parameters()
         self.setObjectName("toolWindow")
@@ -145,16 +153,21 @@ class ToolWindow(QWidget):
         management_tab_content = self.createManagementTabContent()
         license_tab_content = self.createLicenseTabContent()
         self.screen_tab_content = screen_tab_content
+        camera_path = os.path.join(self.parent_dir, 'ressources', 'images', 'camera.png')
+        screen_path = os.path.join(self.parent_dir, 'ressources', 'images', 'screen_30px.png')
+        alarm_path = os.path.join(self.parent_dir, 'ressources', 'images', 'alarm.png')
+        management_path = os.path.join(self.parent_dir, 'ressources', 'images', 'regi.png')
+        license_path = os.path.join(self.parent_dir, 'ressources', 'images', 'open_source.png')
         self.tabWidget.addTab(camera_tab_content, QtGui.QIcon(
-            "./ressources/images/camera.png"), "가메라")
+            camera_path), "가메라")
         self.tabWidget.addTab(screen_tab_content, QtGui.QIcon(
-            "./ressources/images/screen_30px.png"), "화면")
+            screen_path), "화면")
         self.tabWidget.addTab(alarm_tab_content, QtGui.QIcon(
-            "./ressources/images/alarm.png"), "알림")
+            alarm_path), "알림")
         self.tabWidget.addTab(management_tab_content, QtGui.QIcon(
-            "./ressources/images/regi.png"), "관리 및 시스템")
+            management_path), "관리 및 시스템")
         self.tabWidget.addTab(license_tab_content, QtGui.QIcon(
-            "./ressources/images/open_source.png"), "오픈소스 라이센스")
+            license_path), "오픈소스 라이센스")
         main_layout.addWidget(self.tabWidget)
 
         # Bottom Buttons
@@ -572,9 +585,10 @@ class ToolWindow(QWidget):
         license_widget = QWidget()
         license_layout = QVBoxLayout(license_widget)
 
-        text_browser = QTextBrowser()
+        text_browser = QTextBrowser() 
+        markdown_path = os.path.join(self.parent_dir, 'ressources', 'license_markdown.md')
         markdown_content = self.loadMarkdownContent(
-            "./ressources/license_markdown.md")
+            markdown_path)
         html_content = markdown.markdown(markdown_content)
         text_browser.setHtml(html_content)
 
@@ -588,8 +602,7 @@ class ToolWindow(QWidget):
         except FileNotFoundError:
             return "The markdown file doesn't exist or couldn't be load"
 
-    def loadStyleSheet(self): 
-        # parent_dir = os.path.dirname(self.base_path) 
-        qss_path = os.path.join(self.base_path, 'ressources', 'qss', 'style.qss')
+    def loadStyleSheet(self):  
+        qss_path = os.path.join(self.parent_dir, 'ressources', 'qss', 'style.qss')
         with open(qss_path, 'r') as file:
             self.setStyleSheet(file.read())
