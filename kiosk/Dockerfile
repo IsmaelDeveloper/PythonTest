@@ -9,25 +9,26 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3.9-venv \
     unzip \
+    fonts-dejavu-core \
+    ttf-bitstream-vera \
+    fonts-noto-cjk \
     libgl1-mesa-dri \
     libgl1-mesa-glx \
-    libgstreamer1.0-0 \
-    libgstreamer-plugins-base1.0-0 \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    libgstreamer-plugins-bad1.0-dev \
     gstreamer1.0-plugins-base \
     gstreamer1.0-plugins-good \
     gstreamer1.0-plugins-bad \
     gstreamer1.0-plugins-ugly \
-    libxcomposite1 \
-    libxi6 \
-    libfontconfig1 \
-    libasound2 \
-    libxrender1 \
-    libpulse0 \
-    libxrandr2 \
-    libxcursor1 \
-    libxss1 \
-    libnss3 \
-    libx11-xcb1 \
+    gstreamer1.0-libav \
+    gstreamer1.0-tools \
+    gstreamer1.0-x \
+    gstreamer1.0-alsa \
+    gstreamer1.0-gl \
+    gstreamer1.0-gtk3 \
+    gstreamer1.0-qt5 \
+    gstreamer1.0-pulseaudio \
     && rm -rf /var/lib/apt/lists/*
 
 # Mettre à jour pip et installer les packages Python nécessaires
