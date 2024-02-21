@@ -58,9 +58,10 @@ class WebcamWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.image_label)
         self.setLayout(layout)
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(lambda: self.process_frame(self.video_capture, self.thermal_cam, self.face_detection_model, self.embed_dict, distance_threshold))
-        self.timer.start(100)
+        self.timer = QTimer(self) 
+        if  hasattr(self, 'video_capture') and  hasattr(self, 'thermal_cam') :
+            self.timer.timeout.connect(lambda: self.process_frame(self.video_capture, self.thermal_cam, self.face_detection_model, self.embed_dict, distance_threshold))
+            self.timer.start(100) 
         self.mse_choose = 0.9
 
     def detect_and_print_available_cameras(self):
