@@ -5,8 +5,7 @@ import cv2
 import numpy as np
 import torch
 import os
-import sys
-import time
+import sys 
 from ultralytics import YOLO
 from facenet_pytorch import InceptionResnetV1
 
@@ -29,11 +28,7 @@ class WebcamWidget(QWidget):
         self.face_detection_model = YOLO(weights_path)
         self.face_similarity_model = InceptionResnetV1(
             pretrained='vggface2').eval()
-
-        self.thermal_cam = cv2.VideoCapture(0)
-        self.thermal_cam.set(cv2.CAP_PROP_FOURCC,
-                             cv2.VideoWriter.fourcc('Y', '1', '6', ' '))
-        self.thermal_cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
+        self.detect_and_print_available_cameras()
 
         self.embed_path =  os.path.join(
             self.base_path, 'datasets', 'webcam_test' , 'member') 
@@ -55,8 +50,6 @@ class WebcamWidget(QWidget):
         print('Weights loaded successfully')
 
         distance_threshold = 0.6 
-        
-        self.video_capture = cv2.VideoCapture(2)
         self.image_label = QLabel(self)
         self.image_label.setSizePolicy(
             QSizePolicy.Ignored, QSizePolicy.Ignored)
@@ -69,6 +62,35 @@ class WebcamWidget(QWidget):
         self.timer.timeout.connect(lambda: self.process_frame(self.video_capture, self.thermal_cam, self.face_detection_model, self.embed_dict, distance_threshold))
         self.timer.start(100)
         self.mse_choose = 0.9
+
+    def detect_and_print_available_cameras(self):
+        max_test_cameras = 10 
+        for index in range(max_test_cameras):
+            cap = cv2.VideoCapture(index) 
+            if cap.isOpened():
+                ret, frame = cap.read()
+                if ret:
+                    if self.is_thermal_camera(frame) == False:
+                        if index == 0 :
+                            self.video_capture = cap
+                            self.thermal_cam = cv2.VideoCapture(2)
+                            self.thermal_cam.set(cv2.CAP_PROP_FOURCC,
+                                                cv2.VideoWriter.fourcc('Y', '1', '6', ' '))
+                            self.thermal_cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
+                            break
+                        else :
+                            self.video_capture = cap
+                            self.thermal_cam = cv2.VideoCapture(0) 
+                            self.thermal_cam.set(cv2.CAP_PROP_FOURCC,
+                                                cv2.VideoWriter.fourcc('Y', '1', '6', ' '))
+                            self.thermal_cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
+                            break 
+                cap.release() 
+
+    def is_thermal_camera(self, frame): 
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        unique_colors = len(np.unique(gray_frame)) 
+        return unique_colors < 50
 
     def compensateHumanTemperature(tempC):
         if 20.0 < tempC and tempC <= 37.5:
