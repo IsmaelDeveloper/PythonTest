@@ -15,10 +15,10 @@ from PyQt5.QtGui import QImage, QPixmap
 from utils.customTabBar import CustomTabBar
 from utils.toolWindow import ToolWindow
 from utils.LocalParameterStorage import LocalParameterStorage
+from utils.LocalDbParameterStorage import LocalDbParameterStorage
 from urllib.parse import quote
 from utils.faceRecognition import WebcamWidget
-
-
+from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest
 class WebEnginePage(QWebEnginePage):
     closeViewRequested = pyqtSignal()
 
@@ -120,8 +120,31 @@ class MainApp(QWidget):
         self.socket_thread.iceCandidateReceived.connect(
             lambda data: self.iceCandidatesQueue.append(data)
         )
+        self.LocalDbParameterStorage = LocalDbParameterStorage()
         self.offerSent = False
         self.openWebViewSignal.connect(self.openFullScreenWebViewSlot)
+        self.network_manager = QNetworkAccessManager(self)
+        self.network_manager.finished.connect(self.onHttpRequestFinished)
+        self.startHttpRequestTimer()
+
+    def startHttpRequestTimer(self):
+        self.http_request_timer = QTimer(self)
+        self.http_request_timer.timeout.connect(self.makeHttpRequest) 
+        self.http_request_timer.start(60000)
+
+    def makeHttpRequest(self):
+        url = "http://sjhtest.musicen.com/delay/1"
+        request = QNetworkRequest(QUrl(url))
+        self.network_manager.get(request)
+
+    def onHttpRequestFinished(self, reply):
+        # Vérifie si la requête a réussi
+        if reply.error():
+            print(f"Erreur de requête HTTP: {reply.errorString()}")
+        else:
+            # Convertit la réponse en chaîne de caractères et imprime
+            response_data = reply.readAll().data().decode("utf-8")
+            print(response_data)
 
     def initUI(self):
         self.widget_states = None
