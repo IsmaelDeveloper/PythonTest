@@ -1,5 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy
-from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy,  QGraphicsView, QGraphicsScene, QGraphicsTextItem, QFrame, QStackedWidget
 from PyQt5.QtGui import QImage, QPixmap
 import cv2
 import numpy as np
@@ -8,7 +7,9 @@ import os
 import sys 
 from ultralytics import YOLO
 from facenet_pytorch import InceptionResnetV1
-
+from PyQt5.QtCore import Qt 
+from PyQt5.QtCore import QTimer, QRectF
+from PyQt5.QtGui import QColor
 
 class WebcamWidget(QWidget):
     def __init__(self, parent=None):
@@ -56,13 +57,44 @@ class WebcamWidget(QWidget):
         self.image_label.setScaledContents(True)
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.image_label)
+        layout.setSpacing(0)
+        layout.addWidget(self.image_label) 
         self.setLayout(layout)
+        
         self.timer = QTimer(self) 
         if  hasattr(self, 'video_capture') and  hasattr(self, 'thermal_cam') :
             self.timer.timeout.connect(lambda: self.process_frame(self.video_capture, self.thermal_cam, self.face_detection_model, self.embed_dict, distance_threshold))
             self.timer.start(100) 
         self.mse_choose = 0.9
+
+        self.graphicsView = QGraphicsView(self)
+        self.graphicsView.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.graphicsView.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.graphicsView.setFrameShape(QFrame.NoFrame)
+        self.graphicsView.setStyleSheet("background: transparent; border: none;")
+        self.scene = QGraphicsScene()
+        self.graphicsView.setScene(self.scene)
+        self.textItem = QGraphicsTextItem("your text here")
+        self.textItem.setDefaultTextColor(QColor("white"))
+        self.scene.addItem(self.textItem)
+        self.scene.setBackgroundBrush(Qt.transparent)
+        self.timer.timeout.connect(self.scroll_text)
+        self.timer.start(1)
+
+        self.text_position = 0
+
+    def scroll_text(self):
+        self.text_position -= 2  
+        if self.text_position < -self.textItem.boundingRect().width():
+            self.text_position = self.width()
+
+        self.textItem.setPos(self.text_position, 0)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # Positionnez graphicsView sur l'image_label. Exemple : en bas de l'image_label.
+        self.graphicsView.setGeometry(0, self.image_label.height() - 50, self.image_label.width(), 50)
+
 
     def detect_and_print_available_cameras(self):
         max_test_cameras = 10 
