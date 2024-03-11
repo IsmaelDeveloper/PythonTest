@@ -71,7 +71,7 @@ class WebcamWidget(QWidget):
         self.graphicsView.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.graphicsView.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.graphicsView.setFrameShape(QFrame.NoFrame)
-        self.graphicsView.setStyleSheet("background: transparent; border: none;")
+        self.graphicsView.setStyleSheet("background-color: rgba(0, 0, 0, 150); border: none;")
         self.scene = QGraphicsScene()
         self.graphicsView.setScene(self.scene)
         self.textItem = QGraphicsTextItem("your text here")
