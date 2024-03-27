@@ -86,6 +86,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
       usersDiv.appendChild(userContainer);
     });
+    if (window.initializePagination) {
+      window.initializePagination();
+    }
   });
 
   function createAndSendOffer(targetUser) {

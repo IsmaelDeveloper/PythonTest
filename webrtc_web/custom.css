@@ -14,16 +14,26 @@ h1 {
   margin-bottom: 90px;
 }
 
-#users {
-  width: 100%;
+#user-navigation {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  width: 90%;
+}
+
+#users {
+  display: flex;
+  flex-direction: column; /* Aligner les enfants (rectangles) verticalement */
+  overflow: hidden;
+  width: 100%; /* Ajustez selon la largeur des flèches */
+}
+
+button:disabled {
+  color: #ccc;
 }
 
 .user-container {
-  margin-top: 10px;
-  width: 80%;
+  min-width: calc(20% - 40px); /* Ajuster en fonction de la marge */
+  margin: 10px 20px;
   height: 60px;
   display: flex;
   justify-content: space-between;
