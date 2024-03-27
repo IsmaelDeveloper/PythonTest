@@ -63,17 +63,28 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   socket.on("update_users", function (users) {
-    usersDiv.innerHTML = "";
+    usersDiv.innerHTML = ""; // Effacer les utilisateurs existants
     users.forEach(function (user) {
       if (user == username) {
-        return;
+        return; // Ne pas afficher l'utilisateur actuel
       }
-      var btn = document.createElement("button");
-      btn.innerText = user;
-      btn.onclick = function () {
+      var userContainer = document.createElement("div");
+      userContainer.className = "user-container";
+
+      var userName = document.createElement("div");
+      userName.className = "user-name";
+      userName.innerText = user;
+      userContainer.appendChild(userName);
+
+      var callButton = document.createElement("button");
+      callButton.className = "button call-button";
+      callButton.innerText = "전화걸기";
+      callButton.onclick = function () {
         createAndSendOffer(user);
       };
-      usersDiv.appendChild(btn);
+      userContainer.appendChild(callButton);
+
+      usersDiv.appendChild(userContainer);
     });
   });
 
