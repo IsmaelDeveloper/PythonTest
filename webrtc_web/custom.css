@@ -1,3 +1,7 @@
+html {
+  height: 100%;
+}
+
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f4;
@@ -5,6 +9,7 @@ body {
   flex-direction: column;
   align-items: center;
   margin: 0;
+  min-height: 100vh;
   padding-top: 100px;
 }
 
@@ -22,9 +27,9 @@ h1 {
 
 #users {
   display: flex;
-  flex-direction: column; /* Aligner les enfants (rectangles) verticalement */
+  flex-direction: column;
   overflow: hidden;
-  width: 100%; /* Ajustez selon la largeur des flèches */
+  width: 100%;
 }
 
 button:disabled {
@@ -32,7 +37,7 @@ button:disabled {
 }
 
 .user-container {
-  min-width: calc(20% - 40px); /* Ajuster en fonction de la marge */
+  min-width: calc(20% - 40px);
   margin: 10px 20px;
   height: 60px;
   display: flex;
@@ -44,16 +49,23 @@ button:disabled {
   border-radius: 10px;
 }
 
+/* Nouveau style pour le conteneur de boutons */
+.button-container {
+  display: flex;
+  gap: 10px; /* Ajustez l'écart entre les boutons */
+}
+
 .user-name {
   font-size: 20px;
   color: #333;
 }
 
-.call-button {
+.call-button,
+.button {
   background-color: #4caf50;
   border: none;
   color: white;
-  padding: 10px 20px;
+  padding: 5px 10px; /* Padding réduit */
   font-size: 16px;
   cursor: pointer;
   border-radius: 5px;
@@ -126,4 +138,35 @@ button {
 
 button:hover {
   background-color: #45a049;
+}
+
+#footer-controls {
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+#counter-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 20%;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  padding: 10px;
+  box-sizing: border-box;
+  text-align: center;
+  height: 50px;
+}
+
+#all-call-button {
+  width: 80%;
+  padding: 10px 0;
+  font-size: 16px;
+  border-radius: 10px;
+  cursor: pointer;
 }

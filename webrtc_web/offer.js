@@ -74,15 +74,27 @@ document.addEventListener("DOMContentLoaded", function () {
       var userName = document.createElement("div");
       userName.className = "user-name";
       userName.innerText = user;
-      userContainer.appendChild(userName);
+
+      var buttonContainer = document.createElement("div");
+      buttonContainer.className = "button-container";
 
       var callButton = document.createElement("button");
-      callButton.className = "button call-button";
+      callButton.className = "call-button";
       callButton.innerText = "전화걸기";
       callButton.onclick = function () {
         createAndSendOffer(user);
       };
-      userContainer.appendChild(callButton);
+
+      var saveButton = document.createElement("button");
+      saveButton.className = "button save-button";
+      saveButton.innerText = "담기";
+      attachSaveButtonEvent(saveButton, user);
+
+      buttonContainer.appendChild(callButton);
+      buttonContainer.appendChild(saveButton);
+
+      userContainer.appendChild(userName);
+      userContainer.appendChild(buttonContainer);
 
       usersDiv.appendChild(userContainer);
     });
