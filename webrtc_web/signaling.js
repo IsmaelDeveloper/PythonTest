@@ -1,5 +1,5 @@
 const express = require("express");
-const https = require("https");
+const https = require("http");
 const socketIo = require("socket.io");
 const cors = require("cors");
 const fs = require("fs");
@@ -28,6 +28,9 @@ const io = socketIo(httpsServer, {
 const users = {};
 const offers = {};
 const answers = {};
+
+const usersForRoom = {};
+const socketToRoom = {};
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
@@ -66,7 +69,62 @@ io.on("connection", (socket) => {
       io.emit("update_users", Object.keys(users));
     }
     console.log("User disconnected:", socket.id);
+
+    // disconnect from room
+    const roomID = socketToRoom[socket.id];
+    let room = usersForRoom[roomID];
+    if (room) {
+      room = room.filter((id) => id !== socket.id);
+      usersForRoom[roomID] = room;
+    }
   });
+
+  // start room functions
+
+  socket.on("roomCall", (data) => {
+    const { roomId, selectedUsers } = data;
+    io.emit("roomCalling", { roomId, selectedUsers });
+    console.log(
+      `Room call initiated for room ${roomId} with users: ${selectedUsers.join(
+        ", "
+      )}`
+    );
+  });
+
+  socket.on("join room", (roomID) => {
+    if (usersForRoom[roomID]) {
+      const length = usersForRoom[roomID].length;
+      if (length === 4) {
+        socket.emit("room full");
+        return;
+      }
+      usersForRoom[roomID].push(socket.id);
+    } else {
+      usersForRoom[roomID] = [socket.id];
+    }
+    socketToRoom[socket.id] = roomID;
+    const usersInThisRoom = usersForRoom[roomID].filter(
+      (id) => id !== socket.id
+    );
+
+    socket.emit("all users", usersInThisRoom);
+  });
+
+  socket.on("sending signal", (payload) => {
+    io.to(payload.userToSignal).emit("user joined", {
+      signal: payload.signal,
+      callerID: payload.callerID,
+    });
+  });
+
+  socket.on("returning signal", (payload) => {
+    io.to(payload.callerID).emit("receiving returned signal", {
+      signal: payload.signal,
+      id: socket.id,
+    });
+  });
+
+  // end room functions
 });
 
 app.post("/offer", (req, res) => {
