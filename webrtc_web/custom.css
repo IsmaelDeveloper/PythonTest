@@ -170,3 +170,37 @@ button:hover {
   border-radius: 10px;
   cursor: pointer;
 }
+
+#groupCallVideoContainer {
+  align-items: center;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%; /* ou la largeur souhaitée */
+  height: 80%; /* ou la hauteur souhaitée */
+  background-color: white;
+  padding: 20px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Pour que le bouton soit toujours en bas */
+  z-index: 101; /* Assurez-vous qu'il est au-dessus de #videoPopup si nécessaire */
+}
+
+#videos {
+  flex: 1; /* Assure que le conteneur des vidéos prend tout l'espace au-dessus du bouton */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  gap: 10px;
+  width: 100%; /* Prend toute la largeur du conteneur parent */
+}
+#videos video,
+#videos audio {
+  max-width: 200px; /* ou autre taille appropriée */
+  border-radius: 5px; /* style si nécessaire */
+}

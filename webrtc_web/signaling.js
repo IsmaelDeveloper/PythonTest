@@ -10,6 +10,8 @@ const privateKey = fs.readFileSync(certPath + "lo.cal.com.key", "utf8");
 const certificate = fs.readFileSync(certPath + "lo.cal.com.crt", "utf8");
 const credentials = { key: privateKey, cert: certificate };
 const httpsServer = https.createServer(credentials, app);
+const { PeerServer } = require("peer");
+const peerServer = PeerServer({ port: 9000, path: "/myapp" });
 
 app.use(
   cors({
@@ -28,9 +30,7 @@ const io = socketIo(httpsServer, {
 const users = {};
 const offers = {};
 const answers = {};
-
-const usersForRoom = {};
-const socketToRoom = {};
+const groupCalls = {};
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
@@ -71,57 +71,29 @@ io.on("connection", (socket) => {
     console.log("User disconnected:", socket.id);
 
     // disconnect from room
-    const roomID = socketToRoom[socket.id];
-    let room = usersForRoom[roomID];
-    if (room) {
-      room = room.filter((id) => id !== socket.id);
-      usersForRoom[roomID] = room;
-    }
   });
 
   // start room functions
 
-  socket.on("roomCall", (data) => {
-    const { roomId, selectedUsers } = data;
-    io.emit("roomCalling", { roomId, selectedUsers });
-    console.log(
-      `Room call initiated for room ${roomId} with users: ${selectedUsers.join(
-        ", "
-      )}`
-    );
-  });
-
-  socket.on("join room", (roomID) => {
-    if (usersForRoom[roomID]) {
-      const length = usersForRoom[roomID].length;
-      if (length === 4) {
-        socket.emit("room full");
-        return;
-      }
-      usersForRoom[roomID].push(socket.id);
-    } else {
-      usersForRoom[roomID] = [socket.id];
+  socket.on("sendCandidateToAnswerForMultipleCall", (data) => {
+    const targetSocketId = users[data.target];
+    if (targetSocketId) {
+      io.emit("receiveCandidateInAnswerForMultipleCall", data);
     }
-    socketToRoom[socket.id] = roomID;
-    const usersInThisRoom = usersForRoom[roomID].filter(
-      (id) => id !== socket.id
-    );
-
-    socket.emit("all users", usersInThisRoom);
   });
 
-  socket.on("sending signal", (payload) => {
-    io.to(payload.userToSignal).emit("user joined", {
-      signal: payload.signal,
-      callerID: payload.callerID,
-    });
+  socket.on("sendCandidateToOfferForMultipleCall", (data) => {
+    const targetSocketId = users[data.target];
+    if (targetSocketId) {
+      io.emit("receiveCandidateInOfferForMultipleCall", data);
+    }
+  });
+  socket.on("roomCall", ({ offer, targetUser, from }) => {
+    io.emit("roomCalling", { offer, from, targetUser });
   });
 
-  socket.on("returning signal", (payload) => {
-    io.to(payload.callerID).emit("receiving returned signal", {
-      signal: payload.signal,
-      id: socket.id,
-    });
+  socket.on("sendAnswerMultipleCall", ({ answer, to, from }) => {
+    io.emit("receiveAnswer", { answer, to, from: from });
   });
 
   // end room functions

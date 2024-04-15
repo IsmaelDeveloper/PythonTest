@@ -1,11 +1,23 @@
 let saveButtonCounter = 0;
 let selectedUsers = [];
 
-// Assurez-vous d'inclure les scripts pour Peer et io au préalable
-let peers = [];
 let socketRef = io.connect(`${location.protocol}//${location.hostname}:6969`);
-const userVideo = document.createElement("video");
-const peersRef = [];
+var username = new URLSearchParams(window.location.search).get("username");
+const offerConnection = {};
+const answerConnection = {};
+const rtcConfig = {
+  iceServers: [
+    {
+      urls: "stun:stun.l.google.com:19302",
+    },
+    {
+      urls: "turn:13.250.13.83:3478?transport=udp",
+      username: "YzYNCouZM1mhqhmseWk6",
+      credential: "YzYNCouZM1mhqhmseWk6",
+    },
+  ],
+};
+let pendingCandidates = [];
 
 function attachSaveButtonEvent(saveButton, userName) {
   saveButton.dataset.isSelected = "false";
@@ -32,34 +44,99 @@ function attachSaveButtonEvent(saveButton, userName) {
   });
 }
 
+//
+
 document.addEventListener("DOMContentLoaded", function () {
+  // call
   document
     .getElementById("all-call-button")
     .addEventListener("click", function () {
-      const roomId = generateRoomId(); // Générer un roomId aléatoire
-      socketRef.emit("roomCall", { roomId, selectedUsers });
-      console.log(
-        `Calling room with ID: ${roomId} for users: ${selectedUsers.join(", ")}`
-      );
+      selectedUsers.forEach((targetUser) => {
+        if (targetUser !== username) {
+          offerConnection[targetUser] = new RTCPeerConnection(rtcConfig);
+          navigator.mediaDevices
+            .getUserMedia({ video: true, audio: true })
+            .then((stream) => {
+              console.log("Tracks to be added:", stream.getTracks());
+              stream
+                .getTracks()
+                .forEach((track) =>
+                  offerConnection[targetUser].addTrack(track, stream)
+                );
+              return offerConnection[targetUser].createOffer();
+            })
+            .then((offer) => {
+              offerConnection[targetUser].setLocalDescription(offer);
+              offerConnection[targetUser].onsignalingstatechange = function (
+                event
+              ) {
+                console.log(
+                  "Signaling state change:",
+                  offerConnection[targetUser].signalingState
+                );
+              };
+              offerConnection[targetUser].onicecandidate = function (event) {
+                if (event.candidate) {
+                  // console.log("New ICE candidate (Offer):", event.candidate);
+                  socketRef.emit("sendCandidateToAnswerForMultipleCall", {
+                    target: targetUser,
+                    candidate: event.candidate,
+                  });
+                }
+              };
+
+              socketRef.emit("roomCall", {
+                offer,
+                targetUser,
+                from: username,
+              });
+              socketRef.on("receiveAnswer", function (data) {
+                const { answer, to, from } = data;
+                if (username === to) {
+                  console.log("username : ", username);
+                  console.log("from : ", from);
+                  console.log(answer);
+                  // console.log("receiveAnswer", answer);
+                  offerConnection[targetUser].setRemoteDescription(
+                    new RTCSessionDescription(answer)
+                  );
+                  offerConnection[targetUser].ontrack = function (event) {
+                    addVideoStream(event);
+                  };
+                }
+              });
+              socketRef.on(
+                "receiveCandidateInOfferForMultipleCall",
+                function (data) {
+                  console.log(data);
+                  if (data.target === username) {
+                    var candidate = new RTCIceCandidate(data.candidate);
+                    if (offerConnection[targetUser].remoteDescription) {
+                      offerConnection[targetUser]
+                        .addIceCandidate(candidate)
+                        .catch(console.error);
+                    } else {
+                      pendingCandidates.push(candidate);
+                    }
+                  }
+                }
+              );
+            });
+        }
+      });
     });
+  // call
 
-  function generateRoomId() {
-    const now = Date.now();
-    const randomPart = Math.random().toString(36).substring(2, 15);
-    return `room_${now}_${randomPart}`;
-  }
-
+  // receive call
   socketRef.on("roomCalling", function (data) {
-    const { roomId, selectedUsers } = data;
-    const username = new URLSearchParams(window.location.search).get(
-      "username"
-    );
-    if (selectedUsers.includes(username)) {
-      displayGroupCallPopup(roomId, selectedUsers);
+    const { offer, from, targetUser } = data;
+    if (username === targetUser) {
+      displayGroupCallPopup(offer, from, targetUser);
     }
   });
+  // receive call
 
-  function displayGroupCallPopup(roomID, selectedUsers) {
+  function displayGroupCallPopup(offer, from, targetUser) {
     const callPopup = document.getElementById("callPopup");
     callPopup.innerHTML = `<p>그룹 콜 초대.</p>
         <button id="acceptGroupCall">수락하다</button>
@@ -69,102 +146,119 @@ document.addEventListener("DOMContentLoaded", function () {
     const callingSound = document.getElementById("callingSound");
     callingSound.play();
 
+    // accept call
     document.getElementById("acceptGroupCall").onclick = function () {
       callPopup.style.display = "none";
       callingSound.pause();
       callingSound.currentTime = 0;
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then((stream) => {
-          userVideo.srcObject = stream;
-          userVideo.autoplay = true;
-          userVideo.muted = true;
-          document.body.appendChild(userVideo);
-
-          socketRef.emit("join room", roomID);
-          socketRef.on("all users", (users) => {
-            const peers = [];
-            users.forEach((userID) => {
-              const peer = createPeer(userID, socketRef.id, stream);
-              peersRef.push({
-                peerID: userID,
-                peer,
-              });
-              peers.push(peer);
-            });
-            peers.forEach((peer) => {
-              const video = document.createElement("video");
-              peer.on("stream", (stream) => {
-                video.srcObject = stream;
-                video.autoplay = true;
-                document.body.appendChild(video);
-              });
-            });
-          });
-
-          socketRef.on("user joined", (payload) => {
-            const peer = addPeer(payload.signal, payload.callerID, stream);
-            peersRef.push({
-              peerID: payload.callerID,
-              peer,
-            });
-
-            const video = document.createElement("video");
-            peer.on("stream", (stream) => {
-              video.srcObject = stream;
-              video.autoplay = true;
-              document.body.appendChild(video);
-            });
-          });
-
-          socketRef.on("receiving returned signal", (payload) => {
-            const item = peersRef.find((p) => p.peerID === payload.id);
-            item.peer.signal(payload.signal);
-          });
-        });
+      document.getElementById("groupCallVideoContainer").style.display =
+        "block";
+      acceptGroupCall(offer, from, targetUser);
     };
 
+    //denied call
     document.getElementById("declineGroupCall").onclick = function () {
       callPopup.style.display = "none";
       callingSound.pause();
       callingSound.currentTime = 0;
     };
+
+    // close call
+    document.getElementById("closeGroupCall").onclick = function () {
+      document.getElementById("groupCallVideoContainer").style.display = "none"; // Cacher le conteneur sur clic du bouton Fermer
+    };
+  }
+
+  // start a call
+  function acceptGroupCall(offer, from, targetUser) {
+    if (username == targetUser) {
+      // Vérifiez si l'offre est destinée à cet utilisateur
+      answerConnection[from] = new RTCPeerConnection(rtcConfig);
+      answerConnection[from].ontrack = function (event) {
+        // alert("targetUser : " + targetUser + " from : " + from);
+        addVideoStream(event);
+      };
+      answerConnection[from]
+        .setRemoteDescription(new RTCSessionDescription(offer))
+        .then(() => {
+          pendingCandidates.forEach((candidate) => {
+            answerConnection[from]
+              .addIceCandidate(candidate)
+              .catch(console.error);
+          });
+          pendingCandidates = [];
+          return navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true,
+          });
+        })
+        .then((stream) => {
+          console.log("Tracks to be added: in answer", stream.getTracks());
+          stream.getTracks().forEach((track) => {
+            answerConnection[from].addTrack(track, stream);
+          });
+
+          return answerConnection[from].createAnswer();
+        })
+        .then((answer) => {
+          answerConnection[from].setLocalDescription(answer);
+
+          // Envoyer la réponse au serveur pour qu'elle soit transmise à l'émetteur
+          socketRef.emit("sendAnswerMultipleCall", {
+            answer,
+            to: from,
+            from: username,
+          });
+
+          socketRef.on(
+            "receiveCandidateInAnswerForMultipleCall",
+            function (data) {
+              if (data.target === username) {
+                var candidate = new RTCIceCandidate(data.candidate);
+                if (answerConnection[from].remoteDescription) {
+                  answerConnection[from]
+                    .addIceCandidate(candidate)
+                    .catch(console.error);
+                }
+              }
+            }
+          );
+
+          answerConnection[from].onicecandidate = function (event) {
+            if (event.candidate) {
+              // console.log("New ICE candidate (Answer):", event.candidate);
+              socketRef.emit("sendCandidateToOfferForMultipleCall", {
+                target: from,
+                from: username,
+                candidate: event.candidate,
+              });
+            }
+          };
+        })
+        .catch(console.error);
+    }
+  }
+
+  function addVideoStream(event) {
+    let container = document.getElementById("groupCallVideoContainer");
+    if (!container.style.display || container.style.display === "none") {
+      container.style.display = "block";
+    }
+
+    if (event.track.kind === "video") {
+      let videoElement = document.createElement("video");
+      videoElement.srcObject = new MediaStream([event.track]);
+      videoElement.autoplay = true;
+      videoElement.playsInline = true;
+      videoElement.classList.add("remote-video");
+      document.getElementById("videos").appendChild(videoElement);
+    } else if (event.track.kind === "audio") {
+      let audioElement = document.createElement("audio");
+      audioElement.srcObject = new MediaStream([event.track]);
+      audioElement.autoplay = true;
+      document
+        .getElementById("groupCallVideoContainer")
+        .appendChild(audioElement);
+    }
   }
 });
-
-function createPeer(userToSignal, callerID, stream) {
-  const peer = new Peer({
-    initiator: true,
-    trickle: false,
-    stream,
-  });
-
-  peer.on("signal", (signal) => {
-    socketRef.emit("sending signal", {
-      userToSignal,
-      callerID,
-      signal,
-    });
-  });
-
-  return peer;
-}
-
-function addPeer(incomingSignal, callerID, stream) {
-  const peer = new Peer({
-    initiator: false,
-    trickle: false,
-    stream,
-  });
-
-  peer.on("signal", (signal) => {
-    socketRef.emit("returning signal", {
-      signal,
-      callerID,
-    });
-  });
-
-  peer.signal(incomingSignal);
-
-  return peer;
-}
