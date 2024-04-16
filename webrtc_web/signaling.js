@@ -76,20 +76,15 @@ io.on("connection", (socket) => {
   // start room functions
 
   socket.on("sendCandidateToAnswerForMultipleCall", (data) => {
-    const targetSocketId = users[data.target];
-    if (targetSocketId) {
-      io.emit("receiveCandidateInAnswerForMultipleCall", data);
-    }
+    console.log("sendCandidateToAnswerForMultipleCall", data);
+    io.emit("receiveCandidateInAnswerForMultipleCall", data);
   });
 
   socket.on("sendCandidateToOfferForMultipleCall", (data) => {
-    const targetSocketId = users[data.target];
-    if (targetSocketId) {
-      io.emit("receiveCandidateInOfferForMultipleCall", data);
-    }
+    io.emit("receiveCandidateInOfferForMultipleCall", data);
   });
-  socket.on("roomCall", ({ offer, targetUser, from }) => {
-    io.emit("roomCalling", { offer, from, targetUser });
+  socket.on("roomCall", ({ offer, targetUser, from, listUsers }) => {
+    io.emit("roomCalling", { offer, from, targetUser, listUsers });
   });
 
   socket.on("sendAnswerMultipleCall", ({ answer, to, from }) => {
