@@ -5,6 +5,8 @@ let socketRef = io.connect(`${location.protocol}//${location.hostname}:6969`);
 var username = new URLSearchParams(window.location.search).get("username");
 var offerConnection = {};
 var answerConnection = {};
+var waitingAnswer = {};
+var isCalling = false;
 const rtcConfig = {
   iceServers: [
     {
@@ -149,6 +151,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           }
         );
+        if (isCalling === false) {
+          waitingAnswer.push(acceptGroupCall(offer, from, targetUser));
+          return;
+        }
         console.log(`Automatically joining call from ${from}`);
         acceptGroupCall(offer, from, targetUser);
       } else {
@@ -187,6 +193,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // accept call
     document.getElementById("acceptGroupCall").onclick = function () {
+      isCalling = true;
       callPopup.style.display = "none";
       callingSound.pause();
       callingSound.currentTime = 0;
@@ -203,6 +210,10 @@ document.addEventListener("DOMContentLoaded", function () {
           createOfferMultipleCall(user, listUsers);
         });
       }
+
+      waitingAnswer.forEach((answer) => {
+        answer();
+      });
     };
 
     //denied call
