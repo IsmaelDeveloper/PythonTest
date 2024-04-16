@@ -154,9 +154,10 @@ document.addEventListener("DOMContentLoaded", function () {
         if (isCalling === false) {
           waitingAnswer.push(acceptGroupCall(offer, from, targetUser));
           return;
+        } else {
+          console.log(`Automatically joining call from ${from}`);
+          acceptGroupCall(offer, from, targetUser);
         }
-        console.log(`Automatically joining call from ${from}`);
-        acceptGroupCall(offer, from, targetUser);
       } else {
         // Afficher la popup seulement si l'appelant n'est pas dans la liste
         // des utilisateurs déjà sélectionnés.
@@ -221,6 +222,7 @@ document.addEventListener("DOMContentLoaded", function () {
       callPopup.style.display = "none";
       callingSound.pause();
       callingSound.currentTime = 0;
+      window.location.reload();
     };
   }
   // close call
