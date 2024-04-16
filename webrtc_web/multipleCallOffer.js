@@ -5,7 +5,7 @@ let socketRef = io.connect(`${location.protocol}//${location.hostname}:6969`);
 var username = new URLSearchParams(window.location.search).get("username");
 var offerConnection = {};
 var answerConnection = {};
-var waitingAnswer = {};
+var waitingAnswer = [];
 var isCalling = false;
 const rtcConfig = {
   iceServers: [
@@ -102,11 +102,6 @@ document.addEventListener("DOMContentLoaded", function () {
         socketRef.on("receiveAnswer", function (data) {
           const { answer, to, from } = data;
           if (username === to) {
-            console.log("username : ", username);
-            console.log("from : ", from);
-            console.log(answer);
-            // console.log("receiveAnswer", answer);
-
             offerConnection[from].setRemoteDescription(
               new RTCSessionDescription(answer)
             );
@@ -116,7 +111,6 @@ document.addEventListener("DOMContentLoaded", function () {
           }
         });
         socketRef.on("receiveCandidateInOfferForMultipleCall", function (data) {
-          console.log(data);
           if (data.target === username) {
             var candidate = new RTCIceCandidate(data.candidate);
             if (offerConnection[targetUser].remoteDescription) {
@@ -151,11 +145,11 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           }
         );
-        if (isCalling === false) {
-          waitingAnswer.push(acceptGroupCall(offer, from, targetUser));
+        if (isCalling == false) {
+          console.log("on wait la");
+          waitingAnswer.push(() => acceptGroupCall(offer, from, targetUser));
           return;
         } else {
-          console.log(`Automatically joining call from ${from}`);
           acceptGroupCall(offer, from, targetUser);
         }
       } else {
@@ -213,6 +207,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       waitingAnswer.forEach((answer) => {
+        console.log("voila des answer", answer);
         answer();
       });
     };
