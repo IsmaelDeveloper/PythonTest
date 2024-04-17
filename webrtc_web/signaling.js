@@ -1,5 +1,5 @@
 const express = require("express");
-const https = require("http");
+const https = require("https");
 const socketIo = require("socket.io");
 const cors = require("cors");
 const fs = require("fs");
@@ -11,7 +11,6 @@ const certificate = fs.readFileSync(certPath + "lo.cal.com.crt", "utf8");
 const credentials = { key: privateKey, cert: certificate };
 const httpsServer = https.createServer(credentials, app);
 const { PeerServer } = require("peer");
-const peerServer = PeerServer({ port: 9000, path: "/myapp" });
 
 app.use(
   cors({
@@ -110,6 +109,11 @@ app.post("/offer", (req, res) => {
     res.status(400).send();
   }
 });
+
+app.get("/test", (req, res) => {
+  res.status(200).send("Server work correctly");
+});
+
 function broadcastOffer(offerData) {
   io.emit("getOffer", offerData);
 }
