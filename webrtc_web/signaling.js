@@ -9,8 +9,15 @@ const certPath = "./cert/";
 const privateKey = fs.readFileSync(certPath + "lo.cal.com.key", "utf8");
 const certificate = fs.readFileSync(certPath + "lo.cal.com.crt", "utf8");
 const credentials = { key: privateKey, cert: certificate };
+
+// ssl_certificate /etc/letsencrypt/live/schback.musicen.com/fullchain.pem; # managed by Certbot
+// ssl_certificate_key /etc/letsencrypt/live/schback.musicen.com/privkey.pem; # managed by Certbot
+// include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+// ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
 const httpsServer = https.createServer(credentials, app);
-const { PeerServer } = require("peer");
+
+app.use(express.static(__dirname));
 
 app.use(
   cors({
