@@ -5,9 +5,12 @@ const cors = require("cors");
 const fs = require("fs");
 
 const app = express();
-const certPath = "./cert/";
-const privateKey = fs.readFileSync(certPath + "lo.cal.com.key", "utf8");
-const certificate = fs.readFileSync(certPath + "lo.cal.com.crt", "utf8");
+// const certPath = "./cert/";
+// const privateKey = fs.readFileSync(certPath + "lo.cal.com.key", "utf8");
+// const certificate = fs.readFileSync(certPath + "lo.cal.com.crt", "utf8");
+const certPath = "/etc/letsencrypt/live/kiosk-chat.musicen.com/";
+const privateKey = fs.readFileSync(certPath + "privkey.pem", "utf8");
+const certificate = fs.readFileSync(certPath + "fullchain.pem", "utf8");
 const credentials = { key: privateKey, cert: certificate };
 
 // ssl_certificate /etc/letsencrypt/live/schback.musicen.com/fullchain.pem; # managed by Certbot
@@ -145,7 +148,7 @@ function broadcastAnswer(answerData) {
   io.emit("getAnswer", answerData);
 }
 
-const PORT = 6969;
+const PORT = 8234;
 httpsServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

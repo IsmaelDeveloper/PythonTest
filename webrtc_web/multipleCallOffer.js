@@ -1,7 +1,7 @@
 let saveButtonCounter = 0;
 let selectedUsers = [];
 
-let socketRef = io.connect(`${location.protocol}//${location.hostname}:6969`);
+let socketRef = io.connect(`${location.protocol}//${location.hostname}:8234`);
 var username = new URLSearchParams(window.location.search).get("username");
 var offerConnection = {};
 var answerConnection = {};
