@@ -113,8 +113,8 @@ document.addEventListener("DOMContentLoaded", function () {
         socketRef.on("receiveCandidateInOfferForMultipleCall", function (data) {
           if (data.target === username) {
             var candidate = new RTCIceCandidate(data.candidate);
-            if (offerConnection[targetUser].remoteDescription) {
-              offerConnection[targetUser]
+            if (offerConnection[data.from].remoteDescription) {
+              offerConnection[data.from]
                 .addIceCandidate(candidate)
                 .catch(console.error);
             }
@@ -251,7 +251,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 .catch(console.error);
             }
           });
-          pendingCandidates = [];
           return navigator.mediaDevices.getUserMedia({
             video: true,
             audio: true,
