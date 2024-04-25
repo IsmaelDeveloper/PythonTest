@@ -63,11 +63,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // call
 
   function createOfferMultipleCall(targetUser, listUsers = selectedUsers) {
+    if (offerConnection[targetUser]) return;
     offerConnection[targetUser] = new RTCPeerConnection(rtcConfig);
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
-        console.log("Tracks to be added:", stream.getTracks());
         stream
           .getTracks()
           .forEach((track) =>
@@ -77,15 +77,11 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .then((offer) => {
         offerConnection[targetUser].setLocalDescription(offer);
-        offerConnection[targetUser].onsignalingstatechange = function (event) {
-          console.log(
-            "Signaling state change:",
-            offerConnection[targetUser].signalingState
-          );
-        };
+        offerConnection[targetUser].onsignalingstatechange = function (
+          event
+        ) {};
         offerConnection[targetUser].onicecandidate = function (event) {
           if (event.candidate) {
-            // console.log("New ICE candidate (Offer):", event.candidate);
             socketRef.emit("sendCandidateToAnswerForMultipleCall", {
               target: targetUser,
               candidate: event.candidate,
@@ -128,41 +124,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const { offer, from, targetUser, listUsers } = data;
 
     if (username === targetUser) {
-      if (listUsers.length == 0) {
-        answerConnection[from] = new RTCPeerConnection(rtcConfig);
-        socketRef.on(
-          "receiveCandidateInAnswerForMultipleCall",
-          function (data) {
-            if (data.target === targetUser) {
-              var candidate = new RTCIceCandidate(data.candidate);
-              if (answerConnection[from].remoteDescription) {
-                answerConnection[from]
-                  .addIceCandidate(candidate)
-                  .catch(console.error);
-              } else {
-                pendingCandidates.push({ from: from, candidate: candidate });
-              }
-            }
-          }
-        );
-        if (isCalling == false) {
-          console.log("on wait la");
-          waitingAnswer.push(() => acceptGroupCall(offer, from, targetUser));
-          return;
-        } else {
-          acceptGroupCall(offer, from, targetUser);
-        }
-      } else {
-        // Afficher la popup seulement si l'appelant n'est pas dans la liste
-        // des utilisateurs déjà sélectionnés.
-        displayGroupCallPopup(offer, from, targetUser, listUsers);
-      }
+      displayGroupCallPopup(offer, from, targetUser, listUsers);
     }
   });
 
   // receive call
 
   function displayGroupCallPopup(offer, from, targetUser, listUsers) {
+    if (answerConnection[from]) return;
     answerConnection[from] = new RTCPeerConnection(rtcConfig);
     socketRef.on("receiveCandidateInAnswerForMultipleCall", function (data) {
       if (data.target === targetUser) {
@@ -177,53 +146,19 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-    const callPopup = document.getElementById("callPopup");
-    callPopup.innerHTML = `<p>그룹 콜 초대.</p>
-        <button id="acceptGroupCall">수락하다</button>
-        <button id="declineGroupCall">거절하다</button>`;
-    callPopup.style.display = "block";
+    openMultipleCallWindow();
+    acceptGroupCall(offer, from, targetUser);
 
-    const callingSound = document.getElementById("callingSound");
-    callingSound.play();
-
-    // accept call
-    document.getElementById("acceptGroupCall").onclick = function () {
-      isCalling = true;
-      callPopup.style.display = "none";
-      callingSound.pause();
-      callingSound.currentTime = 0;
-      openMultipleCallWindow();
-      acceptGroupCall(offer, from, targetUser);
-      const currentUserIndex = listUsers.indexOf(username);
-
-      console.log(username, listUsers, currentUserIndex);
-      // Itérer sur tous les utilisateurs après l'utilisateur courant dans la liste
-      if (currentUserIndex !== -1) {
-        const usersAfterCurrent = listUsers.slice(currentUserIndex + 1);
-        console.log("Creating offers for users: ", usersAfterCurrent);
-        usersAfterCurrent.forEach((user) => {
-          console.log("make offer to : ", user);
-          setTimeout(() => {
-            createOfferMultipleCall(user, []);
-          }, (currentUserIndex + 1) * 1000);
-        });
-      }
-
-      waitingAnswer.forEach((answer) => {
-        console.log("voila des answer", answer);
+    const currentUserIndex = listUsers.indexOf(username);
+    if (currentUserIndex !== -1 && !isCalling) {
+      const usersAfterCurrent = listUsers.slice(currentUserIndex + 1);
+      usersAfterCurrent.forEach((user) => {
         setTimeout(() => {
-          answer();
+          createOfferMultipleCall(user, []);
         }, (currentUserIndex + 1) * 1000);
+        isCalling = true;
       });
-    };
-
-    //denied call
-    document.getElementById("declineGroupCall").onclick = function () {
-      callPopup.style.display = "none";
-      callingSound.pause();
-      callingSound.currentTime = 0;
-      window.location.reload();
-    };
+    }
   }
   // close call
   document.getElementById("closeGroupCall").onclick = function () {
@@ -262,7 +197,6 @@ document.addEventListener("DOMContentLoaded", function () {
           });
         })
         .then((stream) => {
-          console.log("Tracks to be added: in answer", stream.getTracks());
           stream.getTracks().forEach((track) => {
             answerConnection[from].addTrack(track, stream);
           });
