@@ -209,6 +209,7 @@ mySocket.on("connect", () => {
       });
       currentPeer.addEventListener("track", (event) => {
         webRtcPeers[targetUserSocketId].stream = event.streams[0];
+
         addVideoStreamFromPeers();
       });
 
@@ -229,6 +230,11 @@ mySocket.on("connect", () => {
     });
   }
 });
+
+function getUserNameBySocketId(socketId) {
+  const user = socketIdListUsernm.find((item) => item[0] === socketId);
+  return user ? user[1].userNm : "Unknown User"; // Retourne 'Unknown User' si non trouvé
+}
 
 function openMultipleCallWindow() {
   let container = document.getElementById("groupCallVideoContainer");
@@ -251,16 +257,29 @@ function addVideoStreamFromPeers() {
     audioElements[0].parentNode.removeChild(audioElements[0]);
   }
 
-  Object.values(webRtcPeers).forEach((peer) => {
+  console.log(webRtcPeers, "  :   webRtcPeers");
+  Object.entries(webRtcPeers).forEach(([socketId, peer]) => {
+    const username = getUserNameBySocketId(socketId);
     if (peer.stream) {
       peer.stream.getTracks().forEach((track) => {
         if (track.kind === "video") {
+          const videoWrap = document.createElement("div");
+          videoWrap.classList.add("video-wrap");
+
+          console.log("video of : ", username);
           let videoElement = document.createElement("video");
           videoElement.srcObject = new MediaStream([track]);
           videoElement.autoplay = true;
           videoElement.playsInline = true;
           videoElement.classList.add("remote-video");
+
+          const userNameLabel = document.createElement("div");
+          userNameLabel.classList.add("user-label");
+          userNameLabel.textContent = username;
           videoContainer.appendChild(videoElement);
+          videoWrap.appendChild(videoElement);
+          videoWrap.appendChild(userNameLabel);
+          videoContainer.appendChild(videoWrap);
         } else if (track.kind === "audio") {
           let audioElement = document.createElement("audio");
           audioElement.srcObject = new MediaStream([track]);

@@ -204,3 +204,28 @@ button:hover {
   max-width: 200px; /* ou autre taille appropriée */
   border-radius: 5px; /* style si nécessaire */
 }
+
+.video-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 10px;
+}
+
+.video-wrap video {
+  width: 200px;
+  height: auto;
+  border-radius: 5px;
+}
+
+.user-label {
+  background-color: #f8f8f8;
+  color: #333;
+  padding: 5px 10px;
+  margin-top: 5px;
+  font-size: 40px;
+  text-align: center;
+  border-radius: 5px;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
