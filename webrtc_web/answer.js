@@ -1,6 +1,5 @@
-import { serverUrl, rtcConfig } from "./config.js";
+import { serverUrl, rtcConfig, socket } from "./config.js";
 document.addEventListener("DOMContentLoaded", function () {
-  var socket = io.connect(serverUrl);
   var username = new URLSearchParams(window.location.search).get("username");
   var localConnection = new RTCPeerConnection(rtcConfig);
   var target = "";
