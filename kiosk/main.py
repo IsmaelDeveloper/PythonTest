@@ -5,7 +5,7 @@ import socketio
 import ssl
 import json
 from PyQt5.QtWidgets import QMessageBox, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
-from PyQt5.QtCore import QThread, Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect
+from PyQt5.QtCore import QThread, Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect, QJsonDocument
 from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -19,6 +19,64 @@ from utils.LocalDbParameterStorage import LocalDbParameterStorage
 from urllib.parse import quote
 from utils.faceRecognition import WebcamWidget
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest
+from datetime import datetime
+
+class SingleRequestManager:
+    def __init__(self, payload, url, callback):
+        self.payload = payload
+        self.url = url
+        self.callback = callback
+        self.network_manager = QNetworkAccessManager()
+        self.network_manager.finished.connect(self.handleResponse)
+
+    def sendRequest(self):
+        request = QNetworkRequest(QUrl(self.url))
+        request.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
+        payload_bytes = QJsonDocument(self.payload).toJson()
+        self.network_manager.post(request, payload_bytes)
+
+    def handleResponse(self, reply):
+        if reply.error():
+            print(f"HTTP REQUEST ERROR: {reply.errorString()}")
+            response_data = None
+        else:
+            response_data = str(reply.readAll(), 'utf-8')
+
+        if self.callback:  
+            self.callback(response_data)
+
+
+class PollingManager:
+    def __init__(self, payload, url, interval, callback):
+        self.payload = payload
+        self.url = url
+        self.interval = interval
+        self.callback = callback
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.sendRequest)
+        self.network_manager = QNetworkAccessManager()
+        self.network_manager.finished.connect(self.handleResponse)
+
+    def start(self):
+        self.sendRequest()
+        self.timer.start(self.interval)
+
+    def sendRequest(self):
+        request = QNetworkRequest(QUrl(self.url))
+        request.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
+        payload_bytes = QJsonDocument(self.payload).toJson()
+        self.network_manager.post(request, payload_bytes)
+
+    def handleResponse(self, reply):
+        if reply.error():
+            print(f"HTTP REQUEST ERROR :  {reply.errorString()}")
+            response_data = None
+        else:
+            response_data = str(reply.readAll(), 'utf-8')
+        
+        if self.callback:  
+            self.callback(response_data)
+            
 class WebEnginePage(QWebEnginePage):
     closeViewRequested = pyqtSignal()
 
@@ -123,34 +181,47 @@ class MainApp(QWidget):
         self.LocalDbParameterStorage = LocalDbParameterStorage()
         self.offerSent = False
         self.openWebViewSignal.connect(self.openFullScreenWebViewSlot)
-        self.network_manager = QNetworkAccessManager(self)
-        self.network_manager.finished.connect(self.onHttpRequestFinished)
-        self.startHttpRequestTimer()
+        current_timestamp = int(datetime.now().timestamp() * 1000)
+        payload = {
+            "appID": self.deviceId,
+            "date": current_timestamp,
+            "edgeBoxName": "A01",
+            "serviceName": "A01"
+        }
+        url = "http://192.168.0.3/v1/appapi/device/regist"
+        self.singleRequestManager = SingleRequestManager(payload, url, self.requestCallback)
+        self.singleRequestManager.sendRequest()
 
-    def startHttpRequestTimer(self):
-        self.http_request_timer = QTimer(self)
-        self.http_request_timer.timeout.connect(self.makeHttpRequest) 
-        self.http_request_timer.start(60000)
+        
+        payload = {
+            "appID": self.deviceId,
+            "cameraStatus": 0,
+            "edgeboxStatus": 0,
+            "featureType": "KT",
+            "modifiedAt": current_timestamp
+        }
+        url = "http://192.168.0.3/v1/appapi/polling"
+        interval = 60000  
+        self.pollingManager = PollingManager(payload, url, interval, self.pollingCallback)
+        self.pollingManager.start()
 
-    def makeHttpRequest(self):
-        url = "http://sjhtest.musicen.com/delay/1"
-        request = QNetworkRequest(QUrl(url))
-        self.network_manager.get(request)
+    def requestCallback(self, response):
+        print("Single request answer:", response)    
 
-    def onHttpRequestFinished(self, reply):
-        # Vérifie si la requête a réussi
-        if reply.error():
-            print(f"Erreur de requête HTTP: {reply.errorString()}")
-        else:
-            # Convertit la réponse en chaîne de caractères et imprime
-            response_data = reply.readAll().data().decode("utf-8")
-            print(response_data)
+    def pollingCallback(self, response):
+        print("Polling request answer : ", response)
 
     def initUI(self):
+        try:
+            with open('/etc/machine-id', 'r') as file:
+                machine_id = file.read().strip()
+        except FileNotFoundError:
+            print("file /etc/machine-id not found.")
+            machine_id = "51b51c691e4d4f379ce9a8c98585bff5"
         self.widget_states = None
         self.parameter = LocalParameterStorage()
         self.setObjectName("mainWindow")
-        self.deviceId = "DailySafe_51b51c691e4d4f379ce9a8c98585bff5"
+        self.deviceId = f"DailySafe_{machine_id}"
         self.username = "test"
         self.host = "http://211.46.245.40:81"
         self.callingWebviewUrl = "https://musicen.com:6968/userInterface.html?username=" + self.username
