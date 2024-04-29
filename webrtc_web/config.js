@@ -1,7 +1,7 @@
 // config.js
 //export const serverUrl = "192.168.0.136:6969";
-export const serverUrl = `${location.protocol}//${location.hostname}:6969`;
-
+export const serverUrl = `${location.protocol}//${location.hostname}:8234`;
+export var socket = io.connect(serverUrl);
 export const rtcConfig = {
   iceServers: [
     {

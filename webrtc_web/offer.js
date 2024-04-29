@@ -1,6 +1,6 @@
-import { serverUrl, rtcConfig } from "./config.js";
+import { serverUrl, rtcConfig, socket } from "./config.js";
+import { attachSaveButtonEvent } from "./multipleCallOffer.js";
 document.addEventListener("DOMContentLoaded", function () {
-  var socket = io.connect(serverUrl);
   console.log("io url >> " + serverUrl);
   var usersDiv = document.getElementById("users");
   var username = new URLSearchParams(window.location.search).get("username");

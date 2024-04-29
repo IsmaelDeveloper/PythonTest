@@ -8,10 +8,19 @@ const app = express();
 const certPath = "./cert/";
 const privateKey = fs.readFileSync(certPath + "lo.cal.com.key", "utf8");
 const certificate = fs.readFileSync(certPath + "lo.cal.com.crt", "utf8");
+// const certPath = "/etc/letsencrypt/live/kiosk-chat.musicen.com/";
+// const privateKey = fs.readFileSync(certPath + "privkey.pem", "utf8");
+// const certificate = fs.readFileSync(certPath + "fullchain.pem", "utf8");
 const credentials = { key: privateKey, cert: certificate };
+
+// ssl_certificate /etc/letsencrypt/live/schback.musicen.com/fullchain.pem; # managed by Certbot
+// ssl_certificate_key /etc/letsencrypt/live/schback.musicen.com/privkey.pem; # managed by Certbot
+// include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+// ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
 const httpsServer = https.createServer(credentials, app);
-const { PeerServer } = require("peer");
-const peerServer = PeerServer({ port: 9000, path: "/myapp" });
+
+app.use(express.static(__dirname));
 
 app.use(
   cors({
@@ -30,7 +39,8 @@ const io = socketIo(httpsServer, {
 const users = {};
 const offers = {};
 const answers = {};
-const groupCalls = {};
+
+const allSockets = {};
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
@@ -41,6 +51,19 @@ io.on("connection", (socket) => {
     io.emit("update_users", Object.keys(users));
     console.log(`User registered: ${username} with socket ID: ${socket.id}`);
   });
+
+  console.log("🚀 ~ io.on ~ socket:", socket.id);
+  allSockets[socket.id] = { socket: socket, userNm: null };
+
+  socket.join("main");
+  socket.on("usernm-client", (userNm) => {
+    userNm;
+    console.log("🚀 ~ socket.on ~ userNm:", userNm);
+
+    allSockets[socket.id].userNm = userNm;
+    refreshUsers();
+  });
+  refreshUsers();
 
   socket.on("sendCandidateToAnswer", (data) => {
     const targetSocketId = users[data.target];
@@ -57,6 +80,9 @@ io.on("connection", (socket) => {
     }
   });
   socket.on("disconnect", () => {
+    delete allSockets[socket.id];
+    refreshUsers();
+
     let userToRemove;
     for (const [username, socketId] of Object.entries(users)) {
       if (socketId === socket.id) {
@@ -75,27 +101,33 @@ io.on("connection", (socket) => {
 
   // start room functions
 
-  socket.on("sendCandidateToAnswerForMultipleCall", (data) => {
-    const targetSocketId = users[data.target];
-    if (targetSocketId) {
-      io.emit("receiveCandidateInAnswerForMultipleCall", data);
-    }
+  socket.on("boom-client", (boomUsers) => {
+    boomUsers.forEach((socketId) => {
+      io.to(socketId).emit("boom-server", boomUsers);
+    });
   });
 
-  socket.on("sendCandidateToOfferForMultipleCall", (data) => {
-    const targetSocketId = users[data.target];
-    if (targetSocketId) {
-      io.emit("receiveCandidateInOfferForMultipleCall", data);
-    }
-  });
-  socket.on("roomCall", ({ offer, targetUser, from }) => {
-    io.emit("roomCalling", { offer, from, targetUser });
-  });
-
-  socket.on("sendAnswerMultipleCall", ({ answer, to, from }) => {
-    io.emit("receiveAnswer", { answer, to, from: from });
+  socket.on("webrtc-data-client", (message) => {
+    const { sender, receiver, msgType, rtcData } = message;
+    console.log("🚀 ~ socket.on ~ sender:", sender, receiver, msgType);
+    io.to(receiver).emit("webrtc-data-server", {
+      sender,
+      receiver,
+      msgType,
+      rtcData,
+    });
   });
 
+  function refreshUsers() {
+    // const users = allSockets.map(socket => ({...socket, socket:null}));
+
+    const users = {};
+    Object.entries(allSockets).forEach(([key, value]) => {
+      // allSockets[key].socket = null
+      users[key] = { ...value, socket: null };
+    });
+    io.emit("users-server", users);
+  }
   // end room functions
 });
 
@@ -115,6 +147,11 @@ app.post("/offer", (req, res) => {
     res.status(400).send();
   }
 });
+
+app.get("/test", (req, res) => {
+  res.status(200).send("Server work correctly");
+});
+
 function broadcastOffer(offerData) {
   io.emit("getOffer", offerData);
 }
@@ -139,7 +176,18 @@ function broadcastAnswer(answerData) {
   io.emit("getAnswer", answerData);
 }
 
-const PORT = 6969;
+app.get("/msg", (req, res) => {
+  const msg = req.query.msg;
+  io.emit("msg-server", msg);
+});
+app.get("/rooms", (req, res) => {
+  const msg = req.params.msg;
+  console.log(io.sockets.adapter.rooms);
+  // res.json(io.sockets.adapter.rooms);
+  res.json(Object.fromEntries(io.sockets.adapter.rooms));
+});
+
+const PORT = 8234;
 httpsServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
