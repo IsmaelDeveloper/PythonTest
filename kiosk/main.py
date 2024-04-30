@@ -154,6 +154,7 @@ class MainApp(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
+        self.isFullScreenWebViewOpen = False
         self.dustClicked.connect(self.onDustClicked)
         self.weatherClicked.connect(self.onWeatherClicked)
         self.busClicked.connect(self.onBusClicked)
@@ -172,7 +173,7 @@ class MainApp(QWidget):
         self.countdown_button.clicked.connect(self.closeWebview)
         self.isWebviewOnMp4Open = False
         self.socket_thread = SocketIOThread(
-            'https://210.180.118.158:6969', self.username)
+            'https://kiosk-chat.musicen.com:8234', self.username)
         self.socket_thread.start()
         self.socket_thread.offerReceived.connect(self.handleOffer)
         self.socket_thread.iceCandidateReceived.connect(
@@ -224,7 +225,7 @@ class MainApp(QWidget):
         self.deviceId = f"DailySafe_{machine_id}"
         self.username = "test"
         self.host = "http://211.46.245.40:81"
-        self.callingWebviewUrl = "https://musicen.com:6968/userInterface.html?username=" + self.username
+        self.callingWebviewUrl = "https://kiosk-chat.musicen.com:8234/userInterface.html?username=" + self.username
 
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(0)
@@ -275,7 +276,7 @@ class MainApp(QWidget):
         self.addSlideMenu()
 
     def handleOffer(self, offerData):
-        if self.offerSent == False:
+        if self.offerSent == False and self.isFullScreenWebViewOpen == False:
             if offerData.get("target") == self.username:
                 reply = QMessageBox.question(
                     self, '전화', "누군가 자네를 부르고 있네", QMessageBox.Yes | QMessageBox.No)
@@ -408,6 +409,7 @@ class MainApp(QWidget):
         self.web_view.showFullScreen()
 
         self.offerSent = False
+        self.isFullScreenWebViewOpen = True
 
         if offerData is not None:
             self.web_view.loadFinished.connect(
@@ -447,6 +449,7 @@ class MainApp(QWidget):
         self.webcam_widget.show()
         self.buttons_view.setVisible(self.widget_states['buttons_view'])
         self.web_view.setVisible(self.widget_states['web_view'])
+        self.isFullScreenWebViewOpen = False
 
     def setupCountdown(self):
         self.countdown_time = 50
