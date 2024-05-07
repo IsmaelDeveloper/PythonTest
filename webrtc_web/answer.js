@@ -95,9 +95,9 @@ document.addEventListener("DOMContentLoaded", function () {
   function displayCallPopup(callerUsername) {
     document.getElementById(
       "callPopup"
-    ).innerHTML = `<p>${callerUsername} is calling...</p>
-      <button id="acceptCall">Accept</button>
-      <button id="declineCall">Decline</button>`;
+    ).innerHTML = `<p>${callerUsername} 전화중입니다</p>
+      <button id="acceptCall">수락</button>
+      <button id="declineCall">거절하다</button>`;
     document.getElementById("callPopup").style.display = "block";
     var callingSound = document.getElementById("callingSound");
     callingSound.play();
