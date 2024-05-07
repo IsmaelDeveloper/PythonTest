@@ -4,6 +4,7 @@ import os
 import socketio
 import ssl
 import json
+import urllib3
 from PyQt5.QtWidgets import QMessageBox, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
 from PyQt5.QtCore import QThread, Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect, QJsonDocument
 from PyQt5.QtQuickWidgets import QQuickWidget
@@ -113,19 +114,26 @@ class WebEnginePage(QWebEnginePage):
 class SocketIOThread(QThread):
     offerReceived = pyqtSignal(dict)
     iceCandidateReceived = pyqtSignal(dict)
+    multipleCallOfferReceived = pyqtSignal(list)
+    webrtcDataServerList = pyqtSignal(dict)
+    socketIdReceived = pyqtSignal(str)
 
     def __init__(self, url, username):
         QThread.__init__(self)
         self.url = url
         self.username = username
+        self.socketId = None 
 
     def run(self):
         sio = socketio.Client(ssl_verify=False)
 
         @sio.event
         def connect():
+            self.socketId = sio.eio.sid
+            self.socketIdReceived.emit(self.socketId)
             print("Connected to server")
             sio.emit('register', {'username': self.username})
+            sio.emit('usernm-client', self.username)
 
         @sio.event
         def disconnect():
@@ -138,6 +146,16 @@ class SocketIOThread(QThread):
         @sio.event
         def receiveCandidateInAnswer(data):
             self.iceCandidateReceived.emit(data)
+        
+        @sio.on('boom-server')
+        def boom_server(boomUsers):
+            self.multipleCallOfferReceived.emit(boomUsers)
+            print("MULTIPLE CALL ")
+        
+        @sio.on('webrtc-data-server')
+        def webrtc_data_server(message):
+            print("webrtc message ")
+            self.webrtcDataServerList.emit(message)
 
         sio.connect(self.url)
         sio.wait()
@@ -150,6 +168,8 @@ class MainApp(QWidget):
     kioskClicked = pyqtSignal()
     callClicked = pyqtSignal()
     openWebViewSignal = pyqtSignal(dict)
+    openWebViewSignalForMultipleCall = pyqtSignal(list)
+    webrtcDataServerListObject = []
 
     def __init__(self):
         super().__init__()
@@ -172,16 +192,22 @@ class MainApp(QWidget):
         self.countdown_button.hide()
         self.countdown_button.clicked.connect(self.closeWebview)
         self.isWebviewOnMp4Open = False
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         self.socket_thread = SocketIOThread(
             'https://kiosk-chat.musicen.com:8234', self.username)
+        self.socket_thread.socketIdReceived.connect(self.handleSocketId)
         self.socket_thread.start()
         self.socket_thread.offerReceived.connect(self.handleOffer)
+        self.socket_thread.multipleCallOfferReceived.connect(self.handleMultipleCallOffer)
+        self.socket_thread.webrtcDataServerList.connect(self.handleWebrtctDataServer)
+        
         self.socket_thread.iceCandidateReceived.connect(
             lambda data: self.iceCandidatesQueue.append(data)
         )
         self.LocalDbParameterStorage = LocalDbParameterStorage()
         self.offerSent = False
         self.openWebViewSignal.connect(self.openFullScreenWebViewSlot)
+        self.openWebViewSignalForMultipleCall.connect(self.openFullScreenWebViewForMultipleCallSlot)
         current_timestamp = int(datetime.now().timestamp() * 1000)
         payload = {
             "appID": self.deviceId,
@@ -205,6 +231,9 @@ class MainApp(QWidget):
         interval = 60000  
         self.pollingManager = PollingManager(payload, url, interval, self.pollingCallback)
         self.pollingManager.start()
+    
+    def handleSocketId(self, socketId):
+        self.socketId = socketId 
 
     def requestCallback(self, response):
         print("Single request answer:", response)    
@@ -284,11 +313,30 @@ class MainApp(QWidget):
                     QTimer.singleShot(
                         2000, lambda: self.openWebViewSignal.emit(offerData))
 
+    def handleWebrtctDataServer(self, message):
+        self.webrtcDataServerListObject.append(message)
+    def handleMultipleCallOffer(self, offerData):
+        if self.isFullScreenWebViewOpen == False:
+            reply = QMessageBox.question(
+                self, '전화', "누군가 자네를 부르고 있네", QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                print("he said yes")
+                print(offerData)
+                QTimer.singleShot(
+                    2000, lambda: self.openWebViewSignalForMultipleCall.emit(offerData))
+
+
     @pyqtSlot(dict)
     def openFullScreenWebViewSlot(self, offerData):
         self.webcam_widget.releaseCamera()
         url = self.callingWebviewUrl
         self.openFullScreenWebView(url, offerData)
+
+    @pyqtSlot(list)
+    def openFullScreenWebViewForMultipleCallSlot(self, offerData):
+        self.webcam_widget.releaseCamera()
+        url = self.callingWebviewUrl
+        self.openFullScreenWebView(url, offerData, True)
 
     def sendIceCandidateToWebView(self, candidateData):
         jsCode = f"window.receiveCandidateInAnswer({json.dumps(candidateData)})"
@@ -384,7 +432,7 @@ class MainApp(QWidget):
         self.isWebviewOnMp4Open = True
         QTimer.singleShot(100, self.setupCountdown)
 
-    def openFullScreenWebView(self, url, offerData=None):
+    def openFullScreenWebView(self, url, offerData=None, isMultipleCall = False):
         if self.isWebviewOnMp4Open:
             self.closeWebview()
         self.storeWidgetStates()
@@ -411,9 +459,23 @@ class MainApp(QWidget):
         self.offerSent = False
         self.isFullScreenWebViewOpen = True
 
-        if offerData is not None:
+        if offerData is not None and isMultipleCall == False:
             self.web_view.loadFinished.connect(
                 lambda:  self.sendOfferToWebView(offerData))
+        
+        if offerData is not None and isMultipleCall == True:
+            self.web_view.loadFinished.connect(
+                  lambda ok: self.sendMultipleCallToWebView(ok, offerData))
+
+    def sendMultipleCallToWebView(self, ok, offerData):
+        if ok:
+            print(" Load finish")
+            print(offerData)
+            print(self.webrtcDataServerListObject)
+            jsCode = f"window.multipleCallFromPython({json.dumps(self.webrtcDataServerListObject)}, {json.dumps(offerData)}, '{self.socketId}')"
+            self.web_view.page().runJavaScript(jsCode)
+        else:
+            print("loading error")
 
     def sendOfferToWebView(self, offerData):
         if not self.offerSent:
