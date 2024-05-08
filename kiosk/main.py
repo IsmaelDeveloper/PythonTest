@@ -461,7 +461,7 @@ class MainApp(QWidget):
 
         if offerData is not None and isMultipleCall == False:
             self.web_view.loadFinished.connect(
-                lambda:  self.sendOfferToWebView(offerData))
+                lambda ok:  self.sendOfferToWebView(ok, offerData))
         
         if offerData is not None and isMultipleCall == True:
             self.web_view.loadFinished.connect(
@@ -475,17 +475,27 @@ class MainApp(QWidget):
             jsCode = f"window.multipleCallFromPython({json.dumps(self.webrtcDataServerListObject)}, {json.dumps(offerData)}, '{self.socketId}')"
             self.web_view.page().runJavaScript(jsCode)
         else:
+            self.closeFullScreenWebView()
+            self.webcam_widget.releaseCamera()
+            self.openFullScreenWebView(
+            self.callingWebviewUrl, offerData, True)
+
             print("loading error")
 
-    def sendOfferToWebView(self, offerData):
-        if not self.offerSent:
-            for candidate in self.iceCandidatesQueue:
-                print("Sending candidate to webview")
-                self.sendIceCandidateToWebView(candidate)
-            self.iceCandidatesQueue.clear()
-            jsCode = f"window.getOffer({offerData})"
-            self.web_view.page().runJavaScript(jsCode)
-            self.offerSent = True
+    def sendOfferToWebView(self, ok, offerData):
+        if ok:
+            if not self.offerSent:
+                for candidate in self.iceCandidatesQueue:
+                    print("Sending candidate to webview")
+                    self.sendIceCandidateToWebView(candidate)
+                self.iceCandidatesQueue.clear()
+                jsCode = f"window.getOffer({offerData})"
+                self.web_view.page().runJavaScript(jsCode)
+                self.offerSent = True
+        else:
+            self.webcam_widget.releaseCamera()
+            self.openFullScreenWebView(
+                self.callingWebviewUrl, offerData)
 
     def storeWidgetStates(self):
         self.widget_states = {
