@@ -1,9 +1,9 @@
 FROM ubuntu:20.04
 
-# Éviter les messages de dialogue de front-end pendant les installations de paquets
+# avoid frontend dialog during packet installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Mise à jour des paquets et installation de Python 3.9 et des outils nécessaires
+# update packet and install python etc..
 RUN apt-get update && apt-get install -y \
     python3.9 \
     python3-pip \
@@ -31,18 +31,18 @@ RUN apt-get update && apt-get install -y \
     gstreamer1.0-pulseaudio \
     && rm -rf /var/lib/apt/lists/*
 
-# Mettre à jour pip et installer les packages Python nécessaires
+# update pip and install necessary python packet
 RUN python3.9 -m pip install --upgrade pip && \
     pip install PyQt5 PyQtWebEngine
 
-# Copier et extraire l'application
-COPY ./build_ultralytics.zip ./
-RUN unzip ./build_ultralytics.zip -d ./ && \
-    rm ./build_ultralytics.zip
+# copy build kiosk.zip and unzip it
+COPY ./build_kiosk.zip ./
+RUN unzip ./build_kiosk.zip -d ./ && \
+    rm ./build_kiosk.zip
 
-WORKDIR /build_ultralytics/main
+WORKDIR /output/main
 
-# Rendre le fichier principal exécutable
+# make main file executable
 RUN chmod +x ./main
 
 # Configurer l'intégration GLX pour Qt et désactiver le sandbox pour QtWebEngine
