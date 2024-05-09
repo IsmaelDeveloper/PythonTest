@@ -114,7 +114,7 @@ class WebEnginePage(QWebEnginePage):
 class SocketIOThread(QThread):
     offerReceived = pyqtSignal(dict)
     iceCandidateReceived = pyqtSignal(dict)
-    multipleCallOfferReceived = pyqtSignal(list)
+    multipleCallOfferReceived = pyqtSignal(str)
     webrtcDataServerList = pyqtSignal(dict)
     socketIdReceived = pyqtSignal(str)
 
@@ -148,8 +148,8 @@ class SocketIOThread(QThread):
             self.iceCandidateReceived.emit(data)
         
         @sio.on('boom-server')
-        def boom_server(boomUsers):
-            self.multipleCallOfferReceived.emit(boomUsers)
+        def boom_server(UUID):
+            self.multipleCallOfferReceived.emit(UUID)
             print("MULTIPLE CALL ")
         
         @sio.on('webrtc-data-server')
@@ -168,7 +168,7 @@ class MainApp(QWidget):
     kioskClicked = pyqtSignal()
     callClicked = pyqtSignal()
     openWebViewSignal = pyqtSignal(dict)
-    openWebViewSignalForMultipleCall = pyqtSignal(list)
+    openWebViewSignalForMultipleCall = pyqtSignal(str)
     webrtcDataServerListObject = []
 
     def __init__(self):
@@ -252,7 +252,7 @@ class MainApp(QWidget):
         self.parameter = LocalParameterStorage()
         self.setObjectName("mainWindow")
         self.deviceId = f"DailySafe_{machine_id}"
-        self.username = "test"
+        self.username = "a"
         self.host = "http://211.46.245.40:81"
         self.callingWebviewUrl = "https://kiosk-chat.musicen.com:8234/userInterface.html?username=" + self.username
 
@@ -314,16 +314,20 @@ class MainApp(QWidget):
                         2000, lambda: self.openWebViewSignal.emit(offerData))
 
     def handleWebrtctDataServer(self, message):
-        self.webrtcDataServerListObject.append(message)
-    def handleMultipleCallOffer(self, offerData):
+        print(message)
+        if self.isFullScreenWebViewOpen == False:
+            self.webrtcDataServerListObject.append(message)
+        else:
+            jsCode = f"window.webrtcDataServerOn({json.dumps(message)})"
+    def handleMultipleCallOffer(self, UUID):
         if self.isFullScreenWebViewOpen == False:
             reply = QMessageBox.question(
                 self, '전화', "누군가 자네를 부르고 있네", QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.Yes:
                 print("he said yes")
-                print(offerData)
+                print(UUID)
                 QTimer.singleShot(
-                    2000, lambda: self.openWebViewSignalForMultipleCall.emit(offerData))
+                    2000, lambda: self.openWebViewSignalForMultipleCall.emit(UUID))
 
 
     @pyqtSlot(dict)
@@ -332,11 +336,11 @@ class MainApp(QWidget):
         url = self.callingWebviewUrl
         self.openFullScreenWebView(url, offerData)
 
-    @pyqtSlot(list)
-    def openFullScreenWebViewForMultipleCallSlot(self, offerData):
+    @pyqtSlot(str)
+    def openFullScreenWebViewForMultipleCallSlot(self, UUID):
         self.webcam_widget.releaseCamera()
         url = self.callingWebviewUrl
-        self.openFullScreenWebView(url, offerData, True)
+        self.openFullScreenWebView(url, UUID, True)
 
     def sendIceCandidateToWebView(self, candidateData):
         jsCode = f"window.receiveCandidateInAnswer({json.dumps(candidateData)})"
@@ -447,6 +451,14 @@ class MainApp(QWidget):
         if self.web_view.parent() is not None:
             self.web_view.setParent(None)
         self.web_view = QWebEngineView()
+        if offerData is not None and isMultipleCall == False:
+            self.web_view.loadFinished.connect(
+                lambda ok:  self.sendOfferToWebView(ok, offerData))
+        
+        if offerData is not None and isMultipleCall == True:
+            self.web_view.loadFinished.connect(
+                  lambda ok: self.sendMultipleCallToWebView(ok, offerData))
+
         self.configureWebEngineSettings()
         custom_page = WebEnginePage(self.web_view)
         custom_page.closeViewRequested.connect(self.closeFullScreenWebView)
@@ -457,22 +469,14 @@ class MainApp(QWidget):
         self.web_view.showFullScreen()
 
         self.offerSent = False
-        self.isFullScreenWebViewOpen = True
-
-        if offerData is not None and isMultipleCall == False:
-            self.web_view.loadFinished.connect(
-                lambda ok:  self.sendOfferToWebView(ok, offerData))
-        
-        if offerData is not None and isMultipleCall == True:
-            self.web_view.loadFinished.connect(
-                  lambda ok: self.sendMultipleCallToWebView(ok, offerData))
 
     def sendMultipleCallToWebView(self, ok, offerData):
         if ok:
+            self.isFullScreenWebViewOpen = True
             print(" Load finish")
             print(offerData)
             print(self.webrtcDataServerListObject)
-            jsCode = f"window.multipleCallFromPython({json.dumps(self.webrtcDataServerListObject)}, {json.dumps(offerData)}, '{self.socketId}')"
+            jsCode = f"window.multipleCallFromPython({json.dumps(offerData)})"
             self.web_view.page().runJavaScript(jsCode)
         else:
             self.closeFullScreenWebView()
@@ -484,6 +488,7 @@ class MainApp(QWidget):
 
     def sendOfferToWebView(self, ok, offerData):
         if ok:
+            self.isFullScreenWebViewOpen = True
             if not self.offerSent:
                 for candidate in self.iceCandidatesQueue:
                     print("Sending candidate to webview")
