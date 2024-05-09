@@ -1,18 +1,19 @@
+const { v4: uuidv4, v6: uuidv6 } = require("uuid");
 const express = require("express");
-const https = require("http");
+const https = require("https");
 const socketIo = require("socket.io");
 const cors = require("cors");
 const fs = require("fs");
 
 const app = express();
-const certPath = "./cert/";
-const privateKey = fs.readFileSync(certPath + "lo.cal.com.key", "utf8");
-const certificate = fs.readFileSync(certPath + "lo.cal.com.crt", "utf8");
-// const certPath = "/etc/letsencrypt/live/kiosk-chat.musicen.com/";
-// const privateKey = fs.readFileSync(certPath + "privkey.pem", "utf8");
-// const certificate = fs.readFileSync(certPath + "fullchain.pem", "utf8");
+// const certPath = "./cert/";
+// const privateKey = fs.readFileSync(certPath + "lo.cal.com.key", "utf8");
+// const certificate = fs.readFileSync(certPath + "lo.cal.com.crt", "utf8");
+const certPath = "/etc/letsencrypt/live/kiosk-chat.musicen.com/";
+const privateKey = fs.readFileSync(certPath + "privkey.pem", "utf8");
+const certificate = fs.readFileSync(certPath + "fullchain.pem", "utf8");
 const credentials = { key: privateKey, cert: certificate };
-
+const rooms = [];
 // ssl_certificate /etc/letsencrypt/live/schback.musicen.com/fullchain.pem; # managed by Certbot
 // ssl_certificate_key /etc/letsencrypt/live/schback.musicen.com/privkey.pem; # managed by Certbot
 // include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
@@ -44,7 +45,6 @@ const allSockets = {};
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
-
   socket.on("register", (data) => {
     const username = data.username;
     users[username] = socket.id;
@@ -102,9 +102,36 @@ io.on("connection", (socket) => {
   // start room functions
 
   socket.on("boom-client", (boomUsers) => {
+    const uuid = uuidv4();
+    if (!rooms[uuid]) {
+      rooms[uuid] = [];
+    }
     boomUsers.forEach((socketId) => {
-      io.to(socketId).emit("boom-server", boomUsers);
+      io.to(socketId).emit("boom-server", uuid);
     });
+  });
+
+  socket.on("get-room-participants", (data) => {
+    const { roomUUID } = data;
+    if (rooms[roomUUID]) {
+      socket.emit("room-participants", {
+        roomUUID,
+        participants: rooms[roomUUID],
+      });
+    } else {
+      socket.emit("room-participants", { roomUUID, participants: [] });
+    }
+  });
+
+  socket.on("join-room", (data) => {
+    const { roomUUID } = data;
+    if (rooms[roomUUID]) {
+      rooms[roomUUID].push(socket.id);
+      socket.join(roomUUID);
+      console.log(`User ${socket.id} joined room ${roomUUID}`);
+    } else {
+      console.log(`Room ${roomUUID} does not exist`);
+    }
   });
 
   socket.on("webrtc-data-client", (message) => {
