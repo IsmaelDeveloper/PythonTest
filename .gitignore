@@ -1,3 +1,4 @@
 webrtc_web/build/userInterface/PKG-00.toc
 kiosk/output
 kiosk/utils/__pycache__
+webrtc_web/node_modules
