@@ -180,6 +180,7 @@ class MainApp(QWidget):
         self.busClicked.connect(self.onBusClicked)
         self.kioskClicked.connect(self.onKioskClicked)
         self.callClicked.connect(self.onCallClicked)
+        self.isWebviewCloseByUser = False
 
         self.iceCandidatesQueue = []
 
@@ -193,17 +194,7 @@ class MainApp(QWidget):
         self.countdown_button.clicked.connect(self.closeWebview)
         self.isWebviewOnMp4Open = False
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        self.socket_thread = SocketIOThread(
-            'https://kiosk-chat.musicen.com:8234', self.username)
-        self.socket_thread.socketIdReceived.connect(self.handleSocketId)
-        self.socket_thread.start()
-        self.socket_thread.offerReceived.connect(self.handleOffer)
-        self.socket_thread.multipleCallOfferReceived.connect(self.handleMultipleCallOffer)
-        self.socket_thread.webrtcDataServerList.connect(self.handleWebrtctDataServer)
-        
-        self.socket_thread.iceCandidateReceived.connect(
-            lambda data: self.iceCandidatesQueue.append(data)
-        )
+        self.startSocket()
         self.LocalDbParameterStorage = LocalDbParameterStorage()
         self.offerSent = False
         self.openWebViewSignal.connect(self.openFullScreenWebViewSlot)
@@ -232,6 +223,22 @@ class MainApp(QWidget):
         self.pollingManager = PollingManager(payload, url, interval, self.pollingCallback)
         self.pollingManager.start()
     
+    def startSocket(self):
+        self.socket_thread = SocketIOThread(
+            'https://kiosk-chat.musicen.com:8234', self.username)
+        self.socket_thread.socketIdReceived.connect(self.handleSocketId)
+        self.socket_thread.start()
+        self.socket_thread.offerReceived.connect(self.handleOffer)
+        self.socket_thread.multipleCallOfferReceived.connect(self.handleMultipleCallOffer)
+        self.socket_thread.webrtcDataServerList.connect(self.handleWebrtctDataServer)
+        
+        self.socket_thread.iceCandidateReceived.connect(
+            lambda data: self.iceCandidatesQueue.append(data)
+        )
+
+    def userCloseWebview(self):
+        self.isWebviewCloseByUser = True
+        self.closeFullScreenWebView()
     def handleSocketId(self, socketId):
         self.socketId = socketId 
 
@@ -461,7 +468,7 @@ class MainApp(QWidget):
 
         self.configureWebEngineSettings()
         custom_page = WebEnginePage(self.web_view)
-        custom_page.closeViewRequested.connect(self.closeFullScreenWebView)
+        custom_page.closeViewRequested.connect(self.userCloseWebview)
         self.web_view.setPage(custom_page)
 
         self.web_view.setUrl(QUrl(url))
@@ -472,6 +479,7 @@ class MainApp(QWidget):
 
     def sendMultipleCallToWebView(self, ok, offerData):
         if ok:
+            self.isWebviewCloseByUser = False
             self.isFullScreenWebViewOpen = True
             print(" Load finish")
             print(offerData)
@@ -479,15 +487,17 @@ class MainApp(QWidget):
             jsCode = f"window.multipleCallFromPython({json.dumps(offerData)})"
             self.web_view.page().runJavaScript(jsCode)
         else:
-            self.closeFullScreenWebView()
-            self.webcam_widget.releaseCamera()
-            self.openFullScreenWebView(
-            self.callingWebviewUrl, offerData, True)
-
-            print("loading error")
+            if self.isWebviewCloseByUser == False:
+                self.closeFullScreenWebView()
+                self.checkInternetPopup()
+            # self.webcam_widget.releaseCamera()
+            # self.openFullScreenWebView(
+            # self.callingWebviewUrl, offerData, True)
+            # print("loading error")
 
     def sendOfferToWebView(self, ok, offerData):
         if ok:
+            self.isWebviewCloseByUser = False
             self.isFullScreenWebViewOpen = True
             if not self.offerSent:
                 for candidate in self.iceCandidatesQueue:
@@ -498,9 +508,12 @@ class MainApp(QWidget):
                 self.web_view.page().runJavaScript(jsCode)
                 self.offerSent = True
         else:
-            self.webcam_widget.releaseCamera()
-            self.openFullScreenWebView(
-                self.callingWebviewUrl, offerData)
+            if self.isWebviewCloseByUser == False:
+                self.closeFullScreenWebView()
+                self.checkInternetPopup()
+            # self.webcam_widget.releaseCamera()
+            # self.openFullScreenWebView(
+            #     self.callingWebviewUrl, offerData)
 
     def storeWidgetStates(self):
         self.widget_states = {
@@ -508,6 +521,16 @@ class MainApp(QWidget):
             'buttons_view': self.buttons_view.isVisible(),
             'web_view': self.web_view.isVisible()
         }
+
+    def checkInternetPopup(self):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Warning)
+        msgBox.setWindowTitle('오류')
+        msgBox.setText("통화에 연결할 수 없습니다. 인터넷 연결을 확인하세요.")
+        msgBox.setStandardButtons(QMessageBox.Yes)
+        buttonY = msgBox.button(QMessageBox.Yes)
+        buttonY.setText("확인")  # Personnalisez le label du bouton ici
+        msgBox.exec_()
 
     def closeFullScreenWebView(self):
         self.web_view.setUrl(QUrl("about:blank"))
@@ -521,12 +544,12 @@ class MainApp(QWidget):
             main_layout.addWidget(self.video_widget, 3)
             self.video_widget.show()
             self.restoreVideoView()
-
         self.webcam_widget.reactivateCamera()
         self.webcam_widget.show()
         self.buttons_view.setVisible(self.widget_states['buttons_view'])
         self.web_view.setVisible(self.widget_states['web_view'])
         self.isFullScreenWebViewOpen = False
+        # self.isWebviewCloseByUser = False
 
     def setupCountdown(self):
         self.countdown_time = 50
