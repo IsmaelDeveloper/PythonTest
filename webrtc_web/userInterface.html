@@ -68,6 +68,9 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            width: 150px;
+            height: 80px;
+            font-size: 25px;
           "
         >
           닫기
@@ -78,9 +81,11 @@
     <audio id="callingSound" src="calling.mp3" loop></audio>
 
     <div id="callPopup" style="display: none">
-      <p>누군가 자네를 부르고 있네</p>
-      <button id="acceptCall">수락</button>
-      <button id="declineCall">거절하다</button>
+      <div class="callPopupContent">
+        <p>누군가 자네를 부르고 있네</p>
+        <button id="acceptCall">수락</button>
+        <button id="declineCall">거절하다</button>
+      </div>
     </div>
 
     <div id="footer-controls">

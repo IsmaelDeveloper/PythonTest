@@ -17,12 +17,15 @@ h1 {
   color: #333;
   margin-top: 0;
   margin-bottom: 90px;
+  font-size: 50px !important;
 }
 
 #user-navigation {
   display: flex;
   align-items: center;
   width: 90%;
+  margin-top: 30%;
+  margin-bottom: auto;
 }
 
 #users {
@@ -39,7 +42,7 @@ button:disabled {
 .user-container {
   min-width: calc(20% - 40px);
   margin: 10px 20px;
-  height: 60px;
+  height: 120px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -52,11 +55,12 @@ button:disabled {
 /* Nouveau style pour le conteneur de boutons */
 .button-container {
   display: flex;
-  gap: 10px; /* Ajustez l'écart entre les boutons */
+  gap: 30px; /* Ajustez l'écart entre les boutons */
+  height: 60%;
 }
 
 .user-name {
-  font-size: 20px;
+  font-size: 50px;
   color: #333;
 }
 
@@ -66,7 +70,7 @@ button:disabled {
   border: none;
   color: white;
   padding: 5px 10px; /* Padding réduit */
-  font-size: 16px;
+  font-size: 30px;
   cursor: pointer;
   border-radius: 5px;
   font-weight: bold;
@@ -89,6 +93,8 @@ button:disabled {
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
   z-index: 100;
   text-align: center;
+  width: 50%;
+  font-size: 30px;
 }
 
 .local-overlay {
@@ -141,6 +147,7 @@ button:hover {
 }
 
 #footer-controls {
+  height: 7%;
   width: 100%;
   position: fixed;
   bottom: 0;
@@ -155,19 +162,21 @@ button:hover {
   justify-content: center;
   align-items: center;
   width: 20%;
+  height: 100%;
   border: 2px solid #ccc;
   border-radius: 10px;
   padding: 10px;
   box-sizing: border-box;
   text-align: center;
-  height: 50px;
+  font-size: 30px;
 }
 
 #all-call-button {
   width: 80%;
   padding: 10px 0;
-  font-size: 16px;
+  font-size: 30px;
   border-radius: 10px;
+  height: 100%;
   cursor: pointer;
 }
 
