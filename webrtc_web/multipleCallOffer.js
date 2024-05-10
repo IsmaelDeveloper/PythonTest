@@ -14,16 +14,15 @@ export function attachSaveButtonEvent(saveButton, userName) {
   saveButton.dataset.isSelected = "false";
 
   saveButton.addEventListener("click", function () {
+    const isSelected = this.dataset.isSelected === "true";
+    if (!isSelected && saveButtonCounter >= 4) {
+      return;
+    }
     socketIdListUsernm.forEach((item) => {
       if (item[1].userNm === userName) {
         addSelectedUser(item[0]);
       }
     });
-    const isSelected = this.dataset.isSelected === "true";
-    if (!isSelected && saveButtonCounter >= 4) {
-      return;
-    }
-
     this.dataset.isSelected = String(!isSelected);
 
     if (!isSelected) {
