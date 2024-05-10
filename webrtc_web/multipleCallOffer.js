@@ -20,6 +20,10 @@ export function attachSaveButtonEvent(saveButton, userName) {
       }
     });
     const isSelected = this.dataset.isSelected === "true";
+    if (!isSelected && saveButtonCounter >= 4) {
+      return;
+    }
+
     this.dataset.isSelected = String(!isSelected);
 
     if (!isSelected) {

@@ -24,7 +24,7 @@ h1 {
   display: flex;
   align-items: center;
   width: 90%;
-  margin-top: 30%;
+  margin-top: 10%;
   margin-bottom: auto;
 }
 
@@ -96,7 +96,12 @@ button:disabled {
   width: 50%;
   font-size: 30px;
 }
-
+.call-notice {
+  margin-top: 15%;
+  font-size: 35px;
+  font-weight: bold;
+  max-width: 60%;
+}
 .local-overlay {
   position: absolute;
   top: 20px;
