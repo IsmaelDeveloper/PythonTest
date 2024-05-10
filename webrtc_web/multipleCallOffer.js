@@ -39,6 +39,11 @@ export function attachSaveButtonEvent(saveButton, userName) {
   });
 }
 
+$(document).ready(function () {
+  $(".webview_close_btn").on("click", function () {
+    location.href = "closewebview://?";
+  });
+});
 $(function () {
   myVwefew();
 });
