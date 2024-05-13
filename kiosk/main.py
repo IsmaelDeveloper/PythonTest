@@ -426,8 +426,12 @@ class MainApp(QWidget):
 
     def configureWebEngineSettings(self):
         settings = QWebEngineSettings.globalSettings()
-        settings.setAttribute(
-            QWebEngineSettings.PlaybackRequiresUserGesture, False)
+        settings.setAttribute(QWebEngineSettings.PlaybackRequiresUserGesture, False)
+        settings.setAttribute(QWebEngineSettings.AllowRunningInsecureContent, True)
+        settings.setAttribute(QWebEngineSettings.AllowGeolocationOnInsecureOrigins, True)
+        settings.setAttribute(QWebEngineSettings.WebGLEnabled, True)
+        settings.setAttribute(QWebEngineSettings.WebRTCPublicInterfacesOnly, False)
+
 
     def clearCache(self):
         QWebEngineProfile.defaultProfile().clearHttpCache()
@@ -447,7 +451,7 @@ class MainApp(QWidget):
         if self.isWebviewOnMp4Open:
             self.closeWebview()
         self.storeWidgetStates()
-        self.clearCache()
+        # self.clearCache()
         self.video_player.stop()
         self.video_widget.setParent(None)
         self.video_widget.hide()
@@ -532,10 +536,19 @@ class MainApp(QWidget):
         buttonY.setText("확인")  # Personnalisez le label du bouton ici
         msgBox.exec_()
 
+
+
+    def sendCloseSignalToWebView(self):
+            if self.web_view:
+                jsCode = "if (typeof closeCamera === 'function') closeCamera();"
+                self.web_view.page().runJavaScript(jsCode)
+
     def closeFullScreenWebView(self):
+        self.sendCloseSignalToWebView()
         self.web_view.setUrl(QUrl("about:blank"))
         self.web_view.setParent(None)
-        self.web_view.hide()
+        self.web_view.hide() 
+        # self.web_view = QWebEngineView()
 
         self.video_widget.setParent(self)
         main_layout = self.layout()
@@ -550,6 +563,8 @@ class MainApp(QWidget):
         self.web_view.setVisible(self.widget_states['web_view'])
         self.isFullScreenWebViewOpen = False
         # self.isWebviewCloseByUser = False
+
+
 
     def setupCountdown(self):
         self.countdown_time = 50
