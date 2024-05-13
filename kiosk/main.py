@@ -123,42 +123,45 @@ class SocketIOThread(QThread):
         self.url = url
         self.username = username
         self.socketId = None 
-
+        self.sio = socketio.Client(ssl_verify=False)
     def run(self):
-        sio = socketio.Client(ssl_verify=False)
 
-        @sio.event
+        @self.sio.event
         def connect():
-            self.socketId = sio.eio.sid
+            self.socketId = self.sio.eio.sid
             self.socketIdReceived.emit(self.socketId)
             print("Connected to server")
-            sio.emit('register', {'username': self.username})
-            sio.emit('usernm-client', self.username)
+            self.sio.emit('register', {'username': self.username})
+            self.sio.emit('usernm-client', self.username)
 
-        @sio.event
+        @self.sio.event
         def disconnect():
             print("Disconnected from server")
 
-        @sio.event
+        @self.sio.event
         def getOffer(data):
             self.offerReceived.emit(data)
 
-        @sio.event
+        @self.sio.event
         def receiveCandidateInAnswer(data):
             self.iceCandidateReceived.emit(data)
         
-        @sio.on('boom-server')
+        @self.sio.on('boom-server')
         def boom_server(UUID):
             self.multipleCallOfferReceived.emit(UUID)
             print("MULTIPLE CALL ")
         
-        @sio.on('webrtc-data-server')
+        @self.sio.on('webrtc-data-server')
         def webrtc_data_server(message):
             print("webrtc message ")
             self.webrtcDataServerList.emit(message)
 
-        sio.connect(self.url)
-        sio.wait()
+        self.sio.connect(self.url)
+        self.sio.wait()
+
+    def reRegisterUser(self):
+        if self.sio.connected:
+            self.sio.emit('register', {'username': self.username})
 
 
 class MainApp(QWidget):
@@ -327,6 +330,7 @@ class MainApp(QWidget):
         else:
             jsCode = f"window.webrtcDataServerOn({json.dumps(message)})"
     def handleMultipleCallOffer(self, UUID):
+        print(self.isFullScreenWebViewOpen)
         if self.isFullScreenWebViewOpen == False:
             reply = QMessageBox.question(
                 self, '전화', "누군가 자네를 부르고 있네", QMessageBox.Yes | QMessageBox.No)
@@ -480,11 +484,11 @@ class MainApp(QWidget):
         self.web_view.showFullScreen()
 
         self.offerSent = False
+        self.isFullScreenWebViewOpen = True
 
     def sendMultipleCallToWebView(self, ok, offerData):
         if ok:
             self.isWebviewCloseByUser = False
-            self.isFullScreenWebViewOpen = True
             print(" Load finish")
             print(offerData)
             print(self.webrtcDataServerListObject)
@@ -502,7 +506,6 @@ class MainApp(QWidget):
     def sendOfferToWebView(self, ok, offerData):
         if ok:
             self.isWebviewCloseByUser = False
-            self.isFullScreenWebViewOpen = True
             if not self.offerSent:
                 for candidate in self.iceCandidatesQueue:
                     print("Sending candidate to webview")
@@ -562,6 +565,8 @@ class MainApp(QWidget):
         self.buttons_view.setVisible(self.widget_states['buttons_view'])
         self.web_view.setVisible(self.widget_states['web_view'])
         self.isFullScreenWebViewOpen = False
+        self.socket_thread.reRegisterUser() 
+        # self.startSocket()
         # self.isWebviewCloseByUser = False
 
 
