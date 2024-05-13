@@ -200,6 +200,7 @@ class MainApp(QWidget):
         self.startSocket()
         self.LocalDbParameterStorage = LocalDbParameterStorage()
         self.offerSent = False
+        self.multipleCallJsSent = False
         self.openWebViewSignal.connect(self.openFullScreenWebViewSlot)
         self.openWebViewSignalForMultipleCall.connect(self.openFullScreenWebViewForMultipleCallSlot)
         current_timestamp = int(datetime.now().timestamp() * 1000)
@@ -492,8 +493,10 @@ class MainApp(QWidget):
             print(" Load finish")
             print(offerData)
             print(self.webrtcDataServerListObject)
-            jsCode = f"window.multipleCallFromPython({json.dumps(offerData)})"
-            self.web_view.page().runJavaScript(jsCode)
+            if self.multipleCallJsSent == False:
+                jsCode = f"window.multipleCallFromPython({json.dumps(offerData)})"
+                self.web_view.page().runJavaScript(jsCode)
+                self.multipleCallJsSent = True
         else:
             if self.isWebviewCloseByUser == False:
                 self.closeFullScreenWebView()
@@ -548,6 +551,7 @@ class MainApp(QWidget):
 
     def closeFullScreenWebView(self):
         self.sendCloseSignalToWebView()
+        self.multipleCallJsSent = False
         self.web_view.setUrl(QUrl("about:blank"))
         self.web_view.setParent(None)
         self.web_view.hide() 
@@ -566,6 +570,7 @@ class MainApp(QWidget):
         self.web_view.setVisible(self.widget_states['web_view'])
         self.isFullScreenWebViewOpen = False
         self.socket_thread.reRegisterUser() 
+        
         # self.startSocket()
         # self.isWebviewCloseByUser = False
 
