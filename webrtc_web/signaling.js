@@ -80,6 +80,23 @@ io.on("connection", (socket) => {
     }
   });
   socket.on("disconnect", () => {
+    for (const roomUUID in rooms) {
+      if (rooms.hasOwnProperty(roomUUID)) {
+        const index = rooms[roomUUID].indexOf(socket.id);
+        if (index !== -1) {
+          rooms[roomUUID].splice(index, 1); // Remove the user from the room
+          // Notify the remaining users in the room
+          rooms[roomUUID].forEach((id) => {
+            io.to(id).emit("user-left", { socketId: socket.id });
+          });
+          // If the room is empty, delete the room
+          if (rooms[roomUUID].length === 0) {
+            delete rooms[roomUUID];
+          }
+        }
+      }
+    }
+
     delete allSockets[socket.id];
     refreshUsers();
 

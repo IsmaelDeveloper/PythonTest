@@ -8,8 +8,22 @@ let localStream;
 let webRtcPeers = {};
 let socketIdListUsernm = [];
 let webrtc_data_server_list = [];
+let currentRoomUUID = null;
 window.multipleCallFromPython = multipleCallFromPython;
 window.webrtcDataServerOn = webrtc_data_server_on;
+
+// window.addEventListener("beforeunload", handleBeforeUnload);
+
+// function handleBeforeUnload(event) {
+//   alert("test");
+//   if (isCalling && currentRoomUUID) {
+//     mySocket.emit("leave-room", {
+//       roomUUID: currentRoomUUID,
+//       socketId: mySocketId,
+//     });
+//   }
+// }
+
 export function attachSaveButtonEvent(saveButton, userName) {
   saveButton.dataset.isSelected = "false";
 
@@ -56,7 +70,6 @@ const myVwefew = async () => {
 };
 
 const mySocket = socket;
-//
 
 mySocket.on("connect", () => {
   mySocketId = mySocket.id;
@@ -99,7 +112,50 @@ mySocket.on("connect", () => {
       displayGroupCallPopup(roomUUID);
     }
   });
+  mySocket.on("user-left", (data) => {
+    console.log("data in user-left", data);
+    const { socketId } = data;
+    const userName = getUserNameBySocketId(socketId);
+    if (webRtcPeers[socketId]) {
+      webRtcPeers[socketId].peer.close();
+      delete webRtcPeers[socketId];
+    }
+    removeVideoStream(socketId, userName);
+    checkAndRefreshPage();
+  });
 });
+
+function checkAndRefreshPage() {
+  const videoContainer = document.getElementById("videos");
+  if (videoContainer.children.length === 0) {
+    window.location.reload();
+  }
+}
+
+function removeVideoStream(socketId, userName) {
+  // Remove video element
+  const videoContainer = document.getElementById("videos");
+  const videoWraps = videoContainer.getElementsByClassName("video-wrap");
+  for (let videoWrap of videoWraps) {
+    const userLabel = videoWrap.getElementsByClassName("user-label")[0];
+    if (userLabel && userLabel.textContent === userName) {
+      videoContainer.removeChild(videoWrap);
+      break;
+    }
+  }
+
+  // Remove audio element
+  const audioContainer = document.getElementById("groupCallVideoContainer");
+  const audioElements = audioContainer.getElementsByTagName("audio");
+  for (let audioElement of audioElements) {
+    if (audioElement.srcObject && audioElement.srcObject.id === socketId) {
+      audioContainer.removeChild(audioElement);
+      break;
+    }
+  }
+
+  console.log(`Removed video and audio streams for user: ${userName}`);
+}
 
 async function webrtc_data_server_on(message) {
   if (isCalling) {
@@ -213,6 +269,7 @@ async function multipleCallFromPython(roomUUID) {
   displayGroupCallPopup(roomUUID);
 }
 async function boom_server(roomUUID) {
+  currentRoomUUID = roomUUID;
   mySocket.emit("get-room-participants", { roomUUID });
   mySocket.on("room-participants", async (data) => {
     const { participants } = data;
