@@ -108,6 +108,15 @@ async function webrtc_data_server_on(message) {
     webrtc_data_server_list.push(message);
   }
 }
+window.closeCamera = function () {
+  if (localStream) {
+    localStream.getTracks().forEach((track) => {
+      track.stop();
+    });
+    localStream = null;
+    console.log("Camera is off");
+  }
+};
 async function displayGroupCallPopup(roomUUID) {
   const callPopup = document.getElementById("callPopup");
   callPopup.innerHTML = `<div class="callPopupContent"><p>그룹 콜 초대.</p>
