@@ -308,7 +308,7 @@ class MainApp(QWidget):
         self.addSlideMenu()
 
     def handleOffer(self, offerData):
-        if self.offerSent == False and self.isFullScreenWebViewOpen == False:
+        if self.isFullScreenWebViewOpen == False:
             if offerData.get("target") == self.username:
                 reply = QMessageBox.question(
                     self, '전화', "누군가 자네를 부르고 있네", QMessageBox.Yes | QMessageBox.No)
