@@ -2,6 +2,7 @@ import { serverUrl, rtcConfig, socket } from "./config.js";
 document.addEventListener("DOMContentLoaded", function () {
   var username = new URLSearchParams(window.location.search).get("username");
   var localConnection = new RTCPeerConnection(rtcConfig);
+  let callerUsername = "";
   var target = "";
   socket.on("connect", function () {
     console.log("Connected to the server. Socket ID:", socket.id);
@@ -20,6 +21,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   socket.on("receiveCandidateInAnswer", function (data) {
     receiveCandidateInAnswer(data);
+  });
+
+  // Écoute pour les messages entrants contenant un nom d'utilisateur
+  socket.on("closeWebrtcDuo", (usernameData) => {
+    if (usernameData.username === username) {
+      console.log("Reloading due to username match");
+      window.location.reload();
+    }
   });
 
   window.receiveCandidateInAnswer = receiveCandidateInAnswer;
@@ -70,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   function getOffer(data) {
     if (data.target === username) {
-      var callerUsername = data.from; // Ajout du nom de l'utilisateur appelant
+      callerUsername = data.from; // Ajout du nom de l'utilisateur appelant
       displayCallPopup(callerUsername);
       // Lorsque l'utilisateur accepte l'appel
       document.getElementById("acceptCall").onclick = function () {
@@ -83,6 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       document.getElementById("closeVideo").onclick = function () {
         document.getElementById("videoPopup").style.display = "none";
+        socket.emit("sendCloseWebrtcDuo", { username: callerUsername });
         window.location.reload();
       };
 

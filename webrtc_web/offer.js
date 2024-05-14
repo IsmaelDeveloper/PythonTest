@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var usersDiv = document.getElementById("users");
   var username = new URLSearchParams(window.location.search).get("username");
   var target = "";
+  var currentCallTarget = "";
   var localConnection = new RTCPeerConnection(rtcConfig);
 
   // Enregistrement des événements d'état ICE
@@ -47,6 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.getElementById("closeVideo").onclick = function () {
     document.getElementById("videoPopup").style.display = "none";
+    socket.emit("sendCloseWebrtcDuo", { username: currentCallTarget });
     window.location.reload();
   };
 
@@ -55,6 +57,13 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("ice candidate to add", data);
       var candidate = new RTCIceCandidate(data.candidate);
       localConnection.addIceCandidate(candidate).catch(console.error);
+    }
+  });
+
+  socket.on("closeWebrtcDuo", (usernameData) => {
+    if (usernameData.username === username) {
+      console.log("Reloading due to username match");
+      window.location.reload();
     }
   });
 
@@ -104,6 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function createAndSendOffer(targetUser) {
+    currentCallTarget = targetUser;
     target = targetUser;
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })

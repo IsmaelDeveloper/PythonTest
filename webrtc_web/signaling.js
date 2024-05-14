@@ -72,6 +72,9 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("sendCloseWebrtcDuo", (usernameData) => {
+    io.emit("closeWebrtcDuo", usernameData);
+  });
   // Réception des candidats ICE de l'Answer et envoi au pair Offer
   socket.on("sendCandidateToOffer", (data) => {
     const targetSocketId = users[data.target];
