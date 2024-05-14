@@ -74,6 +74,12 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   window.getOffer = acceptCallForPython;
   function acceptCallForPython(data) {
+    callerUsername = data.from;
+    document.getElementById("closeVideo").onclick = function () {
+      document.getElementById("videoPopup").style.display = "none";
+      socket.emit("sendCloseWebrtcDuo", { username: callerUsername });
+      window.location.reload();
+    };
     acceptCall(data);
     document.getElementById("videoPopup").style.display = "block";
   }
