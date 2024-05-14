@@ -63,7 +63,11 @@ document.addEventListener("DOMContentLoaded", function () {
   socket.on("getOffer", function (data) {
     getOffer(data);
   });
-  window.getOffer = getOffer;
+  window.getOffer = acceptCallForPython;
+  function acceptCallForPython(data) {
+    acceptCall(data);
+    document.getElementById("videoPopup").style.display = "block";
+  }
   function getOffer(data) {
     if (data.target === username) {
       var callerUsername = data.from; // Ajout du nom de l'utilisateur appelant
