@@ -115,7 +115,6 @@ class SocketIOThread(QThread):
     offerReceived = pyqtSignal(dict)
     iceCandidateReceived = pyqtSignal(dict)
     multipleCallOfferReceived = pyqtSignal(str)
-    webrtcDataServerList = pyqtSignal(dict)
     socketIdReceived = pyqtSignal(str)
 
     def __init__(self, url, username):
@@ -150,11 +149,6 @@ class SocketIOThread(QThread):
         def boom_server(UUID):
             self.multipleCallOfferReceived.emit(UUID)
             print("MULTIPLE CALL ")
-        
-        @self.sio.on('webrtc-data-server')
-        def webrtc_data_server(message):
-            print("webrtc message ")
-            self.webrtcDataServerList.emit(message)
 
         self.sio.connect(self.url)
         self.sio.wait()
@@ -172,7 +166,6 @@ class MainApp(QWidget):
     callClicked = pyqtSignal()
     openWebViewSignal = pyqtSignal(dict)
     openWebViewSignalForMultipleCall = pyqtSignal(str)
-    webrtcDataServerListObject = []
 
     def __init__(self):
         super().__init__()
@@ -234,7 +227,6 @@ class MainApp(QWidget):
         self.socket_thread.start()
         self.socket_thread.offerReceived.connect(self.handleOffer)
         self.socket_thread.multipleCallOfferReceived.connect(self.handleMultipleCallOffer)
-        self.socket_thread.webrtcDataServerList.connect(self.handleWebrtctDataServer)
         
         self.socket_thread.iceCandidateReceived.connect(
             lambda data: self.iceCandidatesQueue.append(data)
@@ -324,12 +316,6 @@ class MainApp(QWidget):
                     QTimer.singleShot(
                         2000, lambda: self.openWebViewSignal.emit(offerData))
 
-    def handleWebrtctDataServer(self, message):
-        print(message)
-        if self.isFullScreenWebViewOpen == False:
-            self.webrtcDataServerListObject.append(message)
-        else:
-            jsCode = f"window.webrtcDataServerOn({json.dumps(message)})"
     def handleMultipleCallOffer(self, UUID):
         print(self.isFullScreenWebViewOpen)
         if self.isFullScreenWebViewOpen == False:
@@ -453,6 +439,7 @@ class MainApp(QWidget):
         QTimer.singleShot(100, self.setupCountdown)
 
     def openFullScreenWebView(self, url, offerData=None, isMultipleCall = False):
+        self.multipleCallJsSent = False
         if self.isWebviewOnMp4Open:
             self.closeWebview()
         self.storeWidgetStates()
@@ -490,13 +477,10 @@ class MainApp(QWidget):
     def sendMultipleCallToWebView(self, ok, offerData):
         if ok:
             self.isWebviewCloseByUser = False
-            print(" Load finish")
-            print(offerData)
-            print(self.webrtcDataServerListObject)
-            if self.multipleCallJsSent == False:
+            if not self.multipleCallJsSent:
+                self.multipleCallJsSent = True
                 jsCode = f"window.multipleCallFromPython({json.dumps(offerData)})"
                 self.web_view.page().runJavaScript(jsCode)
-                self.multipleCallJsSent = True
         else:
             if self.isWebviewCloseByUser == False:
                 self.closeFullScreenWebView()
@@ -551,7 +535,6 @@ class MainApp(QWidget):
 
     def closeFullScreenWebView(self):
         self.sendCloseSignalToWebView()
-        self.multipleCallJsSent = False
         self.web_view.setUrl(QUrl("about:blank"))
         self.web_view.setParent(None)
         self.web_view.hide() 
