@@ -23,14 +23,6 @@ document.addEventListener("DOMContentLoaded", function () {
     receiveCandidateInAnswer(data);
   });
 
-  // Écoute pour les messages entrants contenant un nom d'utilisateur
-  socket.on("closeWebrtcDuo", (usernameData) => {
-    if (usernameData.username === username) {
-      console.log("Reloading due to username match");
-      window.location.reload();
-    }
-  });
-
   window.receiveCandidateInAnswer = receiveCandidateInAnswer;
 
   function receiveCandidateInAnswer(data) {
