@@ -162,7 +162,7 @@ window.closeCamera = function () {
 };
 async function displayGroupCallPopup(roomUUID) {
   const callPopup = document.getElementById("callPopup");
-  callPopup.innerHTML = `<div class="callPopupContent"><p>그룹 콜 초대.</p>
+  callPopup.innerHTML = `<div class="callPopupContent"><p>단체 전화가 왔습니다.</p>
       <button id="acceptGroupCall">수락하다</button>
       <button id="declineGroupCall">거절하다</button></div>`;
   callPopup.style.display = "block";

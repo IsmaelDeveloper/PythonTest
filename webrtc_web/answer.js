@@ -107,7 +107,8 @@ document.addEventListener("DOMContentLoaded", function () {
   function displayCallPopup(callerUsername) {
     document.getElementById(
       "callPopup"
-    ).innerHTML = `<p>${callerUsername} 전화중입니다</p>
+    ).innerHTML = `<p>${callerUsername}에서 전화가 왔습니다.
+    </p>
       <button id="acceptCall">수락</button>
       <button id="declineCall">거절하다</button>`;
     document.getElementById("callPopup").style.display = "block";
