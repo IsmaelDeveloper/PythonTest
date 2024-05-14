@@ -11,18 +11,7 @@ let webrtc_data_server_list = [];
 let currentRoomUUID = null;
 window.multipleCallFromPython = multipleCallFromPython;
 window.webrtcDataServerOn = webrtc_data_server_on;
-
-// window.addEventListener("beforeunload", handleBeforeUnload);
-
-// function handleBeforeUnload(event) {
-//   alert("test");
-//   if (isCalling && currentRoomUUID) {
-//     mySocket.emit("leave-room", {
-//       roomUUID: currentRoomUUID,
-//       socketId: mySocketId,
-//     });
-//   }
-// }
+const mySocket = socket;
 
 export function attachSaveButtonEvent(saveButton, userName) {
   saveButton.dataset.isSelected = "false";
@@ -68,8 +57,6 @@ const myVwefew = async () => {
     video: true,
   });
 };
-
-const mySocket = socket;
 
 mySocket.on("connect", () => {
   mySocketId = mySocket.id;
@@ -265,8 +252,12 @@ async function webrtc_data_server(message) {
     webRtcPeers[sender].peer.addIceCandidate(newCandi);
   }
 }
+
 async function multipleCallFromPython(roomUUID) {
-  displayGroupCallPopup(roomUUID);
+  isCalling = true;
+  setTimeout(() => {
+    boom_server(roomUUID);
+  }, 1000);
 }
 async function boom_server(roomUUID) {
   currentRoomUUID = roomUUID;
