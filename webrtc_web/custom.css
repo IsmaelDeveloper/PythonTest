@@ -126,7 +126,7 @@ button:disabled {
 .local-overlay {
   position: absolute;
   top: 20px;
-  right: 20px;
+  left: 20px;
   width: 40% !important;
   height: auto !important;
   border: 2px solid #ffff;
