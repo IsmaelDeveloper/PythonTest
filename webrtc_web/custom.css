@@ -128,7 +128,7 @@ button:disabled {
   top: 20px;
   left: 20px;
   width: 40% !important;
-  height: auto !important;
+  height: 400px !important;
   border: 2px solid #ffff;
   border-radius: 10px;
   z-index: 200;

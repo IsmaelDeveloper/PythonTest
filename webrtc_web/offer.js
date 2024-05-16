@@ -40,7 +40,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   localConnection.ontrack = function (event) {
     if (event.track.kind === "video") {
-      document.getElementById("videoPopup").style.display = "block"; // Afficher la popup vidéo
       console.log("event", event);
       document.getElementById("remoteVideo").srcObject = event.streams[0];
     } else if (event.track.kind === "audio") {
@@ -122,7 +121,9 @@ document.addEventListener("DOMContentLoaded", function () {
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
+        document.getElementById("videoPopup").style.display = "block";
         document.getElementById("localVideo").srcObject = stream;
+        document.getElementById("localVideo").classList.add("local-overlay");
         stream
           .getTracks()
           .forEach((track) => localConnection.addTrack(track, stream));
