@@ -30,9 +30,11 @@ h1 {
 
 #users {
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  align-items: flex-start;
   width: 100%;
+  margin: 0 auto;
 }
 
 button:disabled {
@@ -40,28 +42,29 @@ button:disabled {
 }
 
 .user-container {
-  min-width: calc(20% - 40px);
-  margin: 10px 20px;
-  height: 120px;
+  width: calc(50% - 20px);
+  height: 200px;
+  margin: 10px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  justify-content: space-around;
   background-color: #e9e9e9;
-  padding-left: 50px;
-  padding-right: 50px;
+  margin: 10px;
+  padding: 20px;
   border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Nouveau style pour le conteneur de boutons */
 .button-container {
+  width: 100%;
   display: flex;
-  gap: 30px; /* Ajustez l'écart entre les boutons */
-  height: 60%;
 }
 
 .user-name {
-  font-size: 50px;
+  font-size: 40px;
   color: #333;
+  margin-left: 10px;
+  font-weight: bold;
 }
 
 .call-button,
@@ -69,12 +72,24 @@ button:disabled {
   background-color: #4caf50;
   border: none;
   color: white;
-  padding: 5px 10px; /* Padding réduit */
+  padding: 5px 10px;
   font-size: 30px;
   cursor: pointer;
   border-radius: 5px;
   font-weight: bold;
   transition: background-color 0.3s ease;
+  width: 100%;
+}
+.call-button {
+  margin-left: 10px;
+}
+.save-button {
+  background-color: #ffff;
+  color: black;
+}
+
+.save-button:hover {
+  background-color: white;
 }
 
 .call-button:hover {
@@ -191,32 +206,32 @@ button:hover {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80%; /* ou la largeur souhaitée */
-  height: 80%; /* ou la hauteur souhaitée */
+  width: 80%;
+  height: 80%;
   background-color: white;
   padding: 20px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* Pour que le bouton soit toujours en bas */
-  z-index: 101; /* Assurez-vous qu'il est au-dessus de #videoPopup si nécessaire */
+  justify-content: space-between;
+  z-index: 101;
 }
 
 #videos {
-  flex: 1; /* Assure que le conteneur des vidéos prend tout l'espace au-dessus du bouton */
+  flex: 1;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   overflow-y: auto;
   gap: 10px;
-  width: 100%; /* Prend toute la largeur du conteneur parent */
+  width: 100%;
 }
 #videos video,
 #videos audio {
-  max-width: 200px; /* ou autre taille appropriée */
-  border-radius: 5px; /* style si nécessaire */
+  max-width: 200px;
+  border-radius: 5px;
 }
 
 .video-wrap {

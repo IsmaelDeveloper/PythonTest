@@ -99,8 +99,8 @@ document.addEventListener("DOMContentLoaded", function () {
       saveButton.innerText = "담기";
       attachSaveButtonEvent(saveButton, user);
 
-      buttonContainer.appendChild(callButton);
       buttonContainer.appendChild(saveButton);
+      buttonContainer.appendChild(callButton);
 
       userContainer.appendChild(userName);
       userContainer.appendChild(buttonContainer);

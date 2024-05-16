@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   let currentIndex = 0;
-  const usersPerPage = 5;
+  const usersPerPage = 4;
   let allUsers = document.querySelectorAll(".user-container");
   let totalUsers = allUsers.length;
   const prevUsersBtn = document.getElementById("prevUsers");
