@@ -389,13 +389,74 @@ function addSelectedUser(socketId) {
   }
 }
 
+function showSelectedUsersPopup() {
+  const usersList = document.getElementById("usersList");
+  usersList.innerHTML = ""; // Clear previous user list entries
+
+  selectedUsers.forEach((socketId, index) => {
+    const userDiv = document.createElement("div");
+    userDiv.className = "user-div";
+    userDiv.textContent = getUserNameBySocketId(socketId);
+
+    const removeButton = document.createElement("button");
+    removeButton.textContent = "선택취소";
+    removeButton.className = "remove-button";
+    removeButton.onclick = function () {
+      selectedUsers.splice(index, 1);
+      showSelectedUsersPopup();
+    };
+
+    userDiv.insertBefore(removeButton, userDiv.firstChild);
+    usersList.appendChild(userDiv);
+  });
+
+  const popup = document.getElementById("selectedUsersPopup");
+  popup.style.display = "flex";
+
+  const callButton = document.getElementById("callAllButton");
+  callButton.onclick = function () {
+    isCalling = true;
+    allBoom();
+    popup.style.display = "none";
+  };
+}
+
+function setupCloseButton() {
+  const closeButton = document.querySelector(".close-popup-button");
+  if (closeButton) {
+    closeButton.addEventListener("click", function () {
+      const popup = document.getElementById("selectedUsersPopup");
+      if (popup) {
+        popup.style.display = "none";
+      }
+      selectedUsers = [];
+      resetButtonStyles();
+      updateUIAfterClose();
+    });
+  }
+}
+
+function resetButtonStyles() {
+  const buttons = document.querySelectorAll(".save-button");
+  buttons.forEach((button) => {
+    button.style.backgroundColor = "";
+    button.dataset.isSelected = "false";
+  });
+}
+
+function updateUIAfterClose() {
+  const counterDisplay = document.getElementById("counter-display");
+  if (counterDisplay) {
+    counterDisplay.innerText = "0 개";
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
+  setupCloseButton();
   document
     .getElementById("all-call-button")
-    .addEventListener("click", function () {
-      isCalling = true;
-      allBoom();
-    });
+    .addEventListener("click", showSelectedUsersPopup);
+
   document.getElementById("closeGroupCall").onclick = function () {
     window.location.reload();
   };
