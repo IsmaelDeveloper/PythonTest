@@ -403,6 +403,8 @@ function showSelectedUsersPopup() {
     removeButton.className = "remove-button";
     removeButton.onclick = function () {
       selectedUsers.splice(index, 1);
+      const counterDisplay = document.getElementById("counter-display");
+      counterDisplay.innerText = selectedUsers.length + " 개";
       showSelectedUsersPopup();
     };
 
@@ -449,6 +451,7 @@ function updateUIAfterClose() {
   if (counterDisplay) {
     counterDisplay.innerText = "0 개";
   }
+  saveButtonCounter = 0;
 }
 
 document.addEventListener("DOMContentLoaded", function () {
