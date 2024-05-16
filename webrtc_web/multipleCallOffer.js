@@ -9,6 +9,7 @@ let webRtcPeers = {};
 let socketIdListUsernm = [];
 let webrtc_data_server_list = [];
 let currentRoomUUID = null;
+let someoneAnswered = false;
 window.multipleCallFromPython = multipleCallFromPython;
 window.webrtcDataServerOn = webrtc_data_server_on;
 const mySocket = socket;
@@ -174,8 +175,12 @@ async function displayGroupCallPopup(roomUUID) {
   const callingSound = document.getElementById("callingSound");
   callingSound.play();
 
+  const popupTimeout = setTimeout(() => {
+    closePopupAndCleanup();
+  }, 20000); // 20 seconds
   // accept call
   document.getElementById("acceptGroupCall").onclick = async function () {
+    clearTimeout(popupTimeout);
     callPopup.style.display = "none";
     callingSound.pause();
     callingSound.currentTime = 0;
@@ -189,11 +194,18 @@ async function displayGroupCallPopup(roomUUID) {
 
   //denied call
   document.getElementById("declineGroupCall").onclick = function () {
+    clearTimeout(popupTimeout);
     callPopup.style.display = "none";
     callingSound.pause();
     callingSound.currentTime = 0;
     window.location.reload();
   };
+  function closePopupAndCleanup() {
+    callPopup.style.display = "none";
+    callingSound.pause();
+    callingSound.currentTime = 0;
+    window.location.reload(); // Recharge la page pour réinitialiser l'état
+  }
 }
 async function webrtc_data_server(message) {
   const { rtcData, sender, receiver, msgType } = message;
@@ -221,7 +233,7 @@ async function webrtc_data_server(message) {
     nowPeer.addEventListener("track", (event) => {
       const [remoteStream] = event.streams;
       webRtcPeers[sender].stream = remoteStream;
-
+      someoneAnswered = true;
       addVideoStreamFromPeers();
     });
 
@@ -266,6 +278,13 @@ async function multipleCallFromPython(roomUUID) {
 async function boom_server(roomUUID) {
   currentRoomUUID = roomUUID;
   mySocket.emit("get-room-participants", { roomUUID });
+
+  const callTimeout = setTimeout(() => {
+    if (!someoneAnswered) {
+      closeCall();
+    }
+  }, 20000); // 20 secondes
+
   mySocket.on("room-participants", async (data) => {
     const { participants } = data;
 
@@ -317,6 +336,15 @@ async function boom_server(roomUUID) {
     });
   });
 }
+
+function closeCall() {
+  const popup = document.getElementById("callPopup");
+  if (popup) {
+    popup.style.display = "none";
+  }
+  window.location.reload(); // Optionnel: Recharge la page pour réinitialiser l'état
+}
+
 function getUserNameBySocketId(socketId) {
   const user = socketIdListUsernm.find((item) => item[0] === socketId);
   return user ? user[1].userNm : "Unknown User"; // Retourne 'Unknown User' si non trouvé
