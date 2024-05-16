@@ -1,5 +1,8 @@
 import { serverUrl, rtcConfig, socket } from "./config.js";
-import { attachSaveButtonEvent } from "./multipleCallOffer.js";
+import {
+  attachSaveButtonEvent,
+  deleteSelectedUsers,
+} from "./multipleCallOffer.js";
 document.addEventListener("DOMContentLoaded", function () {
   console.log("io url >> " + serverUrl);
   var usersDiv = document.getElementById("users");
@@ -72,6 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   socket.on("update_users", function (users) {
+    deleteSelectedUsers();
     usersDiv.innerHTML = ""; // Effacer les utilisateurs existants
     users.forEach(function (user) {
       if (user == username) {

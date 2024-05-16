@@ -41,6 +41,10 @@ export function attachSaveButtonEvent(saveButton, userName) {
     console.log(selectedUsers);
   });
 }
+export function deleteSelectedUsers() {
+  console.log("deleteSelectedUsers");
+  selectedUsers = [];
+}
 
 $(document).ready(function () {
   $(".webview_close_btn").on("click", function () {
