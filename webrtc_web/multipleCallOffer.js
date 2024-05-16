@@ -336,26 +336,7 @@ function addVideoStreamFromPeers() {
 
   let str = "";
   document.getElementById("videos").innerHTML = "";
-
-  const localVideoWrap = document.createElement("div");
-  localVideoWrap.classList.add("video-wrap", "focus");
-
-  let localVideoElement = document.createElement("video");
-  localVideoElement.srcObject = localStream;
-  localVideoElement.autoplay = true;
-  localVideoElement.playsInline = true;
-  localVideoElement.muted = true;
-  localVideoElement.classList.add("remote-video");
-
-  const localUserNameLabel = document.createElement("div");
-  localUserNameLabel.classList.add("user-label");
-  localUserNameLabel.textContent = new URLSearchParams(
-    window.location.search
-  ).get("username");
-
-  localVideoWrap.appendChild(localVideoElement);
-  localVideoWrap.appendChild(localUserNameLabel);
-  videoContainer.appendChild(localVideoWrap);
+  displayLocalVideo();
 
   const audioElements = document
     .getElementById("groupCallVideoContainer")
@@ -399,7 +380,32 @@ function addVideoStreamFromPeers() {
 }
 
 function allBoom() {
+  openMultipleCallWindow();
+  displayLocalVideo();
   mySocket.emit("boom-client", [...selectedUsers, mySocketId]);
+}
+
+function displayLocalVideo() {
+  const videoContainer = document.getElementById("videos");
+  const localVideoWrap = document.createElement("div");
+  localVideoWrap.classList.add("video-wrap", "focus"); // Appliquer la classe 'focus'
+
+  let localVideoElement = document.createElement("video");
+  localVideoElement.srcObject = localStream;
+  localVideoElement.autoplay = true;
+  localVideoElement.playsInline = true;
+  localVideoElement.muted = true; // Mute pour éviter l'écho
+  localVideoElement.classList.add("remote-video");
+
+  const localUserNameLabel = document.createElement("div");
+  localUserNameLabel.classList.add("user-label");
+  localUserNameLabel.textContent = new URLSearchParams(
+    window.location.search
+  ).get("username");
+
+  localVideoWrap.appendChild(localVideoElement);
+  localVideoWrap.appendChild(localUserNameLabel);
+  videoContainer.insertBefore(localVideoWrap, videoContainer.firstChild); // Ajoute au début
 }
 
 function addSelectedUser(socketId) {
