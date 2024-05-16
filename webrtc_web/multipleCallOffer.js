@@ -118,7 +118,7 @@ mySocket.on("connect", () => {
 
 function checkAndRefreshPage() {
   const videoContainer = document.getElementById("videos");
-  if (videoContainer.children.length === 0) {
+  if (videoContainer.children.length === 1) {
     window.location.reload();
   }
 }
@@ -336,6 +336,27 @@ function addVideoStreamFromPeers() {
 
   let str = "";
   document.getElementById("videos").innerHTML = "";
+
+  const localVideoWrap = document.createElement("div");
+  localVideoWrap.classList.add("video-wrap", "focus");
+
+  let localVideoElement = document.createElement("video");
+  localVideoElement.srcObject = localStream;
+  localVideoElement.autoplay = true;
+  localVideoElement.playsInline = true;
+  localVideoElement.muted = true;
+  localVideoElement.classList.add("remote-video");
+
+  const localUserNameLabel = document.createElement("div");
+  localUserNameLabel.classList.add("user-label");
+  localUserNameLabel.textContent = new URLSearchParams(
+    window.location.search
+  ).get("username");
+
+  localVideoWrap.appendChild(localVideoElement);
+  localVideoWrap.appendChild(localUserNameLabel);
+  videoContainer.appendChild(localVideoWrap);
+
   const audioElements = document
     .getElementById("groupCallVideoContainer")
     .getElementsByTagName("audio");

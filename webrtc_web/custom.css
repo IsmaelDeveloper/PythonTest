@@ -207,13 +207,16 @@ button:hover {
 }
 
 #groupCallVideoContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80%;
-  height: 80%;
+  width: 100%;
+  height: 100%;
   background-color: white;
   padding: 20px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
@@ -222,6 +225,11 @@ button:hover {
   flex-direction: column;
   justify-content: space-between;
   z-index: 101;
+}
+.closeGroupContainer {
+  width: 100%; /* Prend la pleine largeur du conteneur parent */
+  text-align: center; /* Centre le bouton à l'intérieur */
+  margin-top: auto; /* Pousse automatiquement le conteneur vers le bas */
 }
 
 #videos {
@@ -233,23 +241,34 @@ button:hover {
   overflow-y: auto;
   gap: 10px;
   width: 100%;
+  padding: 10px;
+  margin-top: 20%;
 }
+.focus {
+  border: 2px solid #4caf50;
+  padding: 5px;
+  box-shadow: 0 0 8px #4caf50;
+}
+
 #videos video,
 #videos audio {
-  max-width: 200px;
   border-radius: 5px;
 }
 
 .video-wrap {
+  flex-basis: 48%;
+  max-width: 48%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 10px;
+  margin-bottom: 10px;
+  height: 450px;
 }
 
 .video-wrap video {
-  width: 200px;
-  height: auto;
+  width: 100%; /* Utilise toute la largeur disponible dans .video-wrap */
+  height: 100%;
+  object-fit: cover;
   border-radius: 5px;
 }
 
