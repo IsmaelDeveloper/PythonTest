@@ -141,8 +141,20 @@ document.addEventListener("DOMContentLoaded", function () {
           id: username,
         };
         sendOfferToServer(offerData);
+        setTimeout(() => {
+          if (!localConnection.currentRemoteDescription) {
+            closeCall();
+          }
+        }, 20000);
       })
       .catch(console.error);
+  }
+
+  function closeCall() {
+    document.getElementById("videoPopup").style.display = "none";
+    localConnection.close();
+    localConnection = new RTCPeerConnection(rtcConfig);
+    window.location.reload();
   }
 
   function sendOfferToServer(offerData) {

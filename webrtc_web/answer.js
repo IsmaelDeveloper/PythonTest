@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var localConnection = new RTCPeerConnection(rtcConfig);
   let callerUsername = "";
   var target = "";
+  let callTimeout;
   socket.on("connect", function () {
     console.log("Connected to the server. Socket ID:", socket.id);
   });
@@ -79,8 +80,13 @@ document.addEventListener("DOMContentLoaded", function () {
     if (data.target === username) {
       callerUsername = data.from; // Ajout du nom de l'utilisateur appelant
       displayCallPopup(callerUsername);
+      callTimeout = setTimeout(function () {
+        console.log("No response within 20 seconds. Call declined.");
+        closeCallPopup();
+      }, 20000);
       // Lorsque l'utilisateur accepte l'appel
       document.getElementById("acceptCall").onclick = function () {
+        clearTimeout(callTimeout);
         acceptCall(data);
         document.getElementById("callPopup").style.display = "none";
         document.getElementById("videoPopup").style.display = "block"; // Afficher la popup vidéo
@@ -96,6 +102,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Lorsque l'utilisateur décline l'appel
       document.getElementById("declineCall").onclick = function () {
+        clearTimeout(callTimeout);
         console.log("Call declined");
         document.getElementById("callPopup").style.display = "none";
         callingSound.pause();
@@ -114,6 +121,12 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("callPopup").style.display = "block";
     var callingSound = document.getElementById("callingSound");
     callingSound.play();
+  }
+
+  function closeCallPopup() {
+    document.getElementById("callPopup").style.display = "none";
+    clearTimeout(callTimeout);
+    window.location.reload(); // Refresh the page to reset state
   }
 
   function acceptCall(data) {
