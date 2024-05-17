@@ -229,6 +229,9 @@ button:hover {
   z-index: 101;
 }
 .closeGroupContainer {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
   width: 100%; /* Prend la pleine largeur du conteneur parent */
   text-align: center; /* Centre le bouton à l'intérieur */
   margin-top: auto; /* Pousse automatiquement le conteneur vers le bas */

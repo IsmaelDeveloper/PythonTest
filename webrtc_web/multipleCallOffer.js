@@ -10,6 +10,8 @@ let socketIdListUsernm = [];
 let webrtc_data_server_list = [];
 let currentRoomUUID = null;
 let someoneAnswered = false;
+let hasInitiatedCall = false;
+let popupTimeout;
 window.multipleCallFromPython = multipleCallFromPython;
 window.webrtcDataServerOn = webrtc_data_server_on;
 const mySocket = socket;
@@ -76,6 +78,9 @@ mySocket.on("connect", () => {
     console.log("🚀 ~ mySocket.on ~ msg:", msg);
   });
 
+  mySocket.on("endCallForEveryone", function () {
+    window.location.reload(); // Recharger la page pour nettoyer l'interface utilisateur
+  });
   mySocket.on("users-server", (users) => {
     let str = "";
     console.log(users);
@@ -175,7 +180,7 @@ async function displayGroupCallPopup(roomUUID) {
   const callingSound = document.getElementById("callingSound");
   callingSound.play();
 
-  const popupTimeout = setTimeout(() => {
+  popupTimeout = setTimeout(() => {
     closePopupAndCleanup();
   }, 20000); // 20 seconds
   // accept call
@@ -210,6 +215,7 @@ async function displayGroupCallPopup(roomUUID) {
 async function webrtc_data_server(message) {
   const { rtcData, sender, receiver, msgType } = message;
 
+  someoneAnswered = true;
   if (msgType === "offerSdp") {
     // const nowPeer = new RTCPeerConnection(rtcConfig);
     webRtcPeers[sender] = {
@@ -233,7 +239,6 @@ async function webrtc_data_server(message) {
     nowPeer.addEventListener("track", (event) => {
       const [remoteStream] = event.streams;
       webRtcPeers[sender].stream = remoteStream;
-      someoneAnswered = true;
       addVideoStreamFromPeers();
     });
 
@@ -408,6 +413,9 @@ function addVideoStreamFromPeers() {
 }
 
 function allBoom() {
+  hasInitiatedCall = true;
+  document.getElementById("closeGroupCallForAll").style.display = "block";
+
   openMultipleCallWindow();
   displayLocalVideo();
   mySocket.emit("boom-client", [...selectedUsers, mySocketId]);
@@ -521,5 +529,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   document.getElementById("closeGroupCall").onclick = function () {
     window.location.reload();
+  };
+
+  document.getElementById("closeGroupCallForAll").onclick = function () {
+    mySocket.emit("endAllCalls", { roomUUID: currentRoomUUID });
+    //closePopupAndCleanup();
   };
 });

@@ -146,6 +146,10 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("endAllCalls", function (data) {
+    io.to(data.roomUUID).emit("endCallForEveryone");
+  });
+
   socket.on("join-room", (data) => {
     const { roomUUID } = data;
     if (rooms[roomUUID]) {
