@@ -143,6 +143,22 @@ button:disabled {
   object-fit: cover;
 }
 
+.fake-video {
+  background-image: url("path/to/image.png");
+  background-size: cover;
+  font-size: 30px;
+  text-align: center;
+  padding: 20px;
+  width: 320px;
+  height: 180px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  margin: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
 #closeVideo {
   width: auto;
   margin-top: 10px;

@@ -106,6 +106,7 @@ mySocket.on("connect", () => {
     if (isCalling == true) {
       boom_server(roomUUID);
     } else {
+      mySocket.emit("addNotAnsweredPerson", roomUUID, userNm);
       displayGroupCallPopup(roomUUID);
     }
   });
@@ -185,6 +186,8 @@ async function displayGroupCallPopup(roomUUID) {
   }, 20000); // 20 seconds
   // accept call
   document.getElementById("acceptGroupCall").onclick = async function () {
+    const userNm = new URLSearchParams(window.location.search).get("username");
+    mySocket.emit("removeNotAnsweredPerson", roomUUID, userNm);
     clearTimeout(popupTimeout);
     callPopup.style.display = "none";
     callingSound.pause();
@@ -340,8 +343,45 @@ async function boom_server(roomUUID) {
       });
     });
   });
+  addWaitingPeople(currentRoomUUID);
 }
 
+mySocket.on("notAnsweredPerson", (data) => {
+  const { roomUUID, participants } = data;
+  console.log(data, " this is ddata");
+  if (roomUUID === currentRoomUUID) {
+    participants.forEach((userName) => {
+      addWaitingUser(userName);
+    });
+  }
+});
+
+function addWaitingPeople(roomUUID) {
+  mySocket.emit("getNotAnsweredPerson", roomUUID);
+}
+
+function addWaitingUser(userName) {
+  const videoContainer = document.getElementById("videos");
+  if (document.getElementById(`waiting-${userName}`)) {
+    return;
+  }
+
+  const videoWrap = document.createElement("div");
+  videoWrap.classList.add("video-wrap");
+  videoWrap.id = `waiting-${userName}`;
+
+  let fakeVideoElement = document.createElement("div");
+  fakeVideoElement.classList.add("fake-video");
+  fakeVideoElement.innerText = "통화 연결 중입니다";
+
+  const userNameLabel = document.createElement("div");
+  userNameLabel.classList.add("user-label");
+  userNameLabel.textContent = userName;
+
+  videoWrap.appendChild(fakeVideoElement);
+  videoWrap.appendChild(userNameLabel);
+  videoContainer.appendChild(videoWrap);
+}
 function closeCall() {
   const popup = document.getElementById("callPopup");
   if (popup) {
@@ -410,6 +450,8 @@ function addVideoStreamFromPeers() {
       });
     }
   });
+
+  addWaitingPeople(currentRoomUUID);
 }
 
 function allBoom() {

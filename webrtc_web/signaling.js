@@ -20,6 +20,7 @@ const rooms = [];
 // ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 
 const httpsServer = https.createServer(credentials, app);
+const notAnsweredYet = [];
 
 app.use(express.static(__dirname));
 
@@ -134,6 +135,23 @@ io.on("connection", (socket) => {
     });
   });
 
+  socket.on("addNotAnsweredPerson", (roomUUID, username) => {
+    if (!notAnsweredYet[roomUUID]) {
+      notAnsweredYet[roomUUID] = [];
+    }
+    notAnsweredYet[roomUUID].push(username);
+  });
+  socket.on("getNotAnsweredPerson", (roomUUID) => {
+    socket.emit("notAnsweredPerson", {
+      roomUUID,
+      participants: notAnsweredYet[roomUUID],
+    });
+  });
+  socket.on("removeNotAnsweredPerson", (roomUUID, username) => {
+    notAnsweredYet[roomUUID] = notAnsweredYet[roomUUID].filter(
+      (user) => user !== username
+    );
+  });
   socket.on("get-room-participants", (data) => {
     const { roomUUID } = data;
     if (rooms[roomUUID]) {
