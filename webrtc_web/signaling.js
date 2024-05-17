@@ -1,17 +1,17 @@
 const { v4: uuidv4, v6: uuidv6 } = require("uuid");
 const express = require("express");
-const https = require("https");
+const https = require("http");
 const socketIo = require("socket.io");
 const cors = require("cors");
 const fs = require("fs");
 
 const app = express();
-// const certPath = "./cert/";
-// const privateKey = fs.readFileSync(certPath + "lo.cal.com.key", "utf8");
-// const certificate = fs.readFileSync(certPath + "lo.cal.com.crt", "utf8");
-const certPath = "/etc/letsencrypt/live/kiosk-chat.musicen.com/";
-const privateKey = fs.readFileSync(certPath + "privkey.pem", "utf8");
-const certificate = fs.readFileSync(certPath + "fullchain.pem", "utf8");
+const certPath = "./cert/";
+const privateKey = fs.readFileSync(certPath + "lo.cal.com.key", "utf8");
+const certificate = fs.readFileSync(certPath + "lo.cal.com.crt", "utf8");
+// const certPath = "/etc/letsencrypt/live/kiosk-chat.musicen.com/";
+// const privateKey = fs.readFileSync(certPath + "privkey.pem", "utf8");
+// const certificate = fs.readFileSync(certPath + "fullchain.pem", "utf8");
 const credentials = { key: privateKey, cert: certificate };
 const rooms = [];
 // ssl_certificate /etc/letsencrypt/live/schback.musicen.com/fullchain.pem; # managed by Certbot
@@ -74,6 +74,9 @@ io.on("connection", (socket) => {
 
   socket.on("sendCloseWebrtcDuo", (usernameData) => {
     io.emit("closeWebrtcDuo", usernameData);
+  });
+  socket.on("sendEndUpTheCallDuo", (usernameData) => {
+    io.emit("endUpTheCallDuo", usernameData);
   });
   // Réception des candidats ICE de l'Answer et envoi au pair Offer
   socket.on("sendCandidateToOffer", (data) => {

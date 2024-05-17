@@ -97,6 +97,7 @@ button:disabled {
 }
 
 #callPopup,
+#endUpPopup,
 #videoPopup {
   position: fixed;
   left: 50%;
@@ -110,7 +111,8 @@ button:disabled {
   text-align: center;
   font-size: 30px;
 }
-#callPopup {
+#callPopup,
+#endUpPopup {
   width: 50%;
 }
 #videoPopup {

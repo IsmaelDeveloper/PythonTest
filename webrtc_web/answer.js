@@ -102,6 +102,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Lorsque l'utilisateur décline l'appel
       document.getElementById("declineCall").onclick = function () {
+        const callData = { username: callerUsername };
+        socket.emit("sendEndUpTheCallDuo", callData);
         clearTimeout(callTimeout);
         console.log("Call declined");
         document.getElementById("callPopup").style.display = "none";

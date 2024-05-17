@@ -73,6 +73,28 @@ document.addEventListener("DOMContentLoaded", function () {
     socket.emit("register", { username: username });
   });
 
+  socket.on("endUpTheCallDuo", function (data) {
+    if (data.username === username) {
+      cleanUpCall();
+    }
+  });
+
+  function displayEndUpPopup() {
+    document.getElementById("endUpPopup").innerHTML = `<p>통화가 종료되었습니다.
+    </p>
+      <button id="endup">닫기</button>`;
+    document.getElementById("endUpPopup").style.display = "block";
+  }
+
+  function cleanUpCall() {
+    document.getElementById("videoPopup").style.display = "none";
+    localConnection.close();
+    localConnection = new RTCPeerConnection(rtcConfig);
+    displayEndUpPopup();
+    document.getElementById("endup").onclick = function () {
+      window.location.reload();
+    };
+  }
   socket.on("update_users", function (users) {
     deleteSelectedUsers();
     usersDiv.innerHTML = ""; // Effacer les utilisateurs existants
