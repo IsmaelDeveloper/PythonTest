@@ -267,7 +267,6 @@ button:hover {
   flex-direction: column;
   align-items: center;
   margin-bottom: 10px;
-  height: 450px;
 }
 
 .video-wrap video {
