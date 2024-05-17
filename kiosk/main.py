@@ -1,8 +1,6 @@
 import sys
-import cv2
 import os
 import socketio
-import ssl
 import json
 import urllib3
 from PyQt5.QtWidgets import QMessageBox, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
@@ -22,6 +20,14 @@ from utils.faceRecognition import WebcamWidget
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from datetime import datetime
 
+def load_username_from_env():
+    try:
+        with open('env.json', 'r') as file:
+            env = json.load(file)
+            return env.get("username", "USERNAME")
+    except (FileNotFoundError, json.JSONDecodeError):
+        return "default_username"
+    
 class SingleRequestManager:
     def __init__(self, payload, url, callback):
         self.payload = payload
@@ -255,7 +261,7 @@ class MainApp(QWidget):
         self.parameter = LocalParameterStorage()
         self.setObjectName("mainWindow")
         self.deviceId = f"DailySafe_{machine_id}"
-        self.username = "a"
+        self.username = os.getenv('USERNAME', 'default_username')
         self.host = "http://211.46.245.40:81"
         self.callingWebviewUrl = "https://kiosk-chat.musicen.com:8234/userInterface.html?username=" + self.username
 

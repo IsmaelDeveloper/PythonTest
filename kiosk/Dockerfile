@@ -49,4 +49,6 @@ RUN chmod +x ./main
 ENV QT_XCB_GL_INTEGRATION=xcb_glx
 ENV QTWEBENGINE_DISABLE_SANDBOX=1
 
+ENV USERNAME=default_username
+
 CMD ["./main"]
