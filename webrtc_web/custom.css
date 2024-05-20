@@ -150,13 +150,15 @@ button:disabled {
   text-align: center;
   padding: 20px;
   width: 320px;
-  height: 180px;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 8px;
   margin: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  color: white;
+  background-color: gray;
 }
 
 #closeVideo {
@@ -263,7 +265,7 @@ button:hover {
   gap: 10px;
   width: 100%;
   padding: 10px;
-  margin-top: 20%;
+  height: 90%;
 }
 .focus {
   border: 2px solid #4caf50;
@@ -283,6 +285,7 @@ button:hover {
   flex-direction: column;
   align-items: center;
   margin-bottom: 10px;
+  height: 30%;
 }
 
 .video-wrap video {

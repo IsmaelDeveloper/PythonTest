@@ -125,7 +125,10 @@ mySocket.on("connect", () => {
 
 function checkAndRefreshPage() {
   const videoContainer = document.getElementById("videos");
-  if (videoContainer.children.length === 1) {
+  const videoElements = Array.from(videoContainer.children).filter(
+    (child) => !child.classList.contains("waiting")
+  );
+  if (videoElements.length === 1) {
     window.location.reload();
   }
 }
@@ -291,6 +294,7 @@ async function boom_server(roomUUID) {
     if (!someoneAnswered) {
       closeCall();
     }
+    removeAllWaitingUsers();
   }, 20000); // 20 secondes
 
   mySocket.on("room-participants", async (data) => {
@@ -367,7 +371,7 @@ function addWaitingUser(userName) {
   }
 
   const videoWrap = document.createElement("div");
-  videoWrap.classList.add("video-wrap");
+  videoWrap.classList.add("video-wrap", "waiting");
   videoWrap.id = `waiting-${userName}`;
 
   let fakeVideoElement = document.createElement("div");
@@ -382,6 +386,15 @@ function addWaitingUser(userName) {
   videoWrap.appendChild(userNameLabel);
   videoContainer.appendChild(videoWrap);
 }
+
+function removeAllWaitingUsers() {
+  const videoContainer = document.getElementById("videos");
+  const waitingElements = videoContainer.getElementsByClassName("waiting");
+  while (waitingElements.length > 0) {
+    waitingElements[0].parentNode.removeChild(waitingElements[0]);
+  }
+}
+
 function closeCall() {
   const popup = document.getElementById("callPopup");
   if (popup) {
