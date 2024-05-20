@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let totalUsers = allUsers.length;
   const prevUsersBtn = document.getElementById("prevUsers");
   const nextUsersBtn = document.getElementById("nextUsers");
+  const pageButtonsContainer = document.getElementById("page-buttons");
 
   function updateUsersVisibility() {
     allUsers.forEach((user, index) => {
@@ -16,6 +17,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     prevUsersBtn.disabled = currentIndex === 0;
     nextUsersBtn.disabled = currentIndex + usersPerPage >= totalUsers;
+
+    generatePageButtons();
   }
 
   prevUsersBtn.onclick = function () {
@@ -35,6 +38,23 @@ document.addEventListener("DOMContentLoaded", function () {
     totalUsers = allUsers.length;
     currentIndex = 0; // Reset to the first page on initialization
     updateUsersVisibility();
+  }
+
+  function generatePageButtons() {
+    pageButtonsContainer.innerHTML = ""; // Clear previous buttons
+    const totalPages = Math.ceil(totalUsers / usersPerPage);
+
+    for (let i = 0; i < totalPages; i++) {
+      const pageButton = document.createElement("button");
+      pageButton.textContent = i + 1;
+      pageButton.classList.add("page-button");
+      pageButton.disabled = i === Math.floor(currentIndex / usersPerPage);
+      pageButton.onclick = function () {
+        currentIndex = i * usersPerPage;
+        updateUsersVisibility();
+      };
+      pageButtonsContainer.appendChild(pageButton);
+    }
   }
 
   window.initializePagination = initializePagination;
