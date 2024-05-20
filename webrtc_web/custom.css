@@ -398,3 +398,28 @@ button:hover {
   cursor: pointer;
   font-size: 20px;
 }
+
+/* custom.css */
+.popupNetwork {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: none;
+}
+
+#networkIssuePopup {
+  align-content: center;
+  height: 10%;
+  display: none;
+  text-align: center;
+  font-size: 30px;
+  color: black;
+  border: 2px solid black;
+  border-radius: 10px;
+  padding: 10px;
+}

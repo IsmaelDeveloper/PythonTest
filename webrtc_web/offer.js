@@ -18,7 +18,10 @@ document.addEventListener("DOMContentLoaded", function () {
       localConnection.iceConnectionState
     );
     if (localConnection.iceConnectionState === "disconnected") {
-      window.location.reload();
+      showNetworkIssuePopup();
+      setTimeout(() => {
+        window.location.reload();
+      }, 10000);
     }
   };
 
@@ -84,6 +87,10 @@ document.addEventListener("DOMContentLoaded", function () {
     </p>
       <button id="endup">닫기</button>`;
     document.getElementById("endUpPopup").style.display = "block";
+  }
+
+  function showNetworkIssuePopup() {
+    document.getElementById("networkIssuePopup").style.display = "block";
   }
 
   function cleanUpCall() {
