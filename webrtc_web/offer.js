@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (localConnection.iceConnectionState === "disconnected") {
       showNetworkIssuePopup();
       setTimeout(() => {
-        window.location.reload();
+        document.getElementById("networkIssuePopup").style.display = "none";
       }, 10000);
     }
   };
