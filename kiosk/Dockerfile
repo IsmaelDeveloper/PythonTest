@@ -29,16 +29,16 @@ RUN apt-get update && apt-get install -y \
     gstreamer1.0-gtk3 \
     gstreamer1.0-qt5 \
     gstreamer1.0-pulseaudio \
+    pulseaudio \
+    alsa-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # update pip and install necessary python packet
 RUN python3.9 -m pip install --upgrade pip && \
     pip install PyQt5 PyQtWebEngine
 
-# copy build kiosk.zip and unzip it
-COPY ./build_kiosk.zip ./
-RUN unzip ./build_kiosk.zip -d ./ && \
-    rm ./build_kiosk.zip
+# copy the output folder directly
+COPY ./output /output
 
 WORKDIR /output/main
 
