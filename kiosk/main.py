@@ -9,7 +9,7 @@ import zipfile
 import shutil
 from io import BytesIO
 from PyQt5.QtWidgets import QMessageBox, QDialog, QLineEdit, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget, QInputDialog
-from PyQt5.QtCore import Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect, QProcess
+from PyQt5.QtCore import Qt, QProcess, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect, QProcess
 from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -306,8 +306,17 @@ class MainApp(QWidget):
                     print(f'Failed to delete directory for user {user_seq}. Reason: {e}')
 
 
+    # def start_and_monitor_process(self, process_name):
+    #         self.process = QProcess(self)
+    #         self.process.finished.connect(self.on_process_finished)
+    #         self.process.start(process_name)
+
+    # def on_process_finished(self):
+    #     print("WE CLOOOOOOOOOOOOOOOOOOOOOOSE")
+        
     def initUI(self):
         self.check_existing_user()
+        # self.start_and_monitor_process("gedit")
         try:
             with open('/etc/machine-id', 'r') as file:
                 machine_id = file.read().strip()
