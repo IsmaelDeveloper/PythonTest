@@ -83,15 +83,17 @@ class MainApp(QWidget):
     def check_existing_user(self):
         connection = sqlite3.connect('kioskdb.db')
         cursor = connection.cursor()
-        cursor.execute('SELECT instt_code FROM user LIMIT 1')
+        cursor.execute('SELECT instt_code, kiosk_seq FROM user LIMIT 1')
         result = cursor.fetchone()
         connection.close()
         
         if result:
             self.insttCode = result[0]
-            print(f"Existing instt_code found: {self.insttCode}")
+            self.kioskSeq = result[1]
+            print(f"Existing instt_code found: {self.insttCode}, kiosk_seq found: {self.kioskSeq}")
         else:
             self.showKioskInputPopup()
+
 
 
     def showKioskInputPopup(self):
