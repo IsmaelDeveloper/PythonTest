@@ -1,144 +1,23 @@
 import sys
 import os
-import socketio
 import json
 import urllib3
 import requests
 import sqlite3
-from PyQt5.QtWidgets import QMessageBox, QDialog, QLineEdit,QStyle, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget, QInputDialog
-from PyQt5.QtCore import QThread, Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect, QJsonDocument
+from PyQt5.QtWidgets import QMessageBox, QDialog, QLineEdit, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget, QInputDialog
+from PyQt5.QtCore import Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect
 from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtQuick import QQuickView
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineSettings, QWebEngineProfile
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings, QWebEngineProfile
 from utils.customTabBar import CustomTabBar
 from utils.toolWindow import ToolWindow
 from utils.LocalParameterStorage import LocalParameterStorage
 from utils.LocalDbParameterStorage import LocalDbParameterStorage
-from urllib.parse import quote
+from utils.PollingManager import PollingManager
 from utils.faceRecognition import WebcamWidget
-from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest
-
-def load_username_from_env():
-    try:
-        with open('env.json', 'r') as file:
-            env = json.load(file)
-            return env.get("username", "USERNAME")
-    except (FileNotFoundError, json.JSONDecodeError):
-        return "default_username"
-
-class PollingManager:
-    def __init__(self, payload, url, interval, callback):
-        self.payload = payload
-        self.url = url
-        self.interval = interval
-        self.callback = callback
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.sendRequest)
-        self.network_manager = QNetworkAccessManager()
-        self.network_manager.finished.connect(self.handleResponse)
-
-    def start(self):
-        self.sendRequest()
-        self.timer.start(self.interval)
-
-    def sendRequest(self):
-        request = QNetworkRequest(QUrl(self.url))
-        request.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
-        payload_bytes = QJsonDocument(self.payload).toJson()
-        self.network_manager.post(request, payload_bytes)
-
-    def handleResponse(self, reply):
-        if reply.error():
-            print(f"HTTP REQUEST ERROR :  {reply.errorString()}")
-            response_data = None
-        else:
-            response_data = str(reply.readAll(), 'utf-8')
-        
-        if self.callback:  
-            self.callback(response_data)
-            
-class WebEnginePage(QWebEnginePage):
-    closeViewRequested = pyqtSignal()
-
-    def __init__(self, *args, **kwargs):
-        super(WebEnginePage, self).__init__(*args, **kwargs)
-        self.featurePermissionRequested.connect(
-            self.onFeaturePermissionRequested)
-
-    def acceptNavigationRequest(self, url, nav_type, is_main_frame):
-        print(url)
-        if url.scheme() == "closewebview":
-            print("URL personnalisée détectée :", url.toString())
-            self.closeViewRequested.emit()
-            return False
-        return super(WebEnginePage, self).acceptNavigationRequest(url, nav_type, is_main_frame)
-
-    def onFeaturePermissionRequested(self, url, feature):
-        if feature in (QWebEnginePage.MediaAudioCapture,
-                       QWebEnginePage.MediaVideoCapture,
-                       QWebEnginePage.MediaAudioVideoCapture):
-            self.setFeaturePermission(
-                url, feature, QWebEnginePage.PermissionGrantedByUser)
-        else:
-            super(WebEnginePage, self).onFeaturePermissionRequested(url, feature)
-
-    def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
-        if level == QWebEnginePage.JavaScriptConsoleMessageLevel.ErrorMessageLevel:
-            print(
-                f"JS Error: {message} (line: {lineNumber}, source: {sourceID})")
-        else:
-            print(f"JS: {message} (line: {lineNumber}, source: {sourceID})")
-
-
-class SocketIOThread(QThread):
-    offerReceived = pyqtSignal(dict)
-    iceCandidateReceived = pyqtSignal(dict)
-    multipleCallOfferReceived = pyqtSignal(str)
-    socketIdReceived = pyqtSignal(str)
-
-    def __init__(self, url, username):
-        QThread.__init__(self)
-        self.url = url
-        self.username = username
-        self.socketId = None 
-        self.sio = socketio.Client(ssl_verify=False)
-    def run(self):
-
-        @self.sio.event
-        def connect():
-            self.socketId = self.sio.eio.sid
-            self.socketIdReceived.emit(self.socketId)
-            print("Connected to server")
-            self.sio.emit('register', {'username': self.username})
-            self.sio.emit('usernm-client', self.username)
-
-        @self.sio.event
-        def disconnect():
-            print("Disconnected from server")
-
-        @self.sio.event
-        def getOffer(data):
-            self.offerReceived.emit(data)
-
-        @self.sio.event
-        def receiveCandidateInAnswer(data):
-            self.iceCandidateReceived.emit(data)
-        
-        @self.sio.on('boom-server')
-        def boom_server(UUID):
-            self.multipleCallOfferReceived.emit(UUID)
-            print("MULTIPLE CALL ")
-
-        self.sio.connect(self.url)
-        self.sio.wait()
-
-    def reRegisterUser(self):
-        if self.sio.connected:
-            self.sio.emit('register', {'username': self.username})
-
+from utils.WebEngine import WebEnginePage
+from utils.SocketIoThread import SocketIOThread
 
 class MainApp(QWidget):
     dustClicked = pyqtSignal()
@@ -439,12 +318,6 @@ class MainApp(QWidget):
         self.tabWidget.addTab(tab2, "Onglet 2")
         self.tabWidget.setCurrentIndex(0)
 
-        # add content on tab1
-        # tab1_layout = QVBoxLayout()
-        # tab1.setLayout(tab1_layout)
-        # tab1_layout.addWidget(QLabel("Contenu de l'Onglet 1"))
-        # tab1_layout.addWidget(QPushButton("Bouton dans Onglet 1"))
-
         # add widget to slide menu
         slideMenuLayout.addWidget(self.tabWidget)
 
@@ -555,10 +428,6 @@ class MainApp(QWidget):
             if self.isWebviewCloseByUser == False:
                 self.closeFullScreenWebView()
                 self.checkInternetPopup()
-            # self.webcam_widget.releaseCamera()
-            # self.openFullScreenWebView(
-            # self.callingWebviewUrl, offerData, True)
-            # print("loading error")
 
     def sendOfferToWebView(self, ok, offerData):
         if ok:
@@ -575,9 +444,6 @@ class MainApp(QWidget):
             if self.isWebviewCloseByUser == False:
                 self.closeFullScreenWebView()
                 self.checkInternetPopup()
-            # self.webcam_widget.releaseCamera()
-            # self.openFullScreenWebView(
-            #     self.callingWebviewUrl, offerData)
 
     def storeWidgetStates(self):
         self.widget_states = {
@@ -585,7 +451,6 @@ class MainApp(QWidget):
             'buttons_view': self.buttons_view.isVisible(),
             'web_view': self.web_view.isVisible()
         }
-
     def checkInternetPopup(self):
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Warning)
@@ -595,9 +460,6 @@ class MainApp(QWidget):
         buttonY = msgBox.button(QMessageBox.Yes)
         buttonY.setText("확인")  # Personnalisez le label du bouton ici
         msgBox.exec_()
-
-
-
     def sendCloseSignalToWebView(self):
             if self.web_view:
                 jsCode = "if (typeof closeCamera === 'function') closeCamera();"
@@ -608,8 +470,6 @@ class MainApp(QWidget):
         self.web_view.setUrl(QUrl("about:blank"))
         self.web_view.setParent(None)
         self.web_view.hide() 
-        # self.web_view = QWebEngineView()
-
         self.video_widget.setParent(self)
         main_layout = self.layout()
 
@@ -623,12 +483,6 @@ class MainApp(QWidget):
         self.web_view.setVisible(self.widget_states['web_view'])
         self.isFullScreenWebViewOpen = False
         self.socket_thread.reRegisterUser() 
-        
-        # self.startSocket()
-        # self.isWebviewCloseByUser = False
-
-
-
     def setupCountdown(self):
         self.countdown_time = 50
         self.countdown_button.setText("닫기 (" + str(self.countdown_time) + ")")
