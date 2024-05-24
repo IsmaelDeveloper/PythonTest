@@ -71,7 +71,7 @@ class MainApp(QWidget):
         #     "modifiedAt": current_timestamp
         # }
         payload = { 
-            "insttCode": self.insttCode,
+            "kioskSeq": self.kioskSeq,
             "cameraSttusAt" : "Y"
         }
         url = "http://newk.musicen.com/kiosk/polling.api"
@@ -137,21 +137,24 @@ class MainApp(QWidget):
         print(jsonResponse.get('data'))
         if(response.status_code == 200):
             self.insttCode = id
-            self.insert_user(id) 
+            self.kioskSeq = jsonResponse.get('data').get('kioskSeq')
+            print(self.kioskSeq)
+            self.insert_user(id, self.kioskSeq) 
         else:
             self.showCenteredMessageBox('오류', '잘못된 코드입니다. 다시 시도해 주세요.')
             self.showKioskInputPopup()
 
-    
-    def insert_user(self, instt_code):
+        
+    def insert_user(self, instt_code, kiosk_seq):
         connection = sqlite3.connect('kioskdb.db')
         cursor = connection.cursor()
         cursor.execute('''
-            INSERT INTO user (instt_code)
-            VALUES (?)
-        ''', (instt_code,))
+            INSERT INTO user (instt_code, kiosk_seq)
+            VALUES (?, ?)
+        ''', (instt_code, kiosk_seq))
         connection.commit()
         connection.close()
+
 
     
     def showCenteredMessageBox(self, title, message):
