@@ -194,6 +194,9 @@ class MainApp(QWidget):
                 update_user_list = data.get('updateUserList', [])
                 self.processUpdateUserList(update_user_list)
 
+                delete_user_list_str = data.get('deleteUserListStr', [])
+                self.processDeleteUserList(delete_user_list_str)
+
                 kiosk_status = data.get('kioskCtrlAt', 'N')
                 if kiosk_status == 'K':
                     print("Kiosk status is 'K'. Exiting application.")
@@ -213,7 +216,7 @@ class MainApp(QWidget):
         base_path = os.path.join(os.getcwd(), 'utils', 'datasets', 'webcam_test', 'member')
         
         for user in update_user_list:
-            user_nm = user.get('userNm')
+            user_nm = user.get('userSeq')
             user_npz = user.get('userNpz')
 
             if user_nm and user_npz:
@@ -222,7 +225,6 @@ class MainApp(QWidget):
                 if not os.path.exists(user_dir):
                     os.makedirs(user_dir)
                 else:
-                    # Vider le dossier s'il existe déjà
                     for filename in os.listdir(user_dir):
                         file_path = os.path.join(user_dir, filename)
                         try:
@@ -236,8 +238,30 @@ class MainApp(QWidget):
                     decoded_data = base64.b64decode(user_npz)
                     with zipfile.ZipFile(BytesIO(decoded_data), 'r') as zip_ref:
                         zip_ref.extractall(user_dir)
+                        
+                    extracted_items = os.listdir(user_dir)
+                    if len(extracted_items) == 1 and os.path.isdir(os.path.join(user_dir, extracted_items[0])):
+                        single_folder_path = os.path.join(user_dir, extracted_items[0])
+                        for item in os.listdir(single_folder_path):
+                            shutil.move(os.path.join(single_folder_path, item), user_dir)
+                        shutil.rmtree(single_folder_path)
+
                 except Exception as e:
                     print(f'Failed to extract data for user {user_nm}. Reason: {e}')
+
+    def processDeleteUserList(self, delete_user_list_str):
+        base_path = os.path.join(os.getcwd(), 'utils', 'datasets', 'webcam_test', 'member')
+        
+        for user_nm in delete_user_list_str:
+            user_dir = os.path.join(base_path, user_nm)
+            
+            if os.path.exists(user_dir):
+                try:
+                    shutil.rmtree(user_dir)
+                    print(f'Successfully deleted directory for user: {user_nm}')
+                except Exception as e:
+                    print(f'Failed to delete directory for user {user_nm}. Reason: {e}')
+
 
     def initUI(self):
         self.check_existing_user()
