@@ -4,6 +4,10 @@ import json
 import urllib3
 import requests
 import sqlite3
+import base64
+import zipfile
+import shutil
+from io import BytesIO
 from PyQt5.QtWidgets import QMessageBox, QDialog, QLineEdit, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget, QInputDialog
 from PyQt5.QtCore import Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect, QProcess
 from PyQt5.QtQuickWidgets import QQuickWidget
@@ -181,12 +185,14 @@ class MainApp(QWidget):
     def pollingCallback(self, response):
         try:
             response_dict = json.loads(response)
-            print(response_dict)
             data = response_dict.get('data', None)
             if data:
                 print("Polling request data:", data)
                 new_marquee_msg = data.get('marqueeMsg', '')
                 self.webcam_widget.checkAndUpdateMarqueeText(new_marquee_msg)
+
+                update_user_list = data.get('updateUserList', [])
+                self.processUpdateUserList(update_user_list)
 
                 kiosk_status = data.get('kioskCtrlAt', 'N')
                 if kiosk_status == 'K':
@@ -202,6 +208,36 @@ class MainApp(QWidget):
         except json.JSONDecodeError:
             print("Failed to decode JSON response")
 
+
+    def processUpdateUserList(self, update_user_list):
+        base_path = os.path.join(os.getcwd(), 'utils', 'datasets', 'webcam_test', 'member')
+        
+        for user in update_user_list:
+            user_nm = user.get('userNm')
+            user_npz = user.get('userNpz')
+
+            if user_nm and user_npz:
+                user_dir = os.path.join(base_path, user_nm)
+                
+                if not os.path.exists(user_dir):
+                    os.makedirs(user_dir)
+                else:
+                    # Vider le dossier s'il existe déjà
+                    for filename in os.listdir(user_dir):
+                        file_path = os.path.join(user_dir, filename)
+                        try:
+                            if os.path.isfile(file_path) or os.path.islink(file_path):
+                                os.unlink(file_path)
+                            elif os.path.isdir(file_path):
+                                shutil.rmtree(file_path)
+                        except Exception as e:
+                            print(f'Failed to delete {file_path}. Reason: {e}')
+                try:
+                    decoded_data = base64.b64decode(user_npz)
+                    with zipfile.ZipFile(BytesIO(decoded_data), 'r') as zip_ref:
+                        zip_ref.extractall(user_dir)
+                except Exception as e:
+                    print(f'Failed to extract data for user {user_nm}. Reason: {e}')
 
     def initUI(self):
         self.check_existing_user()
