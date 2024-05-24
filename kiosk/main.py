@@ -202,6 +202,10 @@ class MainApp(QWidget):
                 delete_user_list_str = data.get('deleteUserListStr', [])
                 self.processDeleteUserList(delete_user_list_str)
 
+                delete_all_user_at = data.get('deleteAllUserAt', 'N')
+                if delete_all_user_at == 'Y':
+                    self.deleteAllUsers()
+
                 kiosk_status = data.get('kioskCtrlAt', 'N')
                 if kiosk_status == 'K':
                     print("Kiosk status is 'K'. Exiting application.")
@@ -215,6 +219,27 @@ class MainApp(QWidget):
                 print("No data found in response")
         except json.JSONDecodeError:
             print("Failed to decode JSON response")
+
+    def deleteAllUsers(self):
+        base_path = os.path.join(os.getcwd(), 'utils', 'datasets', 'webcam_test', 'member')
+
+        # Delete all folders in the member directory
+        if os.path.exists(base_path):
+            for user_dir in os.listdir(base_path):
+                full_path = os.path.join(base_path, user_dir)
+                try:
+                    shutil.rmtree(full_path)
+                    print(f'Successfully deleted directory: {full_path}')
+                except Exception as e:
+                    print(f'Failed to delete directory {full_path}. Reason: {e}')
+
+        # Delete all users in the SQLite database
+        connection = sqlite3.connect('kioskdb.db')
+        cursor = connection.cursor()
+        cursor.execute('DELETE FROM users')
+        connection.commit()
+        connection.close()
+        print('Successfully deleted all users from the database')
 
 
     def processUpdateUserList(self, update_user_list):
