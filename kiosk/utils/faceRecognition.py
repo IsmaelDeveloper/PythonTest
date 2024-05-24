@@ -74,7 +74,8 @@ class WebcamWidget(QWidget):
         self.graphicsView.setStyleSheet("background-color: rgba(0, 0, 0, 150); border: none;")
         self.scene = QGraphicsScene()
         self.graphicsView.setScene(self.scene)
-        self.textItem = QGraphicsTextItem("your text here")
+        self.current_marquee_msg = ""
+        self.textItem = QGraphicsTextItem(self.current_marquee_msg)
         self.textItem.setDefaultTextColor(QColor("white"))
         self.scene.addItem(self.textItem)
         self.scene.setBackgroundBrush(Qt.transparent)
@@ -95,6 +96,13 @@ class WebcamWidget(QWidget):
         # Positionnez graphicsView sur l'image_label. Exemple : en bas de l'image_label.
         self.graphicsView.setGeometry(0, self.image_label.height() - 50, self.image_label.width(), 50)
 
+    def checkAndUpdateMarqueeText(self, new_text):
+        if new_text != self.current_marquee_msg:
+            self.current_marquee_msg = new_text
+            self.updateMarqueeText(new_text)
+
+    def updateMarqueeText(self, text):
+        self.textItem.setPlainText(text)
 
     def detect_and_print_available_cameras(self):
         max_test_cameras = 10 

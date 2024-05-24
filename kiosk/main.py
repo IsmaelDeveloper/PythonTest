@@ -3,7 +3,9 @@ import os
 import socketio
 import json
 import urllib3
-from PyQt5.QtWidgets import QMessageBox, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget
+import requests
+import sqlite3
+from PyQt5.QtWidgets import QMessageBox, QDialog, QLineEdit,QStyle, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget, QInputDialog
 from PyQt5.QtCore import QThread, Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect, QJsonDocument
 from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -18,7 +20,6 @@ from utils.LocalDbParameterStorage import LocalDbParameterStorage
 from urllib.parse import quote
 from utils.faceRecognition import WebcamWidget
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest
-from datetime import datetime
 
 def load_username_from_env():
     try:
@@ -27,31 +28,6 @@ def load_username_from_env():
             return env.get("username", "USERNAME")
     except (FileNotFoundError, json.JSONDecodeError):
         return "default_username"
-    
-class SingleRequestManager:
-    def __init__(self, payload, url, callback):
-        self.payload = payload
-        self.url = url
-        self.callback = callback
-        self.network_manager = QNetworkAccessManager()
-        self.network_manager.finished.connect(self.handleResponse)
-
-    def sendRequest(self):
-        request = QNetworkRequest(QUrl(self.url))
-        request.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
-        payload_bytes = QJsonDocument(self.payload).toJson()
-        self.network_manager.post(request, payload_bytes)
-
-    def handleResponse(self, reply):
-        if reply.error():
-            print(f"HTTP REQUEST ERROR: {reply.errorString()}")
-            response_data = None
-        else:
-            response_data = str(reply.readAll(), 'utf-8')
-
-        if self.callback:  
-            self.callback(response_data)
-
 
 class PollingManager:
     def __init__(self, payload, url, interval, callback):
@@ -202,30 +178,109 @@ class MainApp(QWidget):
         self.multipleCallJsSent = False
         self.openWebViewSignal.connect(self.openFullScreenWebViewSlot)
         self.openWebViewSignalForMultipleCall.connect(self.openFullScreenWebViewForMultipleCallSlot)
-        current_timestamp = int(datetime.now().timestamp() * 1000)
-        payload = {
-            "appID": self.deviceId,
-            "date": current_timestamp,
-            "edgeBoxName": "A01",
-            "serviceName": "A01"
-        }
-        url = "http://192.168.0.3/v1/appapi/device/regist"
-        self.singleRequestManager = SingleRequestManager(payload, url, self.requestCallback)
-        self.singleRequestManager.sendRequest()
-
         
-        payload = {
-            "appID": self.deviceId,
-            "cameraStatus": 0,
-            "edgeboxStatus": 0,
-            "featureType": "KT",
-            "modifiedAt": current_timestamp
+        
+        # payload = {
+        #     "appID": self.deviceId,
+        #     "cameraStatus": 0,
+        #     "edgeboxStatus": 0,
+        #     "featureType": "KT",
+        #     "modifiedAt": current_timestamp
+        # }
+        payload = { 
+            "insttCode": self.insttCode,
+            "cameraSttusAt" : "Y"
         }
-        url = "http://192.168.0.3/v1/appapi/polling"
+        url = "http://newk.musicen.com/kiosk/polling.api"
         interval = 60000  
         self.pollingManager = PollingManager(payload, url, interval, self.pollingCallback)
         self.pollingManager.start()
+
     
+    def check_existing_user(self):
+        connection = sqlite3.connect('kioskdb.db')
+        cursor = connection.cursor()
+        cursor.execute('SELECT instt_code FROM user LIMIT 1')
+        result = cursor.fetchone()
+        connection.close()
+        
+        if result:
+            self.insttCode = result[0]
+            print(f"Existing instt_code found: {self.insttCode}")
+        else:
+            self.showKioskInputPopup()
+
+
+    def showKioskInputPopup(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle('키오스크 번호 입력')
+        dialog.setWindowFlags(Qt.Dialog | Qt.CustomizeWindowHint | Qt.WindowTitleHint)  # Remove the close button
+        layout = QVBoxLayout()
+
+        label = QLabel('키오스크 번호를 입력해 주세요:')
+        layout.addWidget(label)
+
+        input_field = QLineEdit()
+        layout.addWidget(input_field)
+
+        button = QPushButton('확인')
+        button.clicked.connect(lambda: self.onKioskIdEntered(dialog, input_field))
+        layout.addWidget(button)
+
+        dialog.setLayout(layout)
+        dialog.setWindowModality(Qt.ApplicationModal)
+        dialog.adjustSize()  # Adjust the size of the dialog
+        rect = dialog.geometry()
+        center = QApplication.primaryScreen().availableGeometry().center()
+        rect.moveCenter(center)
+        dialog.setGeometry(rect)
+
+        dialog.exec_()
+
+
+    def onKioskIdEntered(self, dialog, input_field):
+        id = input_field.text()
+        dialog.close()
+        self.registId(id)
+
+    def registId(self, id): 
+        payload = { 
+            "insttCode": id,
+        }
+        url = "http://newk.musicen.com/kiosk/registKiosk.api"
+        headers = {"Content-Type" : "application/json"}
+        response = requests.post(url, json=payload, headers=headers)
+        jsonResponse = response.json()
+        print(jsonResponse.get('data'))
+        if(response.status_code == 200):
+            self.insttCode = id
+            self.insert_user(id) 
+        else:
+            self.showCenteredMessageBox('오류', '잘못된 코드입니다. 다시 시도해 주세요.')
+            self.showKioskInputPopup()
+
+    
+    def insert_user(self, instt_code):
+        connection = sqlite3.connect('kioskdb.db')
+        cursor = connection.cursor()
+        cursor.execute('''
+            INSERT INTO user (instt_code)
+            VALUES (?)
+        ''', (instt_code,))
+        connection.commit()
+        connection.close()
+
+    
+    def showCenteredMessageBox(self, title, message):
+        msgBox = QMessageBox(QMessageBox.Warning, title, message, QMessageBox.Ok, self)
+        msgBox.setWindowModality(Qt.ApplicationModal)
+        msgBox.adjustSize()
+        rect = msgBox.geometry()
+        center = QApplication.primaryScreen().availableGeometry().center()
+        rect.moveCenter(center)
+        msgBox.setGeometry(rect)
+        msgBox.exec_()
+
     def startSocket(self):
         self.socket_thread = SocketIOThread(
             'https://kiosk-chat.musicen.com:8234', self.username)
@@ -242,15 +297,24 @@ class MainApp(QWidget):
         self.isWebviewCloseByUser = True
         self.closeFullScreenWebView()
     def handleSocketId(self, socketId):
-        self.socketId = socketId 
-
-    def requestCallback(self, response):
-        print("Single request answer:", response)    
+        self.socketId = socketId    
 
     def pollingCallback(self, response):
-        print("Polling request answer : ", response)
+        try:
+            response_dict = json.loads(response)
+            data = response_dict.get('data', None)
+            if data:
+                print("Polling request data:", data)
+                new_marquee_msg = data.get('marqueeMsg', '')
+                self.webcam_widget.checkAndUpdateMarqueeText(new_marquee_msg)
+            else:
+                print("No data found in response")
+        except json.JSONDecodeError:
+            print("Failed to decode JSON response")
+
 
     def initUI(self):
+        self.check_existing_user()
         try:
             with open('/etc/machine-id', 'r') as file:
                 machine_id = file.read().strip()
