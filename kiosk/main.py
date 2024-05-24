@@ -193,6 +193,7 @@ class MainApp(QWidget):
                     print("Kiosk status is 'K'. Exiting application.")
                     QApplication.quit()
                 elif kiosk_status == 'R':
+                    self.webcam_widget.releaseCamera()
                     print("Kiosk status is 'R'. Restarting application.")
                     QProcess.startDetached(sys.executable, sys.argv)
                     QApplication.quit()
