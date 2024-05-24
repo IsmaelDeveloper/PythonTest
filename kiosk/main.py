@@ -216,14 +216,22 @@ class MainApp(QWidget):
         base_path = os.path.join(os.getcwd(), 'utils', 'datasets', 'webcam_test', 'member')
         
         for user in update_user_list:
-            user_nm = user.get('userSeq')
+            user_seq = user.get('userSeq')
+            user_nm = user.get('userNm')
+
             user_npz = user.get('userNpz')
 
-            if user_nm and user_npz:
-                user_dir = os.path.join(base_path, user_nm)
+            if user_seq and user_npz:
+                user_dir = os.path.join(base_path, user_seq)
                 
                 if not os.path.exists(user_dir):
                     os.makedirs(user_dir)
+                    connection = sqlite3.connect('kioskdb.db')
+                    cursor = connection.cursor()
+                    cursor.execute('INSERT INTO users (user_seq, user_nm) VALUES (?, ?)', (user_seq, user_nm))
+                    connection.commit()
+                    connection.close()
+
                 else:
                     for filename in os.listdir(user_dir):
                         file_path = os.path.join(user_dir, filename)
@@ -247,20 +255,25 @@ class MainApp(QWidget):
                         shutil.rmtree(single_folder_path)
 
                 except Exception as e:
-                    print(f'Failed to extract data for user {user_nm}. Reason: {e}')
+                    print(f'Failed to extract data for user {user_seq}. Reason: {e}')
 
     def processDeleteUserList(self, delete_user_list_str):
         base_path = os.path.join(os.getcwd(), 'utils', 'datasets', 'webcam_test', 'member')
         
-        for user_nm in delete_user_list_str:
-            user_dir = os.path.join(base_path, user_nm)
+        for user_seq in delete_user_list_str:
+            user_dir = os.path.join(base_path, user_seq)
             
             if os.path.exists(user_dir):
                 try:
                     shutil.rmtree(user_dir)
-                    print(f'Successfully deleted directory for user: {user_nm}')
+                    connection = sqlite3.connect('kioskdb.db')
+                    cursor = connection.cursor()
+                    cursor.execute('DELETE FROM users WHERE user_seq = ?', (user_seq,))
+                    connection.commit()
+                    connection.close()
+                    print(f'Successfully deleted directory for user: {user_seq}')
                 except Exception as e:
-                    print(f'Failed to delete directory for user {user_nm}. Reason: {e}')
+                    print(f'Failed to delete directory for user {user_seq}. Reason: {e}')
 
 
     def initUI(self):
