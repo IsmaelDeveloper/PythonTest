@@ -5,7 +5,7 @@ import urllib3
 import requests
 import sqlite3
 from PyQt5.QtWidgets import QMessageBox, QDialog, QLineEdit, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget, QInputDialog
-from PyQt5.QtCore import Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect
+from PyQt5.QtCore import Qt, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect, QProcess
 from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -181,11 +181,21 @@ class MainApp(QWidget):
     def pollingCallback(self, response):
         try:
             response_dict = json.loads(response)
+            print(response_dict)
             data = response_dict.get('data', None)
             if data:
                 print("Polling request data:", data)
                 new_marquee_msg = data.get('marqueeMsg', '')
                 self.webcam_widget.checkAndUpdateMarqueeText(new_marquee_msg)
+
+                kiosk_status = data.get('kioskCtrlAt', 'N')
+                if kiosk_status == 'K':
+                    print("Kiosk status is 'K'. Exiting application.")
+                    QApplication.quit()
+                elif kiosk_status == 'R':
+                    print("Kiosk status is 'R'. Restarting application.")
+                    QProcess.startDetached(sys.executable, sys.argv)
+                    QApplication.quit()
             else:
                 print("No data found in response")
         except json.JSONDecodeError:
