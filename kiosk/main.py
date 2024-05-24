@@ -366,7 +366,7 @@ class MainApp(QWidget):
         main_layout.addWidget(self.video_widget, 3)
 
         mp4_path = os.path.join(
-            self.base_path, 'ressources', 'default_media.mp4')
+            self.base_path, 'ressources/media', 'default_media.mp4')
         self.video_player.setMedia(QMediaContent(
             QUrl.fromLocalFile(mp4_path)))
         self.video_player.mediaStatusChanged.connect(self.onMediaStatusChanged)
