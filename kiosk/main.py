@@ -6,10 +6,10 @@ import requests
 import sqlite3
 import base64
 import zipfile
-import shutil
+import shutil 
 from io import BytesIO
-from PyQt5.QtWidgets import QMessageBox, QDialog, QStackedWidget, QLineEdit, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget, QInputDialog
-from PyQt5.QtCore import Qt, QProcess, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect, QProcess
+from PyQt5.QtWidgets import QLabel, QMessageBox, QDialog, QLineEdit, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget, QInputDialog
+from PyQt5.QtCore import Qt, QProcess, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect
 from PyQt5.QtQuickWidgets import QQuickWidget
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -23,6 +23,7 @@ from utils.PollingManager import PollingManager
 from utils.faceRecognition import WebcamWidget
 from utils.WebEngine import WebEnginePage
 from utils.SocketIoThread import SocketIOThread
+
 
 class MainApp(QWidget):
     dustClicked = pyqtSignal()
@@ -203,13 +204,12 @@ class MainApp(QWidget):
                 delete_user_list_str = data.get('deleteUserListStr', [])
                 self.processDeleteUserList(delete_user_list_str)
 
+                media_file_download = data.get('mediaFileDownload', '')
+                self.processMediaFileDownload(media_file_download)
+
                 delete_all_user_at = data.get('deleteAllUserAt', 'N')
                 if delete_all_user_at == 'Y':
                     self.deleteAllUsers()
-
-                media_file_download = data.get('mediaFileDownload', '')
-                mediaFileNm = data.get('mediaFileNm', '')
-                self.processMediaFileDownload(media_file_download, mediaFileNm)
 
                 kiosk_status = data.get('kioskCtrlAt', 'N')
                 if kiosk_status == 'K':
@@ -225,13 +225,15 @@ class MainApp(QWidget):
         except json.JSONDecodeError:
             print("Failed to decode JSON response")
 
-    def processMediaFileDownload(self, media_file_path, mediaFileNm):
+
+    def processMediaFileDownload(self, media_file_path):
+        print("")
         if media_file_path:
             url = f"http://newk.musicen.com{media_file_path}"
             try:
                 response = requests.get(url)
                 response.raise_for_status()
-                
+
                 # Extract the filename from the Content-Disposition header
                 if 'Content-Disposition' in response.headers:
                     content_disposition = response.headers['Content-Disposition']
@@ -240,36 +242,55 @@ class MainApp(QWidget):
                 else:
                     print("Filename not found in the headers")
                     file_name = "default.zip"  # Fallback if the filename is not provided
-                if mediaFileNm == self.mediaZipName :
-                    return
-                
+
                 media_dir = os.path.join(self.base_path, 'ressources', 'media')
                 if not os.path.exists(media_dir):
                     os.makedirs(media_dir)
-
-                # Clear the media directory
-                if os.path.exists(media_dir):
-                    for file in os.listdir(media_dir):
-                        file_path = os.path.join(media_dir, file)
-                        try:
-                            if os.path.isfile(file_path) or os.path.islink(file_path):
-                                os.unlink(file_path)
-                            elif os.path.isdir(file_path):
-                                shutil.rmtree(file_path)
-                        except Exception as e:
-                            print(f'Failed to delete {file_path}. Reason: {e}')
 
                 # Extract the zip file from the response content
                 with zipfile.ZipFile(BytesIO(response.content)) as zip_ref:
                     zip_ref.extractall(media_dir)
 
                 print(f"Successfully extracted media file to {media_dir}")
-                self.mediaZipName = file_name
-                self.loadMediaFiles()
             except requests.RequestException as e:
                 print(f"Failed to download media file from {url}. Reason: {e}")
             except zipfile.BadZipFile as e:
                 print(f"Failed to extract zip file from response content. Reason: {e}")
+
+    def loadMediaFiles(self):
+        media_dir = os.path.join(os.getcwd(), 'ressources', 'media')
+        self.media_files = [os.path.join(media_dir, f) for f in os.listdir(media_dir) 
+                            if f.lower().endswith(('.mp4', '.avi', '.mov', '.png', '.jpg', '.jpeg'))]
+        print(self.media_files)
+
+    
+    def playNextMedia(self):
+        if not self.media_files:
+            return
+
+        current_file = self.media_files[self.current_media_index]
+        if current_file.lower().endswith(('.mp4', '.avi', '.mov')):
+            self.image_label.hide()
+            self.video_widget.show()
+            self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(current_file)))
+            self.video_player.play()
+            self.video_player.mediaStatusChanged.connect(self.onMediaStatusChanged)
+        elif current_file.lower().endswith(('.png', '.jpg', '.jpeg')):
+            self.video_widget.hide()
+            pixmap = QPixmap(current_file)
+            self.image_label.setPixmap(pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio))
+            self.image_label.show()
+            QTimer.singleShot(10000, self.playNextMedia)  # Display each image for 10 seconds
+
+        self.current_media_index = (self.current_media_index + 1) % len(self.media_files)
+
+
+    @pyqtSlot()
+    def onMediaStatusChanged(self):
+        if self.video_player.mediaStatus() == QMediaPlayer.EndOfMedia:
+            self.playNextMedia()
+
+
 
     def deleteAllUsers(self):
         base_path = os.path.join(os.getcwd(), 'utils', 'datasets', 'webcam_test', 'member')
@@ -366,9 +387,7 @@ class MainApp(QWidget):
     #     print("WE CLOOOOOOOOOOOOOOOOOOOOOOSE")
         
     def initUI(self):
-        self.mediaZipName = ""
         self.check_existing_user()
-        # self.start_and_monitor_process("gedit")
         try:
             with open('/etc/machine-id', 'r') as file:
                 machine_id = file.read().strip()
@@ -406,63 +425,31 @@ class MainApp(QWidget):
         self.buttons_view.setSource(QUrl.fromLocalFile(qml_path))
         main_layout.addWidget(self.buttons_view, 1)
 
-        self.current_media_index = 0
-        self.media_files = []
         # Initialization of QMediaPlayer
         self.video_player = QMediaPlayer()
+
+        # Creation and configuration of QVideoWidget
         self.video_widget = QVideoWidget()
+
         self.video_widget.setAspectRatioMode(Qt.IgnoreAspectRatio)
         self.video_player.setVideoOutput(self.video_widget)
-        self.video_player.mediaStatusChanged.connect(self.onMediaStatusChanged)
+        main_layout.addWidget(self.video_widget, 3)
 
         self.image_label = QLabel()
         self.image_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(self.image_label, 3)
+        self.image_label.hide()
 
-        self.stacked_widget = QStackedWidget()
-        self.stacked_widget.addWidget(self.video_widget)
-        self.stacked_widget.addWidget(self.image_label)
-
-        main_layout.addWidget(self.stacked_widget, 3)
-
-        self.setLayout(main_layout)
         self.loadMediaFiles()
+        self.current_media_index = 0
         self.playNextMedia()
 
         self.web_view = QWebEngineView()
-
         self.configureWebEngineSettings()
-
         self.loadStyleSheet()
         self.addSlideMenu()
 
-    def loadMediaFiles(self):
-        media_dir = os.path.join(os.getcwd(), 'ressources', 'media')
-        self.media_files = [os.path.join(media_dir, f) for f in os.listdir(media_dir) 
-                            if f.lower().endswith(('.mp4', '.avi', '.mov', '.png', '.jpg', '.jpeg'))]
-        print(self.media_files)
 
-
-    def playNextMedia(self):
-        if not self.media_files:
-            return
-
-        current_file = self.media_files[self.current_media_index]
-        if current_file.lower().endswith(('.mp4', '.avi', '.mov')):
-            self.stacked_widget.setCurrentWidget(self.video_widget)
-            self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(current_file)))
-            self.video_player.play()
-        elif current_file.lower().endswith(('.png', '.jpg', '.jpeg')):
-            self.stacked_widget.setCurrentWidget(self.image_label)
-            pixmap = QPixmap(current_file)
-            self.image_label.setPixmap(pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio))
-            QTimer.singleShot(10000, self.playNextMedia)
-
-        self.current_media_index = (self.current_media_index + 1) % len(self.media_files)
-
-    @pyqtSlot()
-    def onMediaStatusChanged(self):
-        if self.video_player.mediaStatus() == QMediaPlayer.EndOfMedia:
-            self.playNextMedia()
 
     def handleOffer(self, offerData):
         if self.isFullScreenWebViewOpen == False:
@@ -719,8 +706,8 @@ class MainApp(QWidget):
         self.isWebviewOnMp4Open = False
 
     def restoreVideoView(self):
-        mp4_path = os.path.join(
-            self.base_path, 'ressources', 'default_media.mp4')
+        # mp4_path = os.path.join(
+        #     self.base_path, 'ressources/media', 'default_media.mp4')
 
         self.video_widget.setParent(self)
         main_layout = self.layout()
@@ -728,9 +715,16 @@ class MainApp(QWidget):
         self.video_player.setVideoOutput(self.video_widget)
         self.video_widget.show()
         self.video_player.stop()
-        self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(
-            mp4_path)))
-        self.video_player.play()
+        self.playNextMedia()
+        # self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(
+        #     mp4_path)))
+        # self.video_player.play()
+
+    @pyqtSlot()
+    def onMediaStatusChanged(self):
+        if self.video_player.mediaStatus() == QMediaPlayer.EndOfMedia:
+            self.video_player.setPosition(0)
+            self.video_player.play()
 
     @pyqtSlot()
     def onDustClicked(self):
