@@ -8,9 +8,10 @@ import base64
 import zipfile
 import shutil
 from io import BytesIO
-from PyQt5.QtWidgets import QMessageBox, QDialog, QLineEdit, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget, QInputDialog
+from PyQt5.QtWidgets import QMessageBox, QDialog, QStackedWidget, QLineEdit, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget, QInputDialog
 from PyQt5.QtCore import Qt, QProcess, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect, QProcess
 from PyQt5.QtQuickWidgets import QQuickWidget
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings, QWebEngineProfile
@@ -248,6 +249,7 @@ class MainApp(QWidget):
                     zip_ref.extractall(media_dir)
 
                 print(f"Successfully extracted media file to {media_dir}")
+                self.loadMediaFiles()
             except requests.RequestException as e:
                 print(f"Failed to download media file from {url}. Reason: {e}")
             except zipfile.BadZipFile as e:
@@ -387,23 +389,27 @@ class MainApp(QWidget):
         self.buttons_view.setSource(QUrl.fromLocalFile(qml_path))
         main_layout.addWidget(self.buttons_view, 1)
 
+        self.current_media_index = 0
+        self.media_files = []
         # Initialization of QMediaPlayer
         self.video_player = QMediaPlayer()
-
-        # Creation and configuration of QVideoWidget
         self.video_widget = QVideoWidget()
-
         self.video_widget.setAspectRatioMode(Qt.IgnoreAspectRatio)
         self.video_player.setVideoOutput(self.video_widget)
-        # Add QVideoWidget to the layout
-        main_layout.addWidget(self.video_widget, 3)
-
-        mp4_path = os.path.join(
-            self.base_path, 'ressources/media', 'default_media.mp4')
-        self.video_player.setMedia(QMediaContent(
-            QUrl.fromLocalFile(mp4_path)))
         self.video_player.mediaStatusChanged.connect(self.onMediaStatusChanged)
-        self.video_player.play()
+
+        self.image_label = QLabel()
+        self.image_label.setAlignment(Qt.AlignCenter)
+
+        self.stacked_widget = QStackedWidget()
+        self.stacked_widget.addWidget(self.video_widget)
+        self.stacked_widget.addWidget(self.image_label)
+
+        main_layout.addWidget(self.stacked_widget, 3)
+
+        self.setLayout(main_layout)
+        self.loadMediaFiles()
+        self.playNextMedia()
 
         self.web_view = QWebEngineView()
 
@@ -411,6 +417,35 @@ class MainApp(QWidget):
 
         self.loadStyleSheet()
         self.addSlideMenu()
+
+    def loadMediaFiles(self):
+        media_dir = os.path.join(os.getcwd(), 'ressources', 'media')
+        self.media_files = [os.path.join(media_dir, f) for f in os.listdir(media_dir) 
+                            if f.lower().endswith(('.mp4', '.avi', '.mov', '.png', '.jpg', '.jpeg'))]
+        print(self.media_files)
+
+
+    def playNextMedia(self):
+        if not self.media_files:
+            return
+
+        current_file = self.media_files[self.current_media_index]
+        if current_file.lower().endswith(('.mp4', '.avi', '.mov')):
+            self.stacked_widget.setCurrentWidget(self.video_widget)
+            self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(current_file)))
+            self.video_player.play()
+        elif current_file.lower().endswith(('.png', '.jpg', '.jpeg')):
+            self.stacked_widget.setCurrentWidget(self.image_label)
+            pixmap = QPixmap(current_file)
+            self.image_label.setPixmap(pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio))
+            QTimer.singleShot(10000, self.playNextMedia)
+
+        self.current_media_index = (self.current_media_index + 1) % len(self.media_files)
+
+    @pyqtSlot()
+    def onMediaStatusChanged(self):
+        if self.video_player.mediaStatus() == QMediaPlayer.EndOfMedia:
+            self.playNextMedia()
 
     def handleOffer(self, offerData):
         if self.isFullScreenWebViewOpen == False:
@@ -679,12 +714,6 @@ class MainApp(QWidget):
         self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(
             mp4_path)))
         self.video_player.play()
-
-    @pyqtSlot()
-    def onMediaStatusChanged(self):
-        if self.video_player.mediaStatus() == QMediaPlayer.EndOfMedia:
-            self.video_player.setPosition(0)
-            self.video_player.play()
 
     @pyqtSlot()
     def onDustClicked(self):
