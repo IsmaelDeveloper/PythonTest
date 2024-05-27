@@ -280,7 +280,8 @@ class MainApp(QWidget):
             pixmap = QPixmap(current_file)
             self.image_label.setPixmap(pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio))
             self.image_label.show()
-            QTimer.singleShot(10000, self.playNextMedia)  # Display each image for 10 seconds
+            self.image_timer = QTimer()
+            self.image_timer.singleShot(10000, self.playNextMedia)
 
         self.current_media_index = (self.current_media_index + 1) % len(self.media_files)
 
@@ -566,7 +567,9 @@ class MainApp(QWidget):
         QWebEngineProfile.defaultProfile().clearHttpCache()
 
     def openWebviewOnMp4(self, url):
+        self.stopMediaTimer() 
         self.video_player.stop()
+        self.image_label.hide() 
         main_layout = self.layout()
         self.web_view.setUrl(QUrl(url))
         main_layout.replaceWidget(self.video_widget, self.web_view)
@@ -577,12 +580,14 @@ class MainApp(QWidget):
         QTimer.singleShot(100, self.setupCountdown)
 
     def openFullScreenWebView(self, url, offerData=None, isMultipleCall = False):
+        self.stopMediaTimer()
         self.multipleCallJsSent = False
         if self.isWebviewOnMp4Open:
             self.closeWebview()
         self.storeWidgetStates()
         # self.clearCache()
         self.video_player.stop()
+        self.image_label.hide() 
         self.video_widget.setParent(None)
         self.video_widget.hide()
         self.buttons_view.hide()
@@ -715,10 +720,17 @@ class MainApp(QWidget):
         self.video_player.setVideoOutput(self.video_widget)
         self.video_widget.show()
         self.video_player.stop()
+        if self.current_media_index > 0 and self.media_files[self.current_media_index - 1].lower().endswith(('.png', '.jpg', '.jpeg')):
+            self.image_label.show() 
         self.playNextMedia()
         # self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(
         #     mp4_path)))
         # self.video_player.play()
+    
+    def stopMediaTimer(self):
+        self.image_timer.stop()
+        print("STOOOOOOOOOOOOOOOOOOP")
+
 
     @pyqtSlot()
     def onMediaStatusChanged(self):
