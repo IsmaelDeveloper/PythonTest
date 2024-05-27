@@ -208,7 +208,8 @@ class MainApp(QWidget):
                     self.deleteAllUsers()
 
                 media_file_download = data.get('mediaFileDownload', '')
-                self.processMediaFileDownload(media_file_download)
+                mediaFileNm = data.get('mediaFileNm', '')
+                self.processMediaFileDownload(media_file_download, mediaFileNm)
 
                 kiosk_status = data.get('kioskCtrlAt', 'N')
                 if kiosk_status == 'K':
@@ -224,7 +225,7 @@ class MainApp(QWidget):
         except json.JSONDecodeError:
             print("Failed to decode JSON response")
 
-    def processMediaFileDownload(self, media_file_path):
+    def processMediaFileDownload(self, media_file_path, mediaFileNm):
         if media_file_path:
             url = f"http://newk.musicen.com{media_file_path}"
             try:
@@ -239,16 +240,31 @@ class MainApp(QWidget):
                 else:
                     print("Filename not found in the headers")
                     file_name = "default.zip"  # Fallback if the filename is not provided
-
+                if mediaFileNm == self.mediaZipName :
+                    return
+                
                 media_dir = os.path.join(self.base_path, 'ressources', 'media')
                 if not os.path.exists(media_dir):
                     os.makedirs(media_dir)
+
+                # Clear the media directory
+                if os.path.exists(media_dir):
+                    for file in os.listdir(media_dir):
+                        file_path = os.path.join(media_dir, file)
+                        try:
+                            if os.path.isfile(file_path) or os.path.islink(file_path):
+                                os.unlink(file_path)
+                            elif os.path.isdir(file_path):
+                                shutil.rmtree(file_path)
+                        except Exception as e:
+                            print(f'Failed to delete {file_path}. Reason: {e}')
 
                 # Extract the zip file from the response content
                 with zipfile.ZipFile(BytesIO(response.content)) as zip_ref:
                     zip_ref.extractall(media_dir)
 
                 print(f"Successfully extracted media file to {media_dir}")
+                self.mediaZipName = file_name
                 self.loadMediaFiles()
             except requests.RequestException as e:
                 print(f"Failed to download media file from {url}. Reason: {e}")
@@ -350,6 +366,7 @@ class MainApp(QWidget):
     #     print("WE CLOOOOOOOOOOOOOOOOOOOOOOSE")
         
     def initUI(self):
+        self.mediaZipName = ""
         self.check_existing_user()
         # self.start_and_monitor_process("gedit")
         try:
