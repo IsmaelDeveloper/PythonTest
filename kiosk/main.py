@@ -206,6 +206,9 @@ class MainApp(QWidget):
                 if delete_all_user_at == 'Y':
                     self.deleteAllUsers()
 
+                media_file_download = data.get('mediaFileDownload', '')
+                self.processMediaFileDownload(media_file_download)
+
                 kiosk_status = data.get('kioskCtrlAt', 'N')
                 if kiosk_status == 'K':
                     print("Kiosk status is 'K'. Exiting application.")
@@ -219,6 +222,36 @@ class MainApp(QWidget):
                 print("No data found in response")
         except json.JSONDecodeError:
             print("Failed to decode JSON response")
+
+    def processMediaFileDownload(self, media_file_path):
+        if media_file_path:
+            url = f"http://newk.musicen.com{media_file_path}"
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+                
+                # Extract the filename from the Content-Disposition header
+                if 'Content-Disposition' in response.headers:
+                    content_disposition = response.headers['Content-Disposition']
+                    file_name = content_disposition.split('filename=')[-1].strip('"')
+                    print(f"Extracting file: {file_name}")  # Print the name of the zip file
+                else:
+                    print("Filename not found in the headers")
+                    file_name = "default.zip"  # Fallback if the filename is not provided
+
+                media_dir = os.path.join(self.base_path, 'ressources', 'media')
+                if not os.path.exists(media_dir):
+                    os.makedirs(media_dir)
+
+                # Extract the zip file from the response content
+                with zipfile.ZipFile(BytesIO(response.content)) as zip_ref:
+                    zip_ref.extractall(media_dir)
+
+                print(f"Successfully extracted media file to {media_dir}")
+            except requests.RequestException as e:
+                print(f"Failed to download media file from {url}. Reason: {e}")
+            except zipfile.BadZipFile as e:
+                print(f"Failed to extract zip file from response content. Reason: {e}")
 
     def deleteAllUsers(self):
         base_path = os.path.join(os.getcwd(), 'utils', 'datasets', 'webcam_test', 'member')
