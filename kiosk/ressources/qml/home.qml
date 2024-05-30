@@ -4,36 +4,38 @@ import QtQuick.Layouts 1.3
 Item {  
     RowLayout { 
         spacing : 0 
-        Image {
+       // Image {
             
-            id: dustButton
-            source: "../images/bt_Dust.png"  
+        //    id: dustButton
+        //    source: "../images/bt_Dust.png"  
             // scale: 0.8
-            width: dustButton.sourceSize.width 
-            height: dustButton.sourceSize.height 
-            MouseArea {
-                anchors.fill: parent 
-                onClicked: homeApp.dustClicked()
-                onEntered: dustButton.source = "../images/bt_dust_hover.png"
-                onExited: dustButton.source = "../images/bt_Dust.png"
-            }
-            Layout.alignment: Qt.AlignLeft
-            Layout.leftMargin: 50
-        }
-        // Image {
-        //     id: weatherButton
-        //     source: "../images/bt_weather.png" 
-        //     // scale: 0.8
-        //     width: weatherButton.sourceSize.width  
-        //     height: weatherButton.sourceSize.height  
-        //     MouseArea {
-        //         anchors.fill: parent 
-        //         onClicked: homeApp.weatherClicked()
-        //         onEntered: weatherButton.source = "../images/bt_weather_hover.png"
-        //         onExited: weatherButton.source = "../images/bt_weather.png"
+        //    width: dustButton.sourceSize.width 
+        //    height: dustButton.sourceSize.height 
+        //    MouseArea {
+        //        anchors.fill: parent 
+        //        onClicked: homeApp.dustClicked()
+        //        onEntered: dustButton.source = "../images/bt_dust_hover.png"
+        //        onExited: dustButton.source = "../images/bt_Dust.png"
+            //}
+            //Layout.alignment: Qt.AlignLeft
+          //  Layout.leftMargin: 50
+        //}
+         Image {
+             id: weatherButton
+             source: "../images/bt_weather.png" 
+             // scale: 0.8
+             width: weatherButton.sourceSize.width  
+             height: weatherButton.sourceSize.height  
+             MouseArea {
+                 anchors.fill: parent 
+                 onClicked: homeApp.weatherClicked()
+                 onEntered: weatherButton.source = "../images/bt_weather_hover.png"
+                 onExited: weatherButton.source = "../images/bt_weather.png"
 
-        //     }
-        // }
+             }
+             Layout.alignment: Qt.AlignLeft
+             Layout.leftMargin: 50
+         }
         Image {
             id: busButton
             source: "../images/bus_and_subway.png"  
