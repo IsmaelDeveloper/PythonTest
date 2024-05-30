@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy,  QGraphicsView, QGraphicsScene, QGraphicsTextItem, QFrame, QStackedWidget
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QFont
 import cv2
 import numpy as np
 import torch
@@ -77,6 +77,8 @@ class WebcamWidget(QWidget):
         self.current_marquee_msg = ""
         self.textItem = QGraphicsTextItem(self.current_marquee_msg)
         self.textItem.setDefaultTextColor(QColor("white"))
+        font = QFont("Arial",  20, QFont.Bold)
+        self.textItem.setFont(font)
         self.scene.addItem(self.textItem)
         self.scene.setBackgroundBrush(Qt.transparent)
         self.timer.timeout.connect(self.scroll_text)
@@ -252,10 +254,8 @@ class WebcamWidget(QWidget):
             self.timer.timeout.disconnect()
         except TypeError:
             pass 
-
-
-        # Redémarrer le timer pour le traitement des images
         self.timer.timeout.connect(lambda: self.process_frame(
-            self.video_capture, self.thermal_cam, self.face_detection_model, self.embed_dict, 0.6))
+            self.video_capture, self.thermal_cam, self.face_detection_model, self.embed_dict, 0.6)) 
+        self.timer.timeout.connect(self.scroll_text)
         self.timer.start(100)
 
