@@ -586,6 +586,7 @@ class MainApp(QWidget):
     def openFullScreenWebView(self, url, offerData=None, isMultipleCall = False):
         self.isWebViewOpen = True 
         self.stopMediaTimer()
+        self.webcam_widget.releaseCamera()
         self.multipleCallJsSent = False
         if self.isWebviewOnMp4Open:
             self.closeWebview()
@@ -766,7 +767,6 @@ class MainApp(QWidget):
 
     @pyqtSlot()
     def onCallClicked(self):
-        self.webcam_widget.releaseCamera()
         self.openFullScreenWebView(
             self.callingWebviewUrl)
 
