@@ -36,6 +36,7 @@ class MainApp(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.isWebViewOpen = False
         self.initUI()
         self.isFullScreenWebViewOpen = False
         self.dustClicked.connect(self.onDustClicked)
@@ -265,25 +266,26 @@ class MainApp(QWidget):
 
     
     def playNextMedia(self):
-        if not self.media_files:
+        if not self.media_files or self.isWebViewOpen:
             return
-
+        print("we print self iswebviewopen : ", self.isWebViewOpen)
         current_file = self.media_files[self.current_media_index]
-        if current_file.lower().endswith(('.mp4', '.avi', '.mov')):
-            self.image_label.hide()
-            self.video_widget.show()
-            self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(current_file)))
-            self.video_player.play()
-            self.video_player.mediaStatusChanged.connect(self.onMediaStatusChanged)
-        elif current_file.lower().endswith(('.png', '.jpg', '.jpeg')):
-            self.video_widget.hide()
-            pixmap = QPixmap(current_file)
-            self.image_label.setPixmap(pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio))
-            self.image_label.show()
-            self.image_timer = QTimer()
-            self.image_timer.singleShot(10000, self.playNextMedia)
+        if self.isFullScreenWebViewOpen == False:
+            if current_file.lower().endswith(('.mp4', '.avi', '.mov')):
+                self.image_label.hide()
+                self.video_widget.show()
+                self.video_player.setMedia(QMediaContent(QUrl.fromLocalFile(current_file)))
+                self.video_player.play()
+                self.video_player.mediaStatusChanged.connect(self.onMediaStatusChanged)
+            elif current_file.lower().endswith(('.png', '.jpg', '.jpeg')):
+                self.video_widget.hide()
+                pixmap = QPixmap(current_file)
+                self.image_label.setPixmap(pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio))
+                self.image_label.show()
+                self.image_timer = QTimer()
+                self.image_timer.singleShot(10000, self.playNextMedia)
 
-        self.current_media_index = (self.current_media_index + 1) % len(self.media_files)
+            self.current_media_index = (self.current_media_index + 1) % len(self.media_files)
 
 
     @pyqtSlot()
@@ -388,6 +390,7 @@ class MainApp(QWidget):
     #     print("WE CLOOOOOOOOOOOOOOOOOOOOOOSE")
         
     def initUI(self):
+        self.isFullScreenWebViewOpen = False
         self.check_existing_user()
         try:
             with open('/etc/machine-id', 'r') as file:
@@ -567,7 +570,8 @@ class MainApp(QWidget):
         QWebEngineProfile.defaultProfile().clearHttpCache()
 
     def openWebviewOnMp4(self, url):
-        self.stopMediaTimer() 
+        self.isWebViewOpen = True 
+        self.stopMediaTimer()
         self.video_player.stop()
         self.image_label.hide() 
         main_layout = self.layout()
@@ -580,6 +584,7 @@ class MainApp(QWidget):
         QTimer.singleShot(100, self.setupCountdown)
 
     def openFullScreenWebView(self, url, offerData=None, isMultipleCall = False):
+        self.isWebViewOpen = True 
         self.stopMediaTimer()
         self.multipleCallJsSent = False
         if self.isWebviewOnMp4Open:
@@ -666,22 +671,17 @@ class MainApp(QWidget):
                 self.web_view.page().runJavaScript(jsCode)
 
     def closeFullScreenWebView(self):
+        self.isWebViewOpen = False 
         self.sendCloseSignalToWebView()
         self.web_view.setUrl(QUrl("about:blank"))
         self.web_view.setParent(None)
         self.web_view.hide() 
-        self.video_widget.setParent(self)
-        main_layout = self.layout()
-
-        if self.widget_states['video_widget']:
-            main_layout.addWidget(self.video_widget, 3)
-            self.video_widget.show()
-            self.restoreVideoView()
         self.webcam_widget.reactivateCamera()
         self.webcam_widget.show()
         self.buttons_view.setVisible(self.widget_states['buttons_view'])
         self.web_view.setVisible(self.widget_states['web_view'])
         self.isFullScreenWebViewOpen = False
+        self.restoreVideoView()
         self.socket_thread.reRegisterUser() 
     def setupCountdown(self):
         self.countdown_time = 50
@@ -703,6 +703,7 @@ class MainApp(QWidget):
             self.closeWebview()
 
     def closeWebview(self):
+        self.isWebViewOpen = False
         self.countdown_timer.stop()
         self.countdown_button.hide()
         self.restoreVideoView()
@@ -728,8 +729,11 @@ class MainApp(QWidget):
         # self.video_player.play()
     
     def stopMediaTimer(self):
-        self.image_timer.stop()
-        print("STOOOOOOOOOOOOOOOOOOP")
+        try:
+            self.image_timer.stop()
+        except AttributeError:
+            pass
+        self.video_player.stop()
 
 
     @pyqtSlot()
