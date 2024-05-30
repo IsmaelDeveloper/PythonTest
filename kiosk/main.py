@@ -677,12 +677,12 @@ class MainApp(QWidget):
         self.web_view.setUrl(QUrl("about:blank"))
         self.web_view.setParent(None)
         self.web_view.hide() 
-        self.webcam_widget.reactivateCamera()
         self.webcam_widget.show()
         self.buttons_view.setVisible(self.widget_states['buttons_view'])
         self.web_view.setVisible(self.widget_states['web_view'])
         self.isFullScreenWebViewOpen = False
         self.restoreVideoView()
+        self.webcam_widget.reactivateCamera()
         self.socket_thread.reRegisterUser() 
     def setupCountdown(self):
         self.countdown_time = 50

@@ -232,14 +232,30 @@ class WebcamWidget(QWidget):
 
     def releaseCamera(self):
         self.timer.stop()
-        self.video_capture.release()
-        self.thermal_cam.release()
+        if hasattr(self, 'video_capture') and self.video_capture.isOpened():
+            self.video_capture.release()
+        if hasattr(self, 'thermal_cam') and self.thermal_cam.isOpened():
+            self.thermal_cam.release()
+
 
     def reactivateCamera(self):
-        if not self.video_capture.isOpened():
-            self.video_capture = cv2.VideoCapture(2)
-        if (not self.thermal_cam.isOpened()):
-            self.thermal_cam = cv2.VideoCapture(0)
-            self.thermal_cam.set(cv2.CAP_PROP_FOURCC,
-                                 cv2.VideoWriter.fourcc('Y', '1', '6', ' '))
-            self.thermal_cam.set(cv2.CAP_PROP_CONVERT_RGB, 0)
+        # # Libérer les caméras actuelles si elles sont ouvertes
+        # if hasattr(self, 'video_capture') and self.video_capture.isOpened():
+        #     self.video_capture.release()
+        # if hasattr(self, 'thermal_cam') and self.thermal_cam.isOpened():
+        #     self.thermal_cam.release()
+
+        # Réinitialiser les caméras disponibles
+        self.detect_and_print_available_cameras()
+
+        try:
+            self.timer.timeout.disconnect()
+        except TypeError:
+            pass 
+
+
+        # Redémarrer le timer pour le traitement des images
+        self.timer.timeout.connect(lambda: self.process_frame(
+            self.video_capture, self.thermal_cam, self.face_detection_model, self.embed_dict, 0.6))
+        self.timer.start(100)
+
