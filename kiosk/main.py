@@ -7,6 +7,7 @@ import sqlite3
 import base64
 import zipfile
 import shutil 
+import subprocess
 from io import BytesIO
 from PyQt5.QtWidgets import QLabel, QMessageBox, QDialog, QLineEdit, QLabel, QSpacerItem, QSizePolicy, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFrame, QTabWidget, QInputDialog
 from PyQt5.QtCore import Qt, QProcess, QUrl, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QRect
@@ -215,12 +216,14 @@ class MainApp(QWidget):
                 kiosk_status = data.get('kioskCtrlAt', 'N')
                 if kiosk_status == 'K':
                     print("Kiosk status is 'K'. Exiting application.")
-                    QApplication.quit()
+                    subprocess.call(["shutdown", "now"])
+                    # QApplication.quit()
                 elif kiosk_status == 'R':
                     self.webcam_widget.releaseCamera()
                     print("Kiosk status is 'R'. Restarting application.")
-                    QProcess.startDetached(sys.executable, sys.argv)
-                    QApplication.quit()
+                    subprocess.call(["reboot"])
+                    # QProcess.startDetached(sys.executable, sys.argv)
+                    # QApplication.quit()
             else:
                 print("No data found in response")
         except json.JSONDecodeError:
@@ -735,13 +738,6 @@ class MainApp(QWidget):
         except AttributeError:
             pass
         self.video_player.stop()
-
-
-    @pyqtSlot()
-    def onMediaStatusChanged(self):
-        if self.video_player.mediaStatus() == QMediaPlayer.EndOfMedia:
-            self.video_player.setPosition(0)
-            self.video_player.play()
 
     @pyqtSlot()
     def onDustClicked(self):

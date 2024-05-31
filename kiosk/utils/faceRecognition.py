@@ -42,8 +42,9 @@ class WebcamWidget(QWidget):
             for npy_name in embed_lid2:
                 embeddings = np.load(embed_path2 + npy_name)
                 tmp_list.append(embeddings)
-            tmp = np.vstack(tmp_list)
-            self.embed_dict[f'{registered_person}'] = tmp
+            if tmp_list:
+                tmp = np.vstack(tmp_list)
+                self.embed_dict[f'{registered_person}'] = tmp
         
         img = np.zeros((160, 160, 3))
         self.face_detection_model.predict(source=img, conf=0.6)
