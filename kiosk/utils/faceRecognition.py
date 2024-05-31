@@ -79,7 +79,7 @@ class WebcamWidget(QWidget):
         self.text_position = 0
 
     def scroll_text(self):
-        self.text_position -= 2
+        self.text_position -= 5
         if self.text_position < -self.textItem.boundingRect().width():
             self.text_position = self.width()
         self.textItem.setPos(self.text_position, 0)
