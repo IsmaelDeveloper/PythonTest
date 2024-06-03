@@ -13,7 +13,7 @@ from PyQt5.QtGui import QColor
 from PIL import Image, ImageDraw, ImageFont
 import threading
 import time
-import random
+import logging
 
 class WebcamWidget(QWidget):
     def __init__(self, parent=None):
@@ -27,6 +27,7 @@ class WebcamWidget(QWidget):
         self.frame_count = 0
 
         self.base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        logging.getLogger('ultralytics').setLevel(logging.WARNING)
         weights_path = os.path.join(self.base_path, 'weights', 'best.pt')
         self.face_detection_model = YOLO(weights_path)
         self.face_similarity_model = InceptionResnetV1(pretrained='vggface2').eval()
@@ -159,7 +160,7 @@ class WebcamWidget(QWidget):
     
     def get_user_name(self, kiosk_seq):
         try:
-            conn = sqlite3.connect('kioskdb.db')  # Assurez-vous que le chemin vers votre base de données est correct
+            conn = sqlite3.connect('kioskdb.db')
             cursor = conn.cursor()
             cursor.execute("SELECT user_nm FROM users WHERE user_seq = ?", (kiosk_seq,))
             result = cursor.fetchone()
