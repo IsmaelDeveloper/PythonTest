@@ -1,9 +1,7 @@
 FROM ubuntu:20.04
 
-# avoid frontend dialog during packet installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# update packet and install python etc..
 RUN apt-get update && apt-get install -y \
     python3.9 \
     python3-pip \
@@ -31,23 +29,19 @@ RUN apt-get update && apt-get install -y \
     gstreamer1.0-pulseaudio \
     pulseaudio \
     alsa-utils \
-    systemd \
     sudo \
+    docker.io \
     && rm -rf /var/lib/apt/lists/*
 
-# update pip and install necessary python packet
 RUN python3.9 -m pip install --upgrade pip && \
     pip install PyQt5 PyQtWebEngine
 
-# copy the output folder directly
 COPY ./output /output
 
 WORKDIR /output/main
 
-# make main file executable
 RUN chmod +x ./main
 
-# Configurer l'intégration GLX pour Qt et désactiver le sandbox pour QtWebEngine
 ENV QT_XCB_GL_INTEGRATION=xcb_glx
 ENV QTWEBENGINE_DISABLE_SANDBOX=1
 
