@@ -102,29 +102,66 @@ class MainApp(QWidget):
 
     def showKioskInputPopup(self):
         dialog = QDialog(self)
-        dialog.setWindowTitle('키오스크 번호 입력')
-        dialog.setWindowFlags(Qt.Dialog | Qt.CustomizeWindowHint | Qt.WindowTitleHint)  # Remove the close button
-        layout = QVBoxLayout()
+        dialog.setWindowFlags(Qt.Dialog | Qt.FramelessWindowHint)  # Remove the title bar
+        
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(20, 20, 20, 20)  # Set margins around the layout
+        
+        # Label for the title
+        title_label = QLabel('본 장치의 기관 코드를 입력해주세요.')
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet("font-size: 16pt; font-weight: bold;")  # Increase font size and set bold
+        layout.addWidget(title_label, alignment=Qt.AlignTop)
 
-        label = QLabel('키오스크 번호를 입력해 주세요:')
-        layout.addWidget(label)
-
+        # Spacer to center the input field vertically
+        layout.addStretch(1)
+        
+        # Input field
         input_field = QLineEdit()
+        input_field.setPlaceholderText('기관코드를 입력해주세요.')
+        input_field.setFixedHeight(40)  # Increase the height of the input field
+        input_field.setStyleSheet("QLineEdit { placeholder-text-color: lightgray; }")
+        input_field.setFocusPolicy(Qt.ClickFocus)
         layout.addWidget(input_field)
+        
+        # Spacer to center the input field vertically
+        layout.addStretch(1)
 
-        button = QPushButton('확인')
-        button.clicked.connect(lambda: self.onKioskIdEntered(dialog, input_field))
-        layout.addWidget(button)
+        # Layout for buttons
+        button_layout = QHBoxLayout()
+        
+        confirm_button = QPushButton('확인')
+        confirm_button.setStyleSheet("background-color: #D3D3D3; padding: 10px;")
+        confirm_button.setAutoDefault(False)
+        confirm_button.setDefault(False)
+        confirm_button.clicked.connect(lambda: self.onKioskIdEntered(dialog, input_field))
+        button_layout.addWidget(confirm_button)
 
+        cancel_button = QPushButton('취소')
+        cancel_button.setStyleSheet("background-color: #D3D3D3; padding: 10px;")
+        cancel_button.setAutoDefault(False)
+        cancel_button.setDefault(False)
+        cancel_button.clicked.connect(dialog.close)
+        button_layout.addWidget(cancel_button)
+
+        layout.addLayout(button_layout)
+        
+        # Set dialog layout and background color
         dialog.setLayout(layout)
+        dialog.setStyleSheet("background-color: white;")
+        
+        # Adjust dialog size and position
         dialog.setWindowModality(Qt.ApplicationModal)
-        dialog.adjustSize()  # Adjust the size of the dialog
+        dialog.setFixedSize(400, 250)  # Increase the size of the dialog
         rect = dialog.geometry()
         center = QApplication.primaryScreen().availableGeometry().center()
         rect.moveCenter(center)
         dialog.setGeometry(rect)
 
         dialog.exec_()
+
+
+
 
 
     def onKioskIdEntered(self, dialog, input_field):
@@ -164,14 +201,56 @@ class MainApp(QWidget):
 
     
     def showCenteredMessageBox(self, title, message):
-        msgBox = QMessageBox(QMessageBox.Warning, title, message, QMessageBox.Ok, self)
-        msgBox.setWindowModality(Qt.ApplicationModal)
-        msgBox.adjustSize()
-        rect = msgBox.geometry()
+        dialog = QDialog(self)
+        dialog.setWindowFlags(Qt.Dialog | Qt.FramelessWindowHint)  # Remove the title bar
+
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(20, 20, 20, 20)  # Set margins around the layout
+
+        # Title label
+        title_label = QLabel(title)
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet("font-size: 16pt; font-weight: bold;")  # Increase font size and set bold
+        layout.addWidget(title_label, alignment=Qt.AlignTop)
+
+        # Spacer to center the message label vertically
+        layout.addStretch(1)
+
+        # Message label
+        message_label = QLabel(message)
+        message_label.setAlignment(Qt.AlignCenter)
+        message_label.setWordWrap(True)
+        layout.addWidget(message_label)
+
+        # Spacer to center the buttons vertically
+        layout.addStretch(1)
+
+        # Layout for buttons
+        button_layout = QHBoxLayout()
+        
+        ok_button = QPushButton('확인')
+        ok_button.setStyleSheet("background-color: #D3D3D3; padding: 10px;")
+        ok_button.setAutoDefault(False)
+        ok_button.setDefault(False)
+        ok_button.clicked.connect(dialog.accept)
+        button_layout.addWidget(ok_button)
+
+        layout.addLayout(button_layout)
+
+        # Set dialog layout and background color
+        dialog.setLayout(layout)
+        dialog.setStyleSheet("background-color: white;")
+
+        # Adjust dialog size and position
+        dialog.setWindowModality(Qt.ApplicationModal)
+        dialog.setFixedSize(400, 250)  # Increase the size of the dialog
+        rect = dialog.geometry()
         center = QApplication.primaryScreen().availableGeometry().center()
         rect.moveCenter(center)
-        msgBox.setGeometry(rect)
-        msgBox.exec_()
+        dialog.setGeometry(rect)
+
+        dialog.exec_()
+
 
     def startSocket(self):
         self.socket_thread = SocketIOThread(
