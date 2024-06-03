@@ -31,6 +31,8 @@ RUN apt-get update && apt-get install -y \
     gstreamer1.0-pulseaudio \
     pulseaudio \
     alsa-utils \
+    systemd \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
 # update pip and install necessary python packet

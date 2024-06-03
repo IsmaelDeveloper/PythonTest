@@ -216,12 +216,12 @@ class MainApp(QWidget):
                 kiosk_status = data.get('kioskCtrlAt', 'N')
                 if kiosk_status == 'K':
                     print("Kiosk status is 'K'. Exiting application.")
-                    subprocess.call(["shutdown", "now"])
+                    self.shutdown()
                     # QApplication.quit()
                 elif kiosk_status == 'R':
                     self.webcam_widget.releaseCamera()
                     print("Kiosk status is 'R'. Restarting application.")
-                    subprocess.call(["reboot"])
+                    self.reboot()
                     # QProcess.startDetached(sys.executable, sys.argv)
                     # QApplication.quit()
             else:
@@ -229,6 +229,11 @@ class MainApp(QWidget):
         except json.JSONDecodeError:
             print("Failed to decode JSON response")
 
+    def shutdown(self):
+        subprocess.call(["/scripts/shutdown.sh"])
+
+    def reboot(self):
+        subprocess.call(["/scripts/reboot.sh"])
 
     def processMediaFileDownload(self, media_file_path):
         print("")
